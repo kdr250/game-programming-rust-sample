@@ -2,13 +2,15 @@ use anyhow::{anyhow, Result};
 use sdl2::{
     event::Event,
     keyboard::{KeyboardState, Scancode},
+    pixels::Color,
+    render::Canvas,
     video::Window,
     EventPump, Sdl,
 };
 
 pub struct Game {
     context: Sdl,
-    window: Window,
+    canvas: Canvas<Window>,
     event_pump: EventPump,
     is_running: bool,
 }
@@ -25,11 +27,13 @@ impl Game {
             .position(100, 100)
             .build()?;
 
+        let canvas = window.into_canvas().build()?;
+
         let event_pump = context.event_pump().map_err(|e| anyhow!(e))?;
 
         Ok(Game {
             context,
-            window,
+            canvas,
             event_pump,
             is_running: true,
         })
@@ -67,5 +71,9 @@ impl Game {
 
     fn update_game(&mut self) {}
 
-    fn generate_output(&mut self) {}
+    fn generate_output(&mut self) {
+        self.canvas.set_draw_color(Color::RGBA(0, 0, 255, 255));
+        self.canvas.clear();
+        self.canvas.present();
+    }
 }
