@@ -84,9 +84,6 @@ impl Game {
         }
     }
 
-    /// Shutdown the game
-    pub fn shutdown(&mut self) {}
-
     /// Herlper functions for the game loop
     fn process_input(&mut self) {
         for event in self.event_pump.poll_iter() {
