@@ -10,6 +10,7 @@ use sdl2::{
 };
 
 const THICKNESS: u32 = 15;
+const PADDLE_HEIGHT: f32 = 100.0;
 
 struct Vector2 {
     x: f32,
@@ -25,6 +26,7 @@ pub struct Game {
     paddle_position: Vector2,
     ball_position: Vector2,
     tick_count: u64,
+    paddle_dir: i32,
 }
 
 impl Game {
@@ -64,6 +66,7 @@ impl Game {
             paddle_position,
             ball_position,
             tick_count: 0,
+            paddle_dir: 0,
         })
     }
 
@@ -95,6 +98,14 @@ impl Game {
         if state.is_scancode_pressed(Scancode::Escape) {
             self.is_running = false;
         }
+
+        self.paddle_dir = 0;
+        if state.is_scancode_pressed(Scancode::W) {
+            self.paddle_dir -= 1;
+        }
+        if state.is_scancode_pressed(Scancode::S) {
+            self.paddle_dir += 1;
+        }
     }
 
     fn update_game(&mut self) {
@@ -106,7 +117,13 @@ impl Game {
 
         self.tick_count = self.timer.ticks64();
 
-        // TODO: Update game objects
+        if self.paddle_dir != 0 {
+            self.paddle_position.y += self.paddle_dir as f32 * 300.0 * delta_time;
+            self.paddle_position.y = self.paddle_position.y.clamp(
+                PADDLE_HEIGHT / 2.0 + THICKNESS as f32,
+                768.0 - PADDLE_HEIGHT / 2.0 - THICKNESS as f32,
+            );
+        }
     }
 
     fn generate_output(&mut self) {
@@ -115,9 +132,29 @@ impl Game {
 
         self.canvas.set_draw_color(Color::RGBA(255, 255, 255, 255));
 
-        let wall = Rect::new(0, 0, 1024, THICKNESS);
+        // Draw top wall
+        let mut wall = Rect::new(0, 0, 1024, THICKNESS);
+        self.canvas.fill_rect(wall).unwrap();
+        // Draw bottom wall
+        wall.y = 768 - THICKNESS as i32;
+        self.canvas.fill_rect(wall).unwrap();
+        // Draw right wall
+        wall.x = 1024 - THICKNESS as i32;
+        wall.y = 0;
+        wall.w = THICKNESS as i32;
+        wall.h = 1024;
         self.canvas.fill_rect(wall).unwrap();
 
+        // Draw paddle
+        let paddle = Rect::new(
+            self.paddle_position.x as i32,
+            self.paddle_position.y as i32 - PADDLE_HEIGHT as i32 / 2,
+            THICKNESS,
+            PADDLE_HEIGHT as u32,
+        );
+        self.canvas.fill_rect(paddle).unwrap();
+
+        // Draw ball
         let ball = Rect::new(
             self.ball_position.x as i32 - THICKNESS as i32 / 2,
             self.ball_position.y as i32 - THICKNESS as i32 / 2,
