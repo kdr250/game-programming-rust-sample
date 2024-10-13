@@ -25,6 +25,7 @@ pub struct Game {
     is_running: bool,
     paddle_position: Vector2,
     ball_position: Vector2,
+    ball_velocity: Vector2,
     tick_count: u64,
     paddle_dir: i32,
 }
@@ -57,6 +58,11 @@ impl Game {
             y: 768.0 / 2.0,
         };
 
+        let ball_velocity = Vector2 {
+            x: -200.0,
+            y: 235.0,
+        };
+
         Ok(Game {
             context,
             canvas,
@@ -65,6 +71,7 @@ impl Game {
             is_running: true,
             paddle_position,
             ball_position,
+            ball_velocity,
             tick_count: 0,
             paddle_dir: 0,
         })
@@ -123,6 +130,27 @@ impl Game {
                 PADDLE_HEIGHT / 2.0 + THICKNESS as f32,
                 768.0 - PADDLE_HEIGHT / 2.0 - THICKNESS as f32,
             );
+        }
+
+        self.ball_position.x += self.ball_velocity.x * delta_time;
+        self.ball_position.y += self.ball_velocity.y * delta_time;
+
+        let diff = (self.paddle_position.y - self.ball_position.y).abs();
+
+        if diff <= PADDLE_HEIGHT / 2.0
+            && self.ball_position.x <= 25.0
+            && self.ball_position.x >= 20.0
+            && self.ball_velocity.x < 0.0
+        {
+            self.ball_velocity.x *= -1.0;
+        } else if self.ball_position.x <= 0.0 {
+            self.is_running = false;
+        } else if self.ball_position.x >= 1024.0 - THICKNESS as f32 && self.ball_velocity.x > 0.0 {
+            self.ball_velocity.x *= -1.0;
+        } else if self.ball_position.y <= THICKNESS as f32 && self.ball_velocity.y < 0.0 {
+            self.ball_velocity.y *= -1.0;
+        } else if self.ball_position.y >= 768.0 - THICKNESS as f32 && self.ball_velocity.y > 0.0 {
+            self.ball_velocity.y *= -1.0;
         }
     }
 
