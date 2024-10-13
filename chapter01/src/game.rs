@@ -6,7 +6,7 @@ use sdl2::{
     rect::Rect,
     render::Canvas,
     video::Window,
-    EventPump, Sdl, TimerSubsystem,
+    EventPump, TimerSubsystem,
 };
 
 const THICKNESS: u32 = 15;
@@ -18,7 +18,6 @@ struct Vector2 {
 }
 
 pub struct Game {
-    context: Sdl,
     canvas: Canvas<Window>,
     event_pump: EventPump,
     timer: TimerSubsystem,
@@ -33,9 +32,9 @@ pub struct Game {
 impl Game {
     /// Initialize game
     pub fn initialize() -> Result<Game> {
-        let context = sdl2::init().map_err(|e| anyhow!(e))?;
+        let sdl = sdl2::init().map_err(|e| anyhow!(e))?;
 
-        let video_system = context.video().map_err(|e| anyhow!(e))?;
+        let video_system = sdl.video().map_err(|e| anyhow!(e))?;
 
         let window = video_system
             .window("Game Programming in Rust", 1024, 768)
@@ -44,9 +43,9 @@ impl Game {
 
         let canvas = window.into_canvas().build()?;
 
-        let event_pump = context.event_pump().map_err(|e| anyhow!(e))?;
+        let event_pump = sdl.event_pump().map_err(|e| anyhow!(e))?;
 
-        let timer = context.timer().map_err(|e| anyhow!(e))?;
+        let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
         let paddle_position = Vector2 {
             x: 10.0,
@@ -64,7 +63,6 @@ impl Game {
         };
 
         Ok(Game {
-            context,
             canvas,
             event_pump,
             timer,
