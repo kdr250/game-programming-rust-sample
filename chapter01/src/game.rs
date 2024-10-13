@@ -6,7 +6,7 @@ use sdl2::{
     rect::Rect,
     render::Canvas,
     video::Window,
-    EventPump, Sdl,
+    EventPump, Sdl, TimerSubsystem,
 };
 
 const THICKNESS: u32 = 15;
@@ -20,9 +20,11 @@ pub struct Game {
     context: Sdl,
     canvas: Canvas<Window>,
     event_pump: EventPump,
+    timer: TimerSubsystem,
     is_running: bool,
     paddle_position: Vector2,
     ball_position: Vector2,
+    tick_count: u64,
 }
 
 impl Game {
@@ -41,6 +43,8 @@ impl Game {
 
         let event_pump = context.event_pump().map_err(|e| anyhow!(e))?;
 
+        let timer = context.timer().map_err(|e| anyhow!(e))?;
+
         let paddle_position = Vector2 {
             x: 10.0,
             y: 768.0 / 2.0,
@@ -55,9 +59,11 @@ impl Game {
             context,
             canvas,
             event_pump,
+            timer,
             is_running: true,
             paddle_position,
             ball_position,
+            tick_count: 0,
         })
     }
 
@@ -91,7 +97,17 @@ impl Game {
         }
     }
 
-    fn update_game(&mut self) {}
+    fn update_game(&mut self) {
+        while self.timer.ticks64() < self.tick_count + 16 {}
+
+        let mut delta_time = (self.timer.ticks64() - self.tick_count) as f32 / 1000.0;
+
+        delta_time = delta_time.min(0.05);
+
+        self.tick_count = self.timer.ticks64();
+
+        // TODO: Update game objects
+    }
 
     fn generate_output(&mut self) {
         self.canvas.set_draw_color(Color::RGBA(0, 0, 255, 255));
