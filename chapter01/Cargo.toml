@@ -1,0 +1,17 @@
+[package]
+name = "chapter01"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+
+[dependencies.sdl2]
+version = "0.37"
+default-features = false
+features = ["static-link", "use-vcpkg"]
+
+[package.metadata.vcpkg]
+dependencies = ["sdl2"]
+git = "https://github.com/microsoft/vcpkg"
+rev = "2024.09.30"
