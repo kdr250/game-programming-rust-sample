@@ -9,13 +9,10 @@ use sdl2::{
     EventPump, TimerSubsystem,
 };
 
+use crate::math::*;
+
 const THICKNESS: u32 = 15;
 const PADDLE_HEIGHT: f32 = 100.0;
-
-struct Vector2 {
-    x: f32,
-    y: f32,
-}
 
 pub struct Game {
     canvas: Canvas<Window>,
@@ -47,20 +44,11 @@ impl Game {
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
-        let paddle_position = Vector2 {
-            x: 10.0,
-            y: 768.0 / 2.0,
-        };
+        let paddle_position = Vector2::new(10.0, 768.0 / 2.0);
 
-        let ball_position = Vector2 {
-            x: 1024.0 / 2.0,
-            y: 768.0 / 2.0,
-        };
+        let ball_position = Vector2::new(1024.0 / 2.0, 768.0 / 2.0);
 
-        let ball_velocity = Vector2 {
-            x: -200.0,
-            y: 235.0,
-        };
+        let ball_velocity = Vector2::new(-200.0, 235.0);
 
         Ok(Game {
             canvas,

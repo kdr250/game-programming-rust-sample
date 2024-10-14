@@ -1,7 +1,8 @@
 mod game;
+mod math;
 
+use crate::game::*;
 use anyhow::Result;
-use game::Game;
 
 fn main() -> Result<()> {
     let mut game = Game::initialize()?;
