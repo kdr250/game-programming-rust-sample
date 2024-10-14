@@ -31,6 +31,10 @@ dependencies = [
 [[package]]
 name = "chapter02"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "sdl2",
+]
 
 [[package]]
 name = "game-programming-rust-sample"
