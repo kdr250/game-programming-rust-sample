@@ -7,11 +7,11 @@ pub struct Vector2 {
 }
 
 impl Vector2 {
-    const ZERO: Vector2 = Vector2::new(0.0, 0.0);
-    const UNIT_X: Vector2 = Vector2::new(1.0, 0.0);
-    const UNIT_Y: Vector2 = Vector2::new(0.0, 1.0);
-    const NEGATIVE_UNIT_X: Vector2 = Vector2::new(-1.0, 0.0);
-    const NEGATIVE_UNIT_Y: Vector2 = Vector2::new(0.0, -1.0);
+    pub const ZERO: Vector2 = Vector2::new(0.0, 0.0);
+    pub const UNIT_X: Vector2 = Vector2::new(1.0, 0.0);
+    pub const UNIT_Y: Vector2 = Vector2::new(0.0, 1.0);
+    pub const NEGATIVE_UNIT_X: Vector2 = Vector2::new(-1.0, 0.0);
+    pub const NEGATIVE_UNIT_Y: Vector2 = Vector2::new(0.0, -1.0);
 
     pub const fn new(x: f32, y: f32) -> Self {
         Self { x, y }
