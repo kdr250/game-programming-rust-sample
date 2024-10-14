@@ -1,3 +1,5 @@
+mod actor;
+mod component;
 mod game;
 mod math;
 
