@@ -75,7 +75,7 @@ mod tests {
         let mut owner: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor));
         let _test_component = TestComponent::new(&mut owner, 100);
 
-        assert_eq!(owner.borrow().get_cocmponents().len(), 1);
+        assert_eq!(1, owner.borrow().get_cocmponents().len());
     }
 
     #[test]
@@ -83,14 +83,14 @@ mod tests {
         let test_actor = TestActor::new();
         let mut owner: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor));
         let test_component0 = TestComponent::new(&mut owner, 100);
-        let _test_component1 = TestComponent::new(&mut owner, 100);
+        let test_component1 = TestComponent::new(&mut owner, 100);
 
         owner.borrow_mut().remove_component(test_component0);
 
         let binding = owner.borrow();
         let actual = binding.get_cocmponents()[0].borrow();
 
-        assert_eq!(binding.get_cocmponents().len(), 1);
-        assert_eq!(actual.id(), 1);
+        assert_eq!(1, binding.get_cocmponents().len());
+        assert_eq!(test_component1.borrow().id(), actual.id());
     }
 }
