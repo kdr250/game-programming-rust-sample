@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use anyhow::{anyhow, Result};
 use sdl2::{
     event::Event,
@@ -9,7 +11,10 @@ use sdl2::{
     EventPump, TimerSubsystem,
 };
 
-use crate::math::*;
+use crate::{
+    actor::{Actor, State},
+    math::*,
+};
 
 const THICKNESS: u32 = 15;
 const PADDLE_HEIGHT: f32 = 100.0;
@@ -24,6 +29,9 @@ pub struct Game {
     ball_velocity: Vector2,
     tick_count: u64,
     paddle_dir: i32,
+    updating_actors: bool,
+    actors: Vec<Rc<RefCell<dyn Actor>>>,
+    pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
 }
 
 impl Game {
@@ -60,6 +68,9 @@ impl Game {
             ball_velocity,
             tick_count: 0,
             paddle_dir: 0,
+            updating_actors: false,
+            actors: vec![],
+            pending_actors: vec![],
         })
     }
 
@@ -69,6 +80,14 @@ impl Game {
             self.process_input();
             self.update_game();
             self.generate_output();
+        }
+    }
+
+    fn add_actor(&mut self, actor: Rc<RefCell<dyn Actor>>) {
+        if self.updating_actors {
+            self.pending_actors.push(actor);
+        } else {
+            self.actors.push(actor);
         }
     }
 
@@ -107,33 +126,27 @@ impl Game {
 
         self.tick_count = self.timer.ticks64();
 
-        if self.paddle_dir != 0 {
-            self.paddle_position.y += self.paddle_dir as f32 * 300.0 * delta_time;
-            self.paddle_position.y = self.paddle_position.y.clamp(
-                PADDLE_HEIGHT / 2.0 + THICKNESS as f32,
-                768.0 - PADDLE_HEIGHT / 2.0 - THICKNESS as f32,
-            );
+        self.updating_actors = true;
+        for actor in &self.actors {
+            actor.borrow_mut().update(delta_time);
+        }
+        self.updating_actors = false;
+
+        for pending in &self.pending_actors {
+            self.actors.push(pending.clone());
+        }
+        self.pending_actors.clear();
+
+        let mut dead_actors = vec![];
+
+        for actor in &self.actors {
+            if actor.borrow().get_state() == State::Dead {
+                dead_actors.push(actor.clone());
+            }
         }
 
-        self.ball_position.x += self.ball_velocity.x * delta_time;
-        self.ball_position.y += self.ball_velocity.y * delta_time;
-
-        let diff = (self.paddle_position.y - self.ball_position.y).abs();
-
-        if diff <= PADDLE_HEIGHT / 2.0
-            && self.ball_position.x <= 25.0
-            && self.ball_position.x >= 20.0
-            && self.ball_velocity.x < 0.0
-        {
-            self.ball_velocity.x *= -1.0;
-        } else if self.ball_position.x <= 0.0 {
-            self.is_running = false;
-        } else if self.ball_position.x >= 1024.0 - THICKNESS as f32 && self.ball_velocity.x > 0.0 {
-            self.ball_velocity.x *= -1.0;
-        } else if self.ball_position.y <= THICKNESS as f32 && self.ball_velocity.y < 0.0 {
-            self.ball_velocity.y *= -1.0;
-        } else if self.ball_position.y >= 768.0 - THICKNESS as f32 && self.ball_velocity.y > 0.0 {
-            self.ball_velocity.y *= -1.0;
+        for actor in dead_actors {
+            drop(actor);
         }
     }
 

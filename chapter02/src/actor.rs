@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{component::Component, math::Vector2, Game};
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum State {
     Active,
     Paused,
