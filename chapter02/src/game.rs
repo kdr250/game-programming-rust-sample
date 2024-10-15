@@ -137,17 +137,8 @@ impl Game {
         }
         self.pending_actors.clear();
 
-        let mut dead_actors = vec![];
-
-        for actor in &self.actors {
-            if actor.borrow().get_state() == State::Dead {
-                dead_actors.push(actor.clone());
-            }
-        }
-
-        for actor in dead_actors {
-            drop(actor);
-        }
+        self.actors
+            .retain(|actor| *actor.borrow().get_state() != State::Dead);
     }
 
     fn generate_output(&mut self) {
