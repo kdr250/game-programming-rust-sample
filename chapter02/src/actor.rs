@@ -96,6 +96,19 @@ macro_rules! impl_getters_setters {
     };
 }
 
+macro_rules! impl_component_operation {
+    () => {
+        fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
+            self.components.push(component);
+        }
+
+        fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>) {
+            self.components
+                .retain(|c| c.borrow().get_id() != component.borrow().get_id());
+        }
+    };
+}
+
 #[cfg(test)]
 pub mod test {
     use std::{cell::RefCell, rc::Rc};
@@ -148,14 +161,7 @@ pub mod test {
 
         impl_getters_setters! {}
 
-        fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
-            self.components.push(component);
-        }
-
-        fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>) {
-            self.components
-                .retain(|c| c.borrow().get_id() != component.borrow().get_id());
-        }
+        impl_component_operation! {}
     }
 
     #[test]
