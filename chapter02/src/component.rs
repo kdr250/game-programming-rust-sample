@@ -71,7 +71,7 @@ macro_rules! impl_getters_setters {
 }
 
 pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
-    debug_assert!(*this.borrow().get_state() == State::Active);
+    debug_assert!(*this.borrow().get_state() == State::Active, "not active");
     this.borrow_mut().set_state(State::Dead);
     this.borrow()
         .get_owner()

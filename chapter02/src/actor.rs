@@ -108,12 +108,19 @@ macro_rules! impl_getters_setters {
 macro_rules! impl_component_operation {
     () => {
         fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
-            debug_assert!(*component.borrow().get_state() == ComponentState::Active);
+            debug_assert!(
+                *component.borrow().get_state() == ComponentState::Active,
+                "not active"
+            );
+
             self.components.push(component);
         }
 
         fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>) {
-            debug_assert!(*component.borrow().get_state() == ComponentState::Dead);
+            debug_assert!(
+                *component.borrow().get_state() == ComponentState::Dead,
+                "not dead"
+            );
             self.components
                 .retain(|c| c.borrow().get_id() != component.borrow().get_id());
         }
