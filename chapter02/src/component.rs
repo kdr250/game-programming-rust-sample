@@ -35,6 +35,22 @@ macro_rules! impl_new {
     };
 }
 
+macro_rules! impl_getters {
+    () => {
+        fn get_id(&self) -> u32 {
+            self.id
+        }
+
+        fn get_update_order(&self) -> i32 {
+            self.update_order
+        }
+
+        fn get_owner(&self) -> &Rc<RefCell<dyn Actor>> {
+            &self.owner
+        }
+    };
+}
+
 pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
     this.borrow()
         .get_owner()
@@ -64,19 +80,9 @@ pub mod tests {
     }
 
     impl Component for TestComponent {
-        fn get_id(&self) -> u32 {
-            self.id
-        }
-
         fn update(&mut self, delta_time: f32) {}
 
-        fn get_update_order(&self) -> i32 {
-            self.update_order
-        }
-
-        fn get_owner(&self) -> &Rc<RefCell<dyn Actor>> {
-            &self.owner
-        }
+        impl_getters! {}
     }
 
     #[test]

@@ -38,12 +38,62 @@ pub trait Actor {
 
     fn get_game(&self) -> &Rc<RefCell<Game>>;
 
+    fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>>;
+
     /// Add/remove components
     fn add_component(&mut self, component: Rc<RefCell<dyn Component>>);
 
     fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>);
+}
 
-    fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>>;
+macro_rules! impl_getters_setters {
+    () => {
+        fn get_position(&self) -> &Vector2 {
+            &self.position
+        }
+
+        fn set_position(&mut self, position: Vector2) {
+            self.position = position;
+        }
+
+        fn get_scale(&self) -> f32 {
+            self.scale
+        }
+
+        fn set_scale(&mut self, scale: f32) {
+            self.scale = scale;
+        }
+
+        fn get_rotation(&self) -> f32 {
+            self.rotation
+        }
+
+        fn set_rotation(&mut self, rotation: f32) {
+            self.rotation = rotation;
+        }
+
+        fn get_state(&self) -> &State {
+            &self.state
+        }
+
+        fn set_state(&mut self, state: State) {
+            self.state = state;
+        }
+
+        fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>> {
+            &self.components
+        }
+
+        fn get_game(&self) -> &Rc<RefCell<Game>> {
+            cfg_if::cfg_if! {
+                if #[cfg(not(test))] {
+                    &self.game
+                } else {
+                    panic!();
+                }
+            }
+        }
+    };
 }
 
 #[cfg(test)]
@@ -52,8 +102,8 @@ pub mod test {
 
     use crate::{
         component::{tests::TestComponent, Component},
+        game::Game,
         math::Vector2,
-        Game,
     };
 
     use super::{Actor, State};
@@ -96,41 +146,7 @@ pub mod test {
 
         fn update_actor(&mut self, delta_time: f32) {}
 
-        fn get_position(&self) -> &Vector2 {
-            &self.position
-        }
-
-        fn set_position(&mut self, position: Vector2) {
-            self.position = position;
-        }
-
-        fn get_scale(&self) -> f32 {
-            self.scale
-        }
-
-        fn set_scale(&mut self, scale: f32) {
-            self.scale = scale;
-        }
-
-        fn get_rotation(&self) -> f32 {
-            self.rotation
-        }
-
-        fn set_rotation(&mut self, rotation: f32) {
-            self.rotation = rotation;
-        }
-
-        fn get_state(&self) -> &State {
-            &self.state
-        }
-
-        fn set_state(&mut self, state: State) {
-            self.state = state;
-        }
-
-        fn get_game(&self) -> &Rc<RefCell<Game>> {
-            todo!();
-        }
+        impl_getters_setters! {}
 
         fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
             self.components.push(component);
@@ -139,10 +155,6 @@ pub mod test {
         fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>) {
             self.components
                 .retain(|c| c.borrow().get_id() != component.borrow().get_id());
-        }
-
-        fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>> {
-            &self.components
         }
     }
 

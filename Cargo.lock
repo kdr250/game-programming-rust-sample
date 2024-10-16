@@ -33,6 +33,7 @@ name = "chapter02"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cfg-if",
  "sdl2",
 ]
 
