@@ -4,6 +4,12 @@ use crate::actor::Actor;
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum State {
+    Active,
+    Dead,
+}
+
 pub trait Component {
     fn update(&mut self, delta_time: f32);
 
@@ -12,6 +18,10 @@ pub trait Component {
     fn get_update_order(&self) -> i32;
 
     fn get_owner(&self) -> &Rc<RefCell<dyn Actor>>;
+
+    fn get_state(&self) -> &State;
+
+    fn set_state(&mut self, state: State);
 }
 
 macro_rules! impl_new {
@@ -26,6 +36,7 @@ macro_rules! impl_new {
                 id: ID.load(Ordering::SeqCst),
                 owner: owner.clone(),
                 update_order,
+                state: State::Active,
             };
             ID.fetch_add(1, Ordering::SeqCst);
             let result = Rc::new(RefCell::new(this));
@@ -35,7 +46,7 @@ macro_rules! impl_new {
     };
 }
 
-macro_rules! impl_getters {
+macro_rules! impl_getters_setters {
     () => {
         fn get_id(&self) -> u32 {
             self.id
@@ -48,10 +59,20 @@ macro_rules! impl_getters {
         fn get_owner(&self) -> &Rc<RefCell<dyn Actor>> {
             &self.owner
         }
+
+        fn get_state(&self) -> &State {
+            &self.state
+        }
+
+        fn set_state(&mut self, state: State) {
+            self.state = state;
+        }
     };
 }
 
 pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
+    debug_assert!(*this.borrow().get_state() == State::Active);
+    this.borrow_mut().set_state(State::Dead);
     this.borrow()
         .get_owner()
         .borrow_mut()
@@ -67,12 +88,13 @@ pub mod tests {
         component::remove_component,
     };
 
-    use super::Component;
+    use super::{Component, State};
 
     pub struct TestComponent {
         id: u32,
         owner: Rc<RefCell<dyn Actor>>,
         update_order: i32,
+        state: State,
     }
 
     impl TestComponent {
@@ -82,7 +104,7 @@ pub mod tests {
     impl Component for TestComponent {
         fn update(&mut self, delta_time: f32) {}
 
-        impl_getters! {}
+        impl_getters_setters! {}
     }
 
     #[test]

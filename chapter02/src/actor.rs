@@ -108,12 +108,25 @@ macro_rules! impl_getters_setters {
 macro_rules! impl_component_operation {
     () => {
         fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
+            debug_assert!(*component.borrow().get_state() == ComponentState::Active);
             self.components.push(component);
         }
 
         fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>) {
+            debug_assert!(*component.borrow().get_state() == ComponentState::Dead);
             self.components
                 .retain(|c| c.borrow().get_id() != component.borrow().get_id());
+        }
+    };
+}
+
+macro_rules! impl_drop {
+    () => {
+        fn drop(&mut self) {
+            for component in &self.components {
+                component.borrow_mut().set_state(ComponentState::Dead);
+            }
+            self.components.clear();
         }
     };
 }
@@ -123,7 +136,7 @@ pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
     use crate::{
-        component::{tests::TestComponent, Component},
+        component::{tests::TestComponent, Component, State as ComponentState},
         game::Game,
         math::Vector2,
     };
@@ -160,6 +173,10 @@ pub mod test {
         impl_component_operation! {}
     }
 
+    impl Drop for TestActor {
+        impl_drop! {}
+    }
+
     #[test]
     fn test_remove_component() {
         let test_actor = TestActor::new();
@@ -167,6 +184,7 @@ pub mod test {
         let test_component0 = TestComponent::new(&mut owner, 100);
         let test_component1 = TestComponent::new(&mut owner, 100);
 
+        test_component0.borrow_mut().set_state(ComponentState::Dead);
         owner.borrow_mut().remove_component(test_component0);
 
         let binding = owner.borrow();
