@@ -156,7 +156,6 @@ pub mod test {
         scale: f32,
         rotation: f32,
         components: Vec<Rc<RefCell<dyn Component>>>,
-        game: Option<Rc<RefCell<Game>>>,
     }
 
     impl TestActor {
@@ -167,7 +166,6 @@ pub mod test {
                 scale: 1.0,
                 rotation: 0.0,
                 components: vec![],
-                game: None,
             }
         }
     }

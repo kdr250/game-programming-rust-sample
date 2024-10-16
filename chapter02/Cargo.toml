@@ -10,9 +10,9 @@ cfg-if = "1.0"
 [dependencies.sdl2]
 version = "0.37"
 default-features = false
-features = ["static-link", "use-vcpkg"]
+features = ["image", "static-link", "use-vcpkg"]
 
 [package.metadata.vcpkg]
-dependencies = ["sdl2"]
+dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]"]
 git = "https://github.com/microsoft/vcpkg"
 rev = "2024.09.30"
