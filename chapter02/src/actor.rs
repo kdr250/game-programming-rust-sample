@@ -11,10 +11,19 @@ pub enum State {
 
 pub trait Actor {
     /// Update function called from Game (not overridable)
-    fn update(&mut self, delta_time: f32);
+    fn update(&mut self, delta_time: f32) {
+        if *self.get_state() == State::Active {
+            self.update_component(delta_time);
+            self.update_actor(delta_time);
+        }
+    }
 
     /// Updates all the components attached to the actor (not overridable)
-    fn update_component(&mut self, delta_time: f32);
+    fn update_component(&mut self, delta_time: f32) {
+        for component in self.get_cocmponents() {
+            component.borrow_mut().update(delta_time);
+        }
+    }
 
     /// Any actor-specific update code (overridable)
     fn update_actor(&mut self, delta_time: f32);
@@ -144,19 +153,6 @@ pub mod test {
     }
 
     impl Actor for TestActor {
-        fn update(&mut self, delta_time: f32) {
-            if self.state == State::Active {
-                self.update_component(delta_time);
-                self.update_actor(delta_time);
-            }
-        }
-
-        fn update_component(&mut self, delta_time: f32) {
-            for component in &self.components {
-                component.borrow_mut().update(delta_time);
-            }
-        }
-
         fn update_actor(&mut self, delta_time: f32) {}
 
         impl_getters_setters! {}
