@@ -5,9 +5,9 @@ use crate::actor::Actor;
 static ID: AtomicU32 = AtomicU32::new(0);
 
 pub trait Component {
-    fn id(&self) -> u32;
-
     fn update(&mut self, delta_time: f32);
+
+    fn get_id(&self) -> u32;
 
     fn get_update_order(&self) -> i32;
 
@@ -16,7 +16,7 @@ pub trait Component {
 
 macro_rules! impl_new {
     () => {
-        fn new(
+        pub fn new(
             owner: &mut Rc<RefCell<dyn Actor>>,
             update_order: i32,
         ) -> Rc<RefCell<dyn Component>> {
@@ -35,15 +35,25 @@ macro_rules! impl_new {
     };
 }
 
+pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
+    this.borrow()
+        .get_owner()
+        .borrow_mut()
+        .remove_component(&this);
+}
+
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::actor::{test::TestActor, Actor};
+    use crate::{
+        actor::{test::TestActor, Actor},
+        component::remove_component,
+    };
 
     use super::Component;
 
-    struct TestComponent {
+    pub struct TestComponent {
         id: u32,
         owner: Rc<RefCell<dyn Actor>>,
         update_order: i32,
@@ -54,7 +64,7 @@ mod tests {
     }
 
     impl Component for TestComponent {
-        fn id(&self) -> u32 {
+        fn get_id(&self) -> u32 {
             self.id
         }
 
@@ -79,18 +89,12 @@ mod tests {
     }
 
     #[test]
-    fn test_owner_remove_component() {
+    fn test_remove() {
         let test_actor = TestActor::new();
         let mut owner: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor));
-        let test_component0 = TestComponent::new(&mut owner, 100);
-        let test_component1 = TestComponent::new(&mut owner, 100);
+        let test_component = TestComponent::new(&mut owner, 100);
+        remove_component(test_component);
 
-        owner.borrow_mut().remove_component(test_component0);
-
-        let binding = owner.borrow();
-        let actual = binding.get_cocmponents()[0].borrow();
-
-        assert_eq!(1, binding.get_cocmponents().len());
-        assert_eq!(test_component1.borrow().id(), actual.id());
+        assert_eq!(0, owner.borrow().get_cocmponents().len());
     }
 }

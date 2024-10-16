@@ -41,7 +41,7 @@ pub trait Actor {
     /// Add/remove components
     fn add_component(&mut self, component: Rc<RefCell<dyn Component>>);
 
-    fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>);
+    fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>);
 
     fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>>;
 }
@@ -50,7 +50,11 @@ pub trait Actor {
 pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::{component::Component, math::Vector2, Game};
+    use crate::{
+        component::{tests::TestComponent, Component},
+        math::Vector2,
+        Game,
+    };
 
     use super::{Actor, State};
 
@@ -132,13 +136,29 @@ pub mod test {
             self.components.push(component);
         }
 
-        fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>) {
+        fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>) {
             self.components
-                .retain(|c| c.borrow().id() != component.borrow().id());
+                .retain(|c| c.borrow().get_id() != component.borrow().get_id());
         }
 
         fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>> {
             &self.components
         }
+    }
+
+    #[test]
+    fn test_remove_component() {
+        let test_actor = TestActor::new();
+        let mut owner: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor));
+        let test_component0 = TestComponent::new(&mut owner, 100);
+        let test_component1 = TestComponent::new(&mut owner, 100);
+
+        owner.borrow_mut().remove_component(&test_component0);
+
+        let binding = owner.borrow();
+        let actual = binding.get_cocmponents()[0].borrow();
+
+        assert_eq!(1, binding.get_cocmponents().len());
+        assert_eq!(test_component1.borrow().get_id(), actual.get_id());
     }
 }
