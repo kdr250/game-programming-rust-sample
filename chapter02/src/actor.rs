@@ -43,7 +43,7 @@ pub trait Actor {
     /// Add/remove components
     fn add_component(&mut self, component: Rc<RefCell<dyn Component>>);
 
-    fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>);
+    fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>);
 }
 
 macro_rules! impl_getters_setters {
@@ -102,7 +102,7 @@ macro_rules! impl_component_operation {
             self.components.push(component);
         }
 
-        fn remove_component(&mut self, component: &Rc<RefCell<dyn Component>>) {
+        fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>) {
             self.components
                 .retain(|c| c.borrow().get_id() != component.borrow().get_id());
         }
@@ -171,7 +171,7 @@ pub mod test {
         let test_component0 = TestComponent::new(&mut owner, 100);
         let test_component1 = TestComponent::new(&mut owner, 100);
 
-        owner.borrow_mut().remove_component(&test_component0);
+        owner.borrow_mut().remove_component(test_component0);
 
         let binding = owner.borrow();
         let actual = binding.get_cocmponents()[0].borrow();

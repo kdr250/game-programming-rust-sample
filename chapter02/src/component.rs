@@ -55,7 +55,7 @@ pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
     this.borrow()
         .get_owner()
         .borrow_mut()
-        .remove_component(&this);
+        .remove_component(this.clone());
 }
 
 #[cfg(test)]
