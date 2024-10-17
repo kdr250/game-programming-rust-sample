@@ -1,13 +1,14 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc};
 
 use anyhow::{anyhow, Result};
 use sdl2::{
     event::Event,
+    image::{InitFlag, LoadTexture},
     keyboard::{KeyboardState, Scancode},
     pixels::Color,
     rect::Rect,
-    render::Canvas,
-    video::Window,
+    render::{Canvas, Texture, TextureCreator},
+    video::{Window, WindowContext},
     EventPump, TimerSubsystem,
 };
 
@@ -19,10 +20,13 @@ use crate::{
 const THICKNESS: u32 = 15;
 const PADDLE_HEIGHT: f32 = 100.0;
 
+#[cfg(feature = "unsafe_textures")]
 pub struct Game {
     canvas: Canvas<Window>,
     event_pump: EventPump,
     timer: TimerSubsystem,
+    texture_creator: TextureCreator<WindowContext>,
+    textures: HashMap<String, Rc<Texture>>,
     is_running: bool,
     paddle_position: Vector2,
     ball_position: Vector2,
@@ -52,6 +56,9 @@ impl Game {
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
+        let _image_context = sdl2::image::init(InitFlag::PNG).map_err(|e| anyhow!(e))?;
+        let texture_creator = canvas.texture_creator();
+
         let paddle_position = Vector2::new(10.0, 768.0 / 2.0);
 
         let ball_position = Vector2::new(1024.0 / 2.0, 768.0 / 2.0);
@@ -62,6 +69,7 @@ impl Game {
             canvas,
             event_pump,
             timer,
+            texture_creator,
             is_running: true,
             paddle_position,
             ball_position,
@@ -71,6 +79,7 @@ impl Game {
             updating_actors: false,
             actors: vec![],
             pending_actors: vec![],
+            textures: HashMap::new(),
         })
     }
 
@@ -89,6 +98,20 @@ impl Game {
         } else {
             self.actors.push(actor);
         }
+    }
+
+    fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {
+        if let Some(texture) = self.textures.get(&file_name.to_string()) {
+            return texture.clone();
+        }
+        let path = Path::new(file_name);
+        let texture = self
+            .texture_creator
+            .load_texture(path)
+            .expect(&format!("Failed to load texture {}", file_name));
+        let result = Rc::new(texture);
+        self.textures.insert(file_name.to_string(), result.clone());
+        result
     }
 
     /// Herlper functions for the game loop
