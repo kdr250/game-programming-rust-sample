@@ -14,7 +14,6 @@ use sdl2::{
 
 use crate::{
     actor::{Actor, State},
-    component::Component,
     math::*,
     sprite_component::SpriteComponent,
 };

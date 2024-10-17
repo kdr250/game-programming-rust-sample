@@ -9,6 +9,7 @@ use sdl2::{
 use crate::{
     actor::Actor,
     component::{self, generate_id, Component, State},
+    math::{self},
 };
 
 pub struct SpriteComponent {
@@ -52,11 +53,12 @@ impl SpriteComponent {
 
     pub fn draw(&mut self, canvas: &mut Canvas<Window>) {
         if let Some(texture) = &self.texture {
-            let width = self.texture_width as f32 * self.owner.borrow().get_scale();
-            let height = self.texture_height as f32 * self.owner.borrow().get_scale();
+            let owner = self.owner.borrow();
+            let width = self.texture_width as f32 * owner.get_scale();
+            let height = self.texture_height as f32 * owner.get_scale();
             let rect = Rect::new(
-                (self.owner.borrow().get_position().x - width / 2.0) as i32,
-                (self.owner.borrow().get_position().y - height / 2.0) as i32,
+                (owner.get_position().x - width / 2.0) as i32,
+                (owner.get_position().y - height / 2.0) as i32,
                 width as u32,
                 height as u32,
             );
@@ -66,7 +68,7 @@ impl SpriteComponent {
                     texture,
                     None,
                     Some(rect),
-                    30.0, // FIXME
+                    -math::to_degrees(owner.get_rotation()) as f64,
                     None,
                     false,
                     false,
