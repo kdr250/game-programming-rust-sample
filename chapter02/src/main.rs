@@ -2,6 +2,7 @@ mod actor;
 mod component;
 mod game;
 mod math;
+mod sprite_component;
 
 use crate::game::*;
 use anyhow::Result;

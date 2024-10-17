@@ -14,7 +14,9 @@ use sdl2::{
 
 use crate::{
     actor::{Actor, State},
+    component::Component,
     math::*,
+    sprite_component::SpriteComponent,
 };
 
 const THICKNESS: u32 = 15;
@@ -27,6 +29,7 @@ pub struct Game {
     timer: TimerSubsystem,
     texture_creator: TextureCreator<WindowContext>,
     textures: HashMap<String, Rc<Texture>>,
+    sprites: Vec<Rc<RefCell<SpriteComponent>>>,
     is_running: bool,
     paddle_position: Vector2,
     ball_position: Vector2,
@@ -70,6 +73,8 @@ impl Game {
             event_pump,
             timer,
             texture_creator,
+            textures: HashMap::new(),
+            sprites: vec![],
             is_running: true,
             paddle_position,
             ball_position,
@@ -79,7 +84,6 @@ impl Game {
             updating_actors: false,
             actors: vec![],
             pending_actors: vec![],
-            textures: HashMap::new(),
         })
     }
 
@@ -202,5 +206,18 @@ impl Game {
         self.canvas.fill_rect(ball).unwrap();
 
         self.canvas.present();
+    }
+
+    pub fn add_sprite(&mut self, sprite: Rc<RefCell<SpriteComponent>>) {
+        let draw_order = sprite.borrow().get_draw_order();
+        if let Some(index) = self
+            .sprites
+            .iter()
+            .position(|s| s.borrow().get_draw_order() > draw_order)
+        {
+            self.sprites.insert(index, sprite);
+        } else {
+            self.sprites.push(sprite);
+        }
     }
 }

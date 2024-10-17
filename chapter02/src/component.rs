@@ -1,4 +1,8 @@
-use std::{cell::RefCell, rc::Rc, sync::atomic::AtomicU32};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use crate::actor::Actor;
 
@@ -22,6 +26,12 @@ pub trait Component {
     fn get_state(&self) -> &State;
 
     fn set_state(&mut self, state: State);
+}
+
+pub fn generate_id() -> u32 {
+    let id = ID.load(Ordering::SeqCst);
+    ID.fetch_add(1, Ordering::SeqCst);
+    id
 }
 
 macro_rules! impl_new {
@@ -69,6 +79,8 @@ macro_rules! impl_getters_setters {
         }
     };
 }
+
+pub(crate) use impl_getters_setters;
 
 pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
     debug_assert!(*this.borrow().get_state() == State::Active, "not active");
