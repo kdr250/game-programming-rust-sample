@@ -28,7 +28,7 @@ pub struct Game {
     timer: TimerSubsystem,
     texture_creator: TextureCreator<WindowContext>,
     textures: HashMap<String, Rc<Texture>>,
-    sprites: Vec<Rc<RefCell<SpriteComponent>>>,
+    sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
     is_running: bool,
     paddle_position: Vector2,
     ball_position: Vector2,
@@ -207,7 +207,7 @@ impl Game {
         self.canvas.present();
     }
 
-    pub fn add_sprite(&mut self, sprite: Rc<RefCell<SpriteComponent>>) {
+    pub fn add_sprite(&mut self, sprite: Rc<RefCell<dyn SpriteComponent>>) {
         let draw_order = sprite.borrow().get_draw_order();
         if let Some(index) = self
             .sprites
