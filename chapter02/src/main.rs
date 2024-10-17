@@ -1,5 +1,6 @@
 mod actor;
 mod anim_sprite_component;
+mod bg_sprite_component;
 mod component;
 mod game;
 mod math;
