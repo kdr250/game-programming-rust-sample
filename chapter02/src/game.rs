@@ -6,43 +6,38 @@ use sdl2::{
     image::{InitFlag, LoadTexture},
     keyboard::{KeyboardState, Scancode},
     pixels::Color,
-    rect::Rect,
     render::{Canvas, Texture, TextureCreator},
     video::{Window, WindowContext},
     EventPump, TimerSubsystem,
 };
 
 use crate::{
-    actor::{Actor, State},
-    math::*,
+    actor::{Actor, DefaultActor, State},
+    bg_sprite_component::BGSpriteComponent,
+    math::Vector2,
+    ship::Ship,
     sprite_component::SpriteComponent,
 };
 
-const THICKNESS: u32 = 15;
-const PADDLE_HEIGHT: f32 = 100.0;
-
-#[cfg(feature = "unsafe_textures")]
 pub struct Game {
+    this: Option<Rc<RefCell<Game>>>,
     canvas: Canvas<Window>,
     event_pump: EventPump,
     timer: TimerSubsystem,
     texture_creator: TextureCreator<WindowContext>,
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
-    is_running: bool,
-    paddle_position: Vector2,
-    ball_position: Vector2,
-    ball_velocity: Vector2,
-    tick_count: u64,
-    paddle_dir: i32,
-    updating_actors: bool,
     actors: Vec<Rc<RefCell<dyn Actor>>>,
     pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
+    is_running: bool,
+    tick_count: u64,
+    updating_actors: bool,
+    ship: Option<Rc<RefCell<Ship>>>,
 }
 
 impl Game {
     /// Initialize game
-    pub fn initialize() -> Result<Game> {
+    pub fn initialize() -> Result<Rc<RefCell<Game>>> {
         let sdl = sdl2::init().map_err(|e| anyhow!(e))?;
 
         let video_system = sdl.video().map_err(|e| anyhow!(e))?;
@@ -61,29 +56,28 @@ impl Game {
         let _image_context = sdl2::image::init(InitFlag::PNG).map_err(|e| anyhow!(e))?;
         let texture_creator = canvas.texture_creator();
 
-        let paddle_position = Vector2::new(10.0, 768.0 / 2.0);
-
-        let ball_position = Vector2::new(1024.0 / 2.0, 768.0 / 2.0);
-
-        let ball_velocity = Vector2::new(-200.0, 235.0);
-
-        Ok(Game {
+        let game = Game {
+            this: None,
             canvas,
             event_pump,
             timer,
             texture_creator,
             textures: HashMap::new(),
             sprites: vec![],
-            is_running: true,
-            paddle_position,
-            ball_position,
-            ball_velocity,
-            tick_count: 0,
-            paddle_dir: 0,
-            updating_actors: false,
             actors: vec![],
             pending_actors: vec![],
-        })
+            is_running: true,
+            tick_count: 0,
+            updating_actors: false,
+            ship: None,
+        };
+
+        let result = Rc::new(RefCell::new(game));
+        let cloned = result.clone();
+        result.borrow_mut().set_this(cloned);
+        Self::load_data(result.clone());
+
+        Ok(result)
     }
 
     /// Runs the game loop until the game is over
@@ -95,7 +89,46 @@ impl Game {
         }
     }
 
-    fn add_actor(&mut self, actor: Rc<RefCell<dyn Actor>>) {
+    fn load_data(this: Rc<RefCell<Game>>) {
+        let ship = Ship::new(this.clone());
+        {
+            let mut s = ship.borrow_mut();
+            s.set_position(Vector2::new(100.0, 384.0));
+            s.set_scale(1.5);
+        }
+        this.borrow_mut().ship = Some(ship);
+
+        let temp = DefaultActor::new(this.clone());
+        temp.borrow_mut().set_position(Vector2::new(512.0, 384.0));
+
+        let mut back_ground = BGSpriteComponent::new(temp.clone(), 10);
+        {
+            let mut bg = back_ground.borrow_mut();
+            bg.set_screen_size(Vector2::new(1024.0, 768.0));
+            let mut game = this.borrow_mut();
+            let bgtexs = vec![
+                game.get_texture("Assets/Farback01.png"),
+                game.get_texture("Assets/Farback02.png"),
+            ];
+            bg.set_bg_textures(bgtexs);
+            bg.set_scroll_speed(-100.0);
+        }
+
+        back_ground = BGSpriteComponent::new(temp.clone(), 50);
+        {
+            let mut bg = back_ground.borrow_mut();
+            bg.set_screen_size(Vector2::new(1024.0, 768.0));
+            let mut game = this.borrow_mut();
+            let bgtexs = vec![
+                game.get_texture("Assets/Stars.png"),
+                game.get_texture("Assets/Stars.png"),
+            ];
+            bg.set_bg_textures(bgtexs);
+            bg.set_scroll_speed(-200.0);
+        }
+    }
+
+    pub fn add_actor(&mut self, actor: Rc<RefCell<dyn Actor>>) {
         if self.updating_actors {
             self.pending_actors.push(actor);
         } else {
@@ -103,11 +136,11 @@ impl Game {
         }
     }
 
-    fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {
+    pub fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {
         if let Some(texture) = self.textures.get(&file_name.to_string()) {
             return texture.clone();
         }
-        let path = Path::new(file_name);
+        let path = Path::new(env!("OUT_DIR")).join("resources").join(file_name);
         let texture = self
             .texture_creator
             .load_texture(path)
@@ -134,13 +167,7 @@ impl Game {
             self.is_running = false;
         }
 
-        self.paddle_dir = 0;
-        if state.is_scancode_pressed(Scancode::W) {
-            self.paddle_dir -= 1;
-        }
-        if state.is_scancode_pressed(Scancode::S) {
-            self.paddle_dir += 1;
-        }
+        self.get_ship().borrow_mut().process_keyboard(state);
     }
 
     fn update_game(&mut self) {
@@ -173,36 +200,10 @@ impl Game {
 
         self.canvas.set_draw_color(Color::RGBA(255, 255, 255, 255));
 
-        // Draw top wall
-        let mut wall = Rect::new(0, 0, 1024, THICKNESS);
-        self.canvas.fill_rect(wall).unwrap();
-        // Draw bottom wall
-        wall.y = 768 - THICKNESS as i32;
-        self.canvas.fill_rect(wall).unwrap();
-        // Draw right wall
-        wall.x = 1024 - THICKNESS as i32;
-        wall.y = 0;
-        wall.w = THICKNESS as i32;
-        wall.h = 1024;
-        self.canvas.fill_rect(wall).unwrap();
-
-        // Draw paddle
-        let paddle = Rect::new(
-            self.paddle_position.x as i32,
-            self.paddle_position.y as i32 - PADDLE_HEIGHT as i32 / 2,
-            THICKNESS,
-            PADDLE_HEIGHT as u32,
-        );
-        self.canvas.fill_rect(paddle).unwrap();
-
-        // Draw ball
-        let ball = Rect::new(
-            self.ball_position.x as i32 - THICKNESS as i32 / 2,
-            self.ball_position.y as i32 - THICKNESS as i32 / 2,
-            THICKNESS,
-            THICKNESS,
-        );
-        self.canvas.fill_rect(ball).unwrap();
+        // Draw all sprite component
+        for sprite in &self.sprites {
+            sprite.borrow().draw(&mut self.canvas);
+        }
 
         self.canvas.present();
     }
@@ -218,5 +219,13 @@ impl Game {
         } else {
             self.sprites.push(sprite);
         }
+    }
+
+    fn set_this(&mut self, this: Rc<RefCell<Game>>) {
+        self.this = Some(this);
+    }
+
+    fn get_ship(&self) -> Rc<RefCell<Ship>> {
+        self.ship.clone().unwrap()
     }
 }

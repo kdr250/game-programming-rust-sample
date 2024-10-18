@@ -1,6 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{component::Component, math::Vector2, Game};
+use crate::{
+    component::{Component, State as ComponentState},
+    math::Vector2,
+    Game,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum State {
@@ -105,6 +109,8 @@ macro_rules! impl_getters_setters {
     };
 }
 
+pub(crate) use impl_getters_setters;
+
 macro_rules! impl_component_operation {
     () => {
         fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
@@ -127,6 +133,8 @@ macro_rules! impl_component_operation {
     };
 }
 
+pub(crate) use impl_component_operation;
+
 macro_rules! impl_drop {
     () => {
         fn drop(&mut self) {
@@ -136,6 +144,48 @@ macro_rules! impl_drop {
             self.components.clear();
         }
     };
+}
+
+pub(crate) use impl_drop;
+
+pub struct DefaultActor {
+    state: State,
+    position: Vector2,
+    scale: f32,
+    rotation: f32,
+    components: Vec<Rc<RefCell<dyn Component>>>,
+    game: Rc<RefCell<Game>>,
+}
+
+impl DefaultActor {
+    pub fn new(game: Rc<RefCell<Game>>) -> Rc<RefCell<Self>> {
+        let this = Self {
+            state: State::Active,
+            position: Vector2::ZERO,
+            scale: 1.0,
+            rotation: 0.0,
+            components: vec![],
+            game: game.clone(),
+        };
+
+        let result = Rc::new(RefCell::new(this));
+
+        game.borrow_mut().add_actor(result.clone());
+
+        result
+    }
+}
+
+impl Actor for DefaultActor {
+    fn update_actor(&mut self, delta_time: f32) {}
+
+    impl_getters_setters! {}
+
+    impl_component_operation! {}
+}
+
+impl Drop for DefaultActor {
+    impl_drop! {}
 }
 
 #[cfg(test)]

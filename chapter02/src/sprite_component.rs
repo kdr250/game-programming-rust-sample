@@ -13,7 +13,7 @@ use crate::{
 };
 
 pub trait SpriteComponent: Component {
-    fn draw(&mut self, canvas: &mut Canvas<Window>) {
+    fn draw(&self, canvas: &mut Canvas<Window>) {
         if let Some(texture) = self.get_texture() {
             let owner = self.get_owner().borrow();
             let width = self.get_texture_width() as f32 * owner.get_scale();

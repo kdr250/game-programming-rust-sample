@@ -33,11 +33,11 @@ pub struct BGSpriteComponent {
 }
 
 impl BGSpriteComponent {
-    fn new(owner: Rc<RefCell<dyn Actor>>, draw_order: i32, update_order: i32) -> Rc<RefCell<Self>> {
+    pub fn new(owner: Rc<RefCell<dyn Actor>>, draw_order: i32) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
             owner: owner.clone(),
-            update_order,
+            update_order: 100,
             state: State::Active,
             texture: None,
             draw_order,
@@ -59,7 +59,7 @@ impl BGSpriteComponent {
         result
     }
 
-    fn set_bg_textures(&mut self, textures: Vec<Rc<Texture>>) {
+    pub fn set_bg_textures(&mut self, textures: Vec<Rc<Texture>>) {
         let mut count = 0;
         for texture in textures {
             let temp = BGTexture {
@@ -71,15 +71,16 @@ impl BGSpriteComponent {
         }
     }
 
-    fn set_screen_size(&mut self, size: Vector2) {
+    pub fn set_screen_size(&mut self, size: Vector2) {
         self.screen_size = size;
     }
 
-    fn set_scroll_speed(&mut self, speed: f32) {
+    pub fn set_scroll_speed(&mut self, speed: f32) {
+        debug_assert!(speed <= 0.0, "speed should be less than or equals to zero");
         self.scroll_speed = speed;
     }
 
-    fn get_scroll_speed(&self) -> f32 {
+    pub fn get_scroll_speed(&self) -> f32 {
         self.scroll_speed
     }
 }
@@ -87,7 +88,7 @@ impl BGSpriteComponent {
 impl SpriteComponent for BGSpriteComponent {
     sprite_component::impl_getters_setters! {}
 
-    fn draw(&mut self, canvas: &mut Canvas<Window>) {
+    fn draw(&self, canvas: &mut Canvas<Window>) {
         let owner = self.get_owner().borrow();
         let width = self.screen_size.x;
         let height = self.screen_size.y;

@@ -23,15 +23,11 @@ pub struct AnimSpriteComponent {
 }
 
 impl AnimSpriteComponent {
-    pub fn new(
-        owner: Rc<RefCell<dyn Actor>>,
-        draw_order: i32,
-        update_order: i32,
-    ) -> Rc<RefCell<Self>> {
+    pub fn new(owner: Rc<RefCell<dyn Actor>>, draw_order: i32) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
             owner: owner.clone(),
-            update_order,
+            update_order: 100,
             state: State::Active,
             texture: None,
             draw_order,
@@ -44,11 +40,13 @@ impl AnimSpriteComponent {
 
         let result = Rc::new(RefCell::new(this));
 
-        let mut borrowed_onwer = owner.borrow_mut();
-        borrowed_onwer.add_component(result.clone());
+        owner.borrow_mut().add_component(result.clone());
 
-        let mut borrowed_game = borrowed_onwer.get_game().borrow_mut();
-        borrowed_game.add_sprite(result.clone());
+        owner
+            .borrow()
+            .get_game()
+            .borrow_mut()
+            .add_sprite(result.clone());
 
         result
     }
