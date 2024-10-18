@@ -4,7 +4,7 @@ use sdl2::render::Texture;
 
 use crate::{
     actors::actor::Actor,
-    components::component::{self, generate_id, Component, State},
+    components::component::{self, Component, State},
     components::sprite_component::{self, SpriteComponent},
 };
 
@@ -25,7 +25,7 @@ pub struct AnimSpriteComponent {
 impl AnimSpriteComponent {
     pub fn new(owner: Rc<RefCell<dyn Actor>>, draw_order: i32) -> Rc<RefCell<Self>> {
         let this = Self {
-            id: generate_id(),
+            id: component::generate_id(),
             owner: owner.clone(),
             update_order: 100,
             state: State::Active,

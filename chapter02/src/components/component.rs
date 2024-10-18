@@ -34,28 +34,6 @@ pub fn generate_id() -> u32 {
     id
 }
 
-macro_rules! impl_new {
-    () => {
-        pub fn new(
-            owner: &mut Rc<RefCell<dyn Actor>>,
-            update_order: i32,
-        ) -> Rc<RefCell<dyn Component>> {
-            use crate::components::component::ID;
-            use std::sync::atomic::Ordering;
-            let this = Self {
-                id: ID.load(Ordering::SeqCst),
-                owner: owner.clone(),
-                update_order,
-                state: State::Active,
-            };
-            ID.fetch_add(1, Ordering::SeqCst);
-            let result = Rc::new(RefCell::new(this));
-            owner.borrow_mut().add_component(result.clone());
-            result
-        }
-    };
-}
-
 macro_rules! impl_getters_setters {
     () => {
         fn get_id(&self) -> u32 {
@@ -100,7 +78,7 @@ pub mod tests {
         components::component::remove_component,
     };
 
-    use super::{Component, State};
+    use super::{generate_id, Component, State};
 
     pub struct TestComponent {
         id: u32,
@@ -110,7 +88,20 @@ pub mod tests {
     }
 
     impl TestComponent {
-        impl_new! {}
+        pub fn new(
+            owner: &mut Rc<RefCell<dyn Actor>>,
+            update_order: i32,
+        ) -> Rc<RefCell<dyn Component>> {
+            let this = Self {
+                id: generate_id(),
+                owner: owner.clone(),
+                update_order,
+                state: State::Active,
+            };
+            let result = Rc::new(RefCell::new(this));
+            owner.borrow_mut().add_component(result.clone());
+            result
+        }
     }
 
     impl Component for TestComponent {

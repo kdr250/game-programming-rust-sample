@@ -114,19 +114,12 @@ pub(crate) use impl_getters_setters;
 macro_rules! impl_component_operation {
     () => {
         fn add_component(&mut self, component: Rc<RefCell<dyn Component>>) {
-            debug_assert!(
-                *component.borrow().get_state() == ComponentState::Active,
-                "not active"
-            );
-
+            debug_assert!(*component.borrow().get_state() == ComponentState::Active);
             self.components.push(component);
         }
 
         fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>) {
-            debug_assert!(
-                *component.borrow().get_state() == ComponentState::Dead,
-                "not dead"
-            );
+            debug_assert!(*component.borrow().get_state() == ComponentState::Dead);
             self.components
                 .retain(|c| c.borrow().get_id() != component.borrow().get_id());
         }
@@ -177,7 +170,7 @@ impl DefaultActor {
 }
 
 impl Actor for DefaultActor {
-    fn update_actor(&mut self, delta_time: f32) {}
+    fn update_actor(&mut self, _delta_time: f32) {}
 
     impl_getters_setters! {}
 

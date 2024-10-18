@@ -8,7 +8,7 @@ use sdl2::{
 
 use crate::{
     actors::actor::Actor,
-    components::component::{self, generate_id, Component, State},
+    components::component::{self, Component, State},
     components::sprite_component::{self, SpriteComponent},
     math::Vector2,
 };
@@ -35,7 +35,7 @@ pub struct BGSpriteComponent {
 impl BGSpriteComponent {
     pub fn new(owner: Rc<RefCell<dyn Actor>>, draw_order: i32) -> Rc<RefCell<Self>> {
         let this = Self {
-            id: generate_id(),
+            id: component::generate_id(),
             owner: owner.clone(),
             update_order: 100,
             state: State::Active,
