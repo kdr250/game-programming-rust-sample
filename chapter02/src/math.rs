@@ -120,7 +120,7 @@ impl MulAssign<f32> for Vector2 {
 mod tests {
     use std::f32::consts::PI;
 
-    use super::{to_degrees, to_radians, Vector2};
+    use super::{to_degrees, to_radians};
 
     #[test]
     fn test_to_radians() {
@@ -136,88 +136,92 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
-    #[test]
-    fn test_add() {
-        let expected = Vector2::new(4.0, 6.0);
+    mod vector2 {
+        use crate::math::Vector2;
 
-        let a = Vector2::new(1.0, 2.0);
-        let b = Vector2::new(3.0, 4.0);
-        let actual = a + b;
+        #[test]
+        fn test_add() {
+            let expected = Vector2::new(4.0, 6.0);
 
-        assert_eq!(expected, actual);
-    }
+            let a = Vector2::new(1.0, 2.0);
+            let b = Vector2::new(3.0, 4.0);
+            let actual = a + b;
 
-    #[test]
-    fn test_add_assign() {
-        let expected = Vector2::new(4.0, 6.0);
+            assert_eq!(expected, actual);
+        }
 
-        let mut actual = Vector2::new(1.0, 2.0);
-        let b = Vector2::new(3.0, 4.0);
-        actual += b;
+        #[test]
+        fn test_add_assign() {
+            let expected = Vector2::new(4.0, 6.0);
 
-        assert_eq!(expected, actual);
-    }
+            let mut actual = Vector2::new(1.0, 2.0);
+            let b = Vector2::new(3.0, 4.0);
+            actual += b;
 
-    #[test]
-    fn test_sub() {
-        let expected = Vector2::new(2.0, 1.0);
+            assert_eq!(expected, actual);
+        }
 
-        let a = Vector2::new(3.0, 3.0);
-        let b = Vector2::new(1.0, 2.0);
-        let actual = a - b;
+        #[test]
+        fn test_sub() {
+            let expected = Vector2::new(2.0, 1.0);
 
-        assert_eq!(expected, actual);
-    }
+            let a = Vector2::new(3.0, 3.0);
+            let b = Vector2::new(1.0, 2.0);
+            let actual = a - b;
 
-    #[test]
-    fn test_sub_assign() {
-        let expected = Vector2::new(2.0, 1.0);
+            assert_eq!(expected, actual);
+        }
 
-        let mut actual = Vector2::new(3.0, 3.0);
-        let b = Vector2::new(1.0, 2.0);
-        actual -= b;
+        #[test]
+        fn test_sub_assign() {
+            let expected = Vector2::new(2.0, 1.0);
 
-        assert_eq!(expected, actual);
-    }
+            let mut actual = Vector2::new(3.0, 3.0);
+            let b = Vector2::new(1.0, 2.0);
+            actual -= b;
 
-    #[test]
-    fn test_mul_vector() {
-        let expected = Vector2::new(3.0, 6.0);
+            assert_eq!(expected, actual);
+        }
 
-        let a = Vector2::new(3.0, 3.0);
-        let b = Vector2::new(1.0, 2.0);
-        let actual = a * b;
+        #[test]
+        fn test_mul_vector() {
+            let expected = Vector2::new(3.0, 6.0);
 
-        assert_eq!(expected, actual);
-    }
+            let a = Vector2::new(3.0, 3.0);
+            let b = Vector2::new(1.0, 2.0);
+            let actual = a * b;
 
-    #[test]
-    fn test_mul_scalar() {
-        let expected = Vector2::new(10.0, 6.0);
+            assert_eq!(expected, actual);
+        }
 
-        let a = Vector2::new(5.0, 3.0);
-        let actual = a * 2.0;
+        #[test]
+        fn test_mul_scalar() {
+            let expected = Vector2::new(10.0, 6.0);
 
-        assert_eq!(expected, actual);
-    }
+            let a = Vector2::new(5.0, 3.0);
+            let actual = a * 2.0;
 
-    #[test]
-    fn test_mul_assign_scalar() {
-        let expected = Vector2::new(10.0, 6.0);
+            assert_eq!(expected, actual);
+        }
 
-        let mut actual = Vector2::new(5.0, 3.0);
-        actual *= 2.0;
+        #[test]
+        fn test_mul_assign_scalar() {
+            let expected = Vector2::new(10.0, 6.0);
 
-        assert_eq!(expected, actual);
-    }
+            let mut actual = Vector2::new(5.0, 3.0);
+            actual *= 2.0;
 
-    #[test]
-    fn test_length_sqrt() {
-        let expected = 25.0;
+            assert_eq!(expected, actual);
+        }
 
-        let a = Vector2::new(3.0, 4.0);
-        let actual = a.length_sqrt();
+        #[test]
+        fn test_length_sqrt() {
+            let expected = 25.0;
 
-        assert_eq!(expected, actual);
+            let a = Vector2::new(3.0, 4.0);
+            let actual = a.length_sqrt();
+
+            assert_eq!(expected, actual);
+        }
     }
 }
