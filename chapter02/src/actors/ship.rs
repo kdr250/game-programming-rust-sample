@@ -3,9 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use sdl2::keyboard::{KeyboardState, Scancode};
 
 use crate::{
-    actor::{self, Actor, State},
-    anim_sprite_component::AnimSpriteComponent,
-    component::{Component, State as ComponentState},
+    actors::actor::{self, Actor, State},
+    components::anim_sprite_component::AnimSpriteComponent,
+    components::component::{Component, State as ComponentState},
     math::Vector2,
     Game,
 };

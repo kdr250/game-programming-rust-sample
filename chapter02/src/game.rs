@@ -12,11 +12,11 @@ use sdl2::{
 };
 
 use crate::{
-    actor::{Actor, DefaultActor, State},
-    bg_sprite_component::BGSpriteComponent,
+    actors::actor::{Actor, DefaultActor, State},
+    actors::ship::Ship,
+    components::bg_sprite_component::BGSpriteComponent,
+    components::sprite_component::SpriteComponent,
     math::Vector2,
-    ship::Ship,
-    sprite_component::SpriteComponent,
 };
 
 pub struct Game {

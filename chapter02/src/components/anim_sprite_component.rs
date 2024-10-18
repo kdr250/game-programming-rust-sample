@@ -3,9 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use sdl2::render::Texture;
 
 use crate::{
-    actor::Actor,
-    component::{self, generate_id, Component, State},
-    sprite_component::{self, SpriteComponent},
+    actors::actor::Actor,
+    components::component::{self, generate_id, Component, State},
+    components::sprite_component::{self, SpriteComponent},
 };
 
 pub struct AnimSpriteComponent {

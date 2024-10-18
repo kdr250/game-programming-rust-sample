@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use sdl2::{
     rect::Rect,
@@ -7,8 +7,7 @@ use sdl2::{
 };
 
 use crate::{
-    actor::Actor,
-    component::{self, generate_id, Component, State},
+    components::component::Component,
     math::{self},
 };
 

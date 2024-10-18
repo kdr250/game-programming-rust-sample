@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    component::{Component, State as ComponentState},
+    components::component::{Component, State as ComponentState},
     math::Vector2,
     Game,
 };
@@ -193,7 +193,7 @@ pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
     use crate::{
-        component::{tests::TestComponent, Component, State as ComponentState},
+        components::component::{tests::TestComponent, Component, State as ComponentState},
         game::Game,
         math::Vector2,
     };

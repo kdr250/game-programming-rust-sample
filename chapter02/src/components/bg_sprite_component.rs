@@ -7,10 +7,10 @@ use sdl2::{
 };
 
 use crate::{
-    actor::Actor,
-    component::{self, generate_id, Component, State},
+    actors::actor::Actor,
+    components::component::{self, generate_id, Component, State},
+    components::sprite_component::{self, SpriteComponent},
     math::Vector2,
-    sprite_component::{self, SpriteComponent},
 };
 
 struct BGTexture {

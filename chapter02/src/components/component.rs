@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use crate::actor::Actor;
+use crate::actors::actor::Actor;
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
@@ -40,7 +40,7 @@ macro_rules! impl_new {
             owner: &mut Rc<RefCell<dyn Actor>>,
             update_order: i32,
         ) -> Rc<RefCell<dyn Component>> {
-            use crate::component::ID;
+            use crate::components::component::ID;
             use std::sync::atomic::Ordering;
             let this = Self {
                 id: ID.load(Ordering::SeqCst),
@@ -96,8 +96,8 @@ pub mod tests {
     use std::{cell::RefCell, rc::Rc};
 
     use crate::{
-        actor::{test::TestActor, Actor},
-        component::remove_component,
+        actors::actor::{test::TestActor, Actor},
+        components::component::remove_component,
     };
 
     use super::{Component, State};
