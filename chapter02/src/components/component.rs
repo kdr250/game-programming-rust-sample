@@ -105,7 +105,7 @@ pub mod tests {
     }
 
     impl Component for TestComponent {
-        fn update(&mut self, delta_time: f32) {}
+        fn update(&mut self, _delta_time: f32) {}
 
         impl_getters_setters! {}
     }
