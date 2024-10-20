@@ -192,6 +192,7 @@ pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
     use crate::{
+        assert_near_eq,
         components::component::{tests::TestComponent, Component, State as ComponentState},
         game::Game,
         math::{self, vector2::Vector2},
@@ -257,9 +258,7 @@ pub mod test {
         test_actor.set_rotation(radian);
         let actual = test_actor.get_forward();
 
-        let expected_actula = expected - actual;
-
-        assert!(math::basic::near_zero(expected_actula.x, 0.001));
-        assert!(math::basic::near_zero(expected_actula.y, 0.001));
+        assert_near_eq!(expected.x, actual.x, 0.001);
+        assert_near_eq!(expected.y, actual.y, 0.001);
     }
 }

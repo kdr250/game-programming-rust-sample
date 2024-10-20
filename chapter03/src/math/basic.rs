@@ -1,7 +1,4 @@
-use std::{
-    f32::consts::PI,
-    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
-};
+use std::f32::consts::PI;
 
 pub fn to_radians(degree: f32) -> f32 {
     degree * PI / 180.0
@@ -28,6 +25,23 @@ mod tests {
     use std::f32::consts::PI;
 
     use super::{to_degrees, to_radians};
+
+    #[macro_export]
+    macro_rules! assert_near_eq {
+        ($left:expr, $right:expr, $epsilon:expr $(,)?) => {
+            match (&$left, &$right, &$epsilon) {
+                (left_val, right_val, epsilon_val) => {
+                    use crate::math;
+                    assert!(
+                        math::basic::near_zero(*left_val - *right_val, *epsilon_val),
+                        "`left == right` failed... left = {}, right = {}",
+                        *left_val,
+                        *right_val
+                    );
+                }
+            }
+        };
+    }
 
     #[test]
     fn test_to_radians() {

@@ -115,7 +115,10 @@ impl MulAssign<f32> for Vector2 {
 
 #[cfg(test)]
 mod tests {
-    use crate::math::{self, vector2::Vector2};
+    use crate::{
+        assert_near_eq,
+        math::{self, vector2::Vector2},
+    };
 
     #[test]
     fn test_add() {
@@ -243,9 +246,6 @@ mod tests {
         let dot_result = Vector2::dot(&a, &b);
         let angle = dot_result.acos();
 
-        assert!(
-            math::basic::near_zero(expected - angle, 0.001),
-            "`left == right` failed... left = {expected}, right = {angle}",
-        );
+        assert_near_eq!(expected, angle, 0.001);
     }
 }
