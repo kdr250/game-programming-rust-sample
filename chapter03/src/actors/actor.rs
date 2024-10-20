@@ -33,6 +33,8 @@ pub trait Actor {
     fn update_actor(&mut self, delta_time: f32);
 
     /// Getters/setters
+    fn get_forward(&self) -> Vector2;
+
     fn get_position(&self) -> &Vector2;
 
     fn set_position(&mut self, position: Vector2);
@@ -61,6 +63,10 @@ pub trait Actor {
 
 macro_rules! impl_getters_setters {
     () => {
+        fn get_forward(&self) -> Vector2 {
+            Vector2::new(self.rotation.cos(), -self.rotation.sin())
+        }
+
         fn get_position(&self) -> &Vector2 {
             &self.position
         }
@@ -188,7 +194,7 @@ pub mod test {
     use crate::{
         components::component::{tests::TestComponent, Component, State as ComponentState},
         game::Game,
-        math::Vector2,
+        math::{self, Vector2},
     };
 
     use super::{Actor, State};
@@ -240,5 +246,20 @@ pub mod test {
 
         assert_eq!(1, binding.get_cocmponents().len());
         assert_eq!(test_component1.borrow().get_id(), actual.get_id());
+    }
+
+    #[test]
+    fn test_get_forward() {
+        let expected = Vector2::new(1.0 / 2.0, -3.0_f32.sqrt() / 2.0);
+
+        let radian = math::to_radians(60.0);
+        let mut test_actor = TestActor::new();
+        test_actor.set_rotation(radian);
+        let actual = test_actor.get_forward();
+
+        let expected_actula = expected - actual;
+
+        assert!(math::near_zero(expected_actula.x, 0.001));
+        assert!(math::near_zero(expected_actula.y, 0.001));
     }
 }
