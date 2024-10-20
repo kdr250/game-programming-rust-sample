@@ -52,6 +52,18 @@ impl Vector2 {
     pub fn length(&self) -> f32 {
         self.length_sqrt().sqrt()
     }
+
+    pub fn normalize_mut(&mut self) {
+        let length = self.length();
+        self.x /= length;
+        self.y /= length;
+    }
+
+    pub fn normalize(&self) -> Vector2 {
+        let mut temp = self.clone();
+        temp.normalize_mut();
+        temp
+    }
 }
 
 impl Add for Vector2 {
@@ -234,6 +246,26 @@ mod tests {
 
             let a = Vector2::new(3.0, 4.0);
             let actual = a.length();
+
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn test_normalize_mut() {
+            let expected = Vector2::new(1.0 / 2.0, 3.0_f32.sqrt() / 2.0);
+
+            let mut actual = Vector2::new(1.0, 3.0_f32.sqrt());
+            actual.normalize_mut();
+
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn test_normalize() {
+            let expected = Vector2::new(1.0 / 2.0, 3.0_f32.sqrt() / 2.0);
+
+            let a = Vector2::new(1.0, 3.0_f32.sqrt());
+            let actual = a.normalize();
 
             assert_eq!(expected, actual);
         }
