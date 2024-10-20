@@ -12,11 +12,13 @@ use sdl2::{
 };
 
 use crate::{
-    actors::actor::{Actor, DefaultActor, State},
-    actors::ship::Ship,
-    components::bg_sprite_component::BGSpriteComponent,
-    components::sprite_component::SpriteComponent,
-    math::vector2::Vector2,
+    actors::{
+        actor::{Actor, DefaultActor, State},
+        asteroid::Asteroid,
+        ship::Ship,
+    },
+    components::{bg_sprite_component::BGSpriteComponent, sprite_component::SpriteComponent},
+    math::{random::Random, vector2::Vector2},
 };
 
 pub struct Game {
@@ -33,6 +35,7 @@ pub struct Game {
     tick_count: u64,
     updating_actors: bool,
     ship: Option<Rc<RefCell<Ship>>>,
+    random: Random,
 }
 
 impl Game {
@@ -70,6 +73,7 @@ impl Game {
             tick_count: 0,
             updating_actors: false,
             ship: None,
+            random: Random::new(),
         };
 
         let result = Rc::new(RefCell::new(game));
@@ -97,6 +101,12 @@ impl Game {
             s.set_scale(1.5);
         }
         this.borrow_mut().ship = Some(ship);
+
+        // Create asteroids
+        const num_asteroids: i32 = 20;
+        for _ in 0..num_asteroids {
+            let _ = Asteroid::new(this.clone());
+        }
 
         let temp = DefaultActor::new(this.clone());
         temp.borrow_mut().set_position(Vector2::new(512.0, 384.0));
@@ -227,5 +237,9 @@ impl Game {
 
     fn get_ship(&self) -> Rc<RefCell<Ship>> {
         self.ship.clone().unwrap()
+    }
+
+    pub fn get_random(&mut self) -> &mut Random {
+        &mut self.random
     }
 }
