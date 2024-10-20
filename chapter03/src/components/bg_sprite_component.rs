@@ -10,7 +10,7 @@ use crate::{
     actors::actor::Actor,
     components::component::{self, Component, State},
     components::sprite_component::{self, SpriteComponent},
-    math::Vector2,
+    math::vector2::Vector2,
 };
 
 struct BGTexture {

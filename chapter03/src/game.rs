@@ -16,7 +16,7 @@ use crate::{
     actors::ship::Ship,
     components::bg_sprite_component::BGSpriteComponent,
     components::sprite_component::SpriteComponent,
-    math::Vector2,
+    math::vector2::Vector2,
 };
 
 pub struct Game {

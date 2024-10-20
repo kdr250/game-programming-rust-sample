@@ -6,7 +6,7 @@ use crate::{
     actors::actor::{self, Actor, State},
     components::anim_sprite_component::AnimSpriteComponent,
     components::component::{Component, State as ComponentState},
-    math::Vector2,
+    math::vector2::Vector2,
     Game,
 };
 

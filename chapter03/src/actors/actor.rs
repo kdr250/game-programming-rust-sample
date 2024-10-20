@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     components::component::{Component, State as ComponentState},
-    math::Vector2,
+    math::vector2::Vector2,
     Game,
 };
 
@@ -194,7 +194,7 @@ pub mod test {
     use crate::{
         components::component::{tests::TestComponent, Component, State as ComponentState},
         game::Game,
-        math::{self, Vector2},
+        math::{self, vector2::Vector2},
     };
 
     use super::{Actor, State};
@@ -252,14 +252,14 @@ pub mod test {
     fn test_get_forward() {
         let expected = Vector2::new(1.0 / 2.0, -3.0_f32.sqrt() / 2.0);
 
-        let radian = math::to_radians(60.0);
+        let radian = math::basic::to_radians(60.0);
         let mut test_actor = TestActor::new();
         test_actor.set_rotation(radian);
         let actual = test_actor.get_forward();
 
         let expected_actula = expected - actual;
 
-        assert!(math::near_zero(expected_actula.x, 0.001));
-        assert!(math::near_zero(expected_actula.y, 0.001));
+        assert!(math::basic::near_zero(expected_actula.x, 0.001));
+        assert!(math::basic::near_zero(expected_actula.y, 0.001));
     }
 }

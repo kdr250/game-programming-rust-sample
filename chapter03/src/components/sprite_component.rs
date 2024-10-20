@@ -29,7 +29,7 @@ pub trait SpriteComponent: Component {
                     &texture,
                     None,
                     Some(rect),
-                    -math::to_degrees(owner.get_rotation()) as f64,
+                    -math::basic::to_degrees(owner.get_rotation()) as f64,
                     None,
                     false,
                     false,
