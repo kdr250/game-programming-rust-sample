@@ -50,6 +50,14 @@ impl Vector3 {
     pub fn dot(&self, other: &Vector3) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
+
+    pub fn cross(&self, other: &Vector3) -> Vector3 {
+        let mut temp = Vector3::ZERO;
+        temp.x = self.y * other.z - self.z * other.y;
+        temp.y = self.z * other.x - self.x * other.z;
+        temp.z = self.x * other.y - self.y * other.x;
+        temp
+    }
 }
 
 impl Add for Vector3 {
@@ -265,5 +273,16 @@ mod tests {
         let actual = Vector3::dot(&a, &b);
 
         assert_near_eq!(expected, actual, 0.001);
+    }
+
+    #[test]
+    fn test_cross() {
+        let expected = Vector3::new(-1.0, 2.0, -1.0);
+
+        let a = Vector3::new(1.0, 2.0, 3.0);
+        let b = Vector3::new(2.0, 3.0, 4.0);
+        let actual = Vector3::cross(&a, &b);
+
+        assert_eq!(expected, actual);
     }
 }
