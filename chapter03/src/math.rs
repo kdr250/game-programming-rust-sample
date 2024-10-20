@@ -64,6 +64,10 @@ impl Vector2 {
         temp.normalize_mut();
         temp
     }
+
+    pub fn dot(&self, other: &Vector2) -> f32 {
+        self.x * other.x + self.y * other.y
+    }
 }
 
 impl Add for Vector2 {
@@ -153,7 +157,7 @@ mod tests {
     }
 
     mod vector2 {
-        use crate::math::Vector2;
+        use crate::math::{self, Vector2};
 
         #[test]
         fn test_add() {
@@ -268,6 +272,23 @@ mod tests {
             let actual = a.normalize();
 
             assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn test_dot() {
+            let expected = math::to_radians(45.0);
+
+            let mut a = Vector2::new(1.0, 2.0);
+            let mut b = Vector2::new(3.0, 1.0);
+            a.normalize_mut();
+            b.normalize_mut();
+            let dot_result = Vector2::dot(&a, &b);
+            let angle = dot_result.acos();
+
+            assert!(
+                math::near_zero(expected - angle, 0.001),
+                "`left == right` failed... left = {expected}, right = {angle}",
+            );
         }
     }
 }
