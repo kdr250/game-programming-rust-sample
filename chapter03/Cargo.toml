@@ -3,4 +3,25 @@ name = "chapter03"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["unsafe_textures"]
+unsafe_textures = []
+
 [dependencies]
+anyhow = "1.0.89"
+cfg-if = "1.0"
+
+[dependencies.sdl2]
+version = "0.37"
+default-features = false
+features = ["image", "static-link", "use-vcpkg", "unsafe_textures"]
+
+[package.metadata.vcpkg]
+dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]"]
+git = "https://github.com/microsoft/vcpkg"
+rev = "2024.09.30"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"

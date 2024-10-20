@@ -42,6 +42,13 @@ dependencies = [
 [[package]]
 name = "chapter03"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "fs_extra",
+ "glob",
+ "sdl2",
+]
 
 [[package]]
 name = "fs_extra"
