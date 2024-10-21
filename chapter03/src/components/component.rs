@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use crate::actors::actor::Actor;
+use crate::{actors::actor::Actor, math::vector2::Vector2};
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
@@ -15,7 +15,11 @@ pub enum State {
 }
 
 pub trait Component {
-    fn update(&mut self, delta_time: f32);
+    fn update(
+        &mut self,
+        delta_time: f32,
+        owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>);
 
     fn get_id(&self) -> u32;
 
@@ -76,6 +80,7 @@ pub mod tests {
     use crate::{
         actors::actor::{test::TestActor, Actor},
         components::component::remove_component,
+        math::vector2::Vector2,
     };
 
     use super::{generate_id, Component, State};
@@ -105,7 +110,13 @@ pub mod tests {
     }
 
     impl Component for TestComponent {
-        fn update(&mut self, _delta_time: f32) {}
+        fn update(
+            &mut self,
+            _delta_time: f32,
+            _owner_info: &(Vector2, f32, Vector2),
+        ) -> (Option<Vector2>, Option<f32>) {
+            (None, None)
+        }
 
         impl_getters_setters! {}
     }

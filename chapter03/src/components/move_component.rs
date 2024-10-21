@@ -1,6 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{actors::actor::Actor, math};
+use crate::{
+    actors::actor::Actor,
+    math::{self, vector2::Vector2},
+};
 
 use super::component::{self, generate_id, Component, State};
 
@@ -50,18 +53,22 @@ impl MoveComponent {
 }
 
 impl Component for MoveComponent {
-    fn update(&mut self, delta_time: f32) {
+    fn update(
+        &mut self,
+        delta_time: f32,
+        owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>) {
+        let mut result = (None, None);
+
         if !math::basic::near_zero(self.angular_speed, 0.001) {
-            let mut owner = self.owner.borrow_mut();
-            let mut rotation = owner.get_rotation();
+            let mut rotation = owner_info.1;
             rotation += self.angular_speed * delta_time;
-            owner.set_rotation(rotation);
+            result.1 = Some(rotation);
         }
 
         if !math::basic::near_zero(self.forward_speed, 0.001) {
-            let mut owner = self.owner.borrow_mut();
-            let mut position = owner.get_position().clone();
-            position += owner.get_forward() * self.forward_speed * delta_time;
+            let mut position = owner_info.0.clone();
+            position += owner_info.2.clone() * self.forward_speed * delta_time;
 
             if position.x < 0.0 {
                 position.x = 1022.0;
@@ -75,8 +82,10 @@ impl Component for MoveComponent {
                 position.y = 2.0;
             }
 
-            owner.set_position(position);
+            result.0 = Some(position);
         }
+
+        result
     }
 
     component::impl_getters_setters! {}

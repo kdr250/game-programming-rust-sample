@@ -105,7 +105,11 @@ impl SpriteComponent for BGSpriteComponent {
 }
 
 impl Component for BGSpriteComponent {
-    fn update(&mut self, delta_time: f32) {
+    fn update(
+        &mut self,
+        delta_time: f32,
+        _owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>) {
         let len = self.bg_textures.len();
         for bg in &mut self.bg_textures {
             bg.offset.x += self.scroll_speed * delta_time;
@@ -113,6 +117,7 @@ impl Component for BGSpriteComponent {
                 bg.offset.x = (len - 1) as f32 * self.screen_size.x - 1.0;
             }
         }
+        (None, None)
     }
 
     component::impl_getters_setters! {}

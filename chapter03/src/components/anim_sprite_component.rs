@@ -4,8 +4,11 @@ use sdl2::render::Texture;
 
 use crate::{
     actors::actor::Actor,
-    components::component::{self, Component, State},
-    components::sprite_component::{self, SpriteComponent},
+    components::{
+        component::{self, Component, State},
+        sprite_component::{self, SpriteComponent},
+    },
+    math::vector2::Vector2,
 };
 
 pub struct AnimSpriteComponent {
@@ -65,9 +68,13 @@ impl SpriteComponent for AnimSpriteComponent {
 }
 
 impl Component for AnimSpriteComponent {
-    fn update(&mut self, delta_time: f32) {
+    fn update(
+        &mut self,
+        delta_time: f32,
+        _owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>) {
         if self.anim_textures.is_empty() {
-            return;
+            return (None, None);
         }
 
         self.current_frame += self.anim_fps * delta_time;
@@ -79,6 +86,8 @@ impl Component for AnimSpriteComponent {
         let texture = self.anim_textures[self.current_frame as usize].clone();
 
         self.set_texture(texture);
+
+        (None, None)
     }
 
     component::impl_getters_setters! {}

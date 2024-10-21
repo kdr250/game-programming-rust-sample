@@ -9,7 +9,7 @@ use sdl2::{
 use crate::{
     actors::actor::Actor,
     components::component::Component,
-    math::{self},
+    math::{self, vector2::Vector2},
 };
 
 pub trait SpriteComponent: Component {
@@ -124,7 +124,13 @@ impl SpriteComponent for DefaultSpriteComponent {
 }
 
 impl Component for DefaultSpriteComponent {
-    fn update(&mut self, _delta_time: f32) {}
+    fn update(
+        &mut self,
+        _delta_time: f32,
+        _owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>) {
+        (None, None)
+    }
 
     component::impl_getters_setters! {}
 }

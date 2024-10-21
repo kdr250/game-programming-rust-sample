@@ -24,8 +24,22 @@ pub trait Actor {
 
     /// Updates all the components attached to the actor (not overridable)
     fn update_component(&mut self, delta_time: f32) {
+        let mut changes = (None, None);
+        let actor_info = (
+            self.get_position().clone(),
+            self.get_rotation(),
+            self.get_forward(),
+        );
         for component in self.get_cocmponents() {
-            component.borrow_mut().update(delta_time);
+            changes = component.borrow_mut().update(delta_time, &actor_info);
+        }
+
+        let (position, rotation) = changes;
+        if let Some(pos) = position {
+            self.set_position(pos);
+        }
+        if let Some(rot) = rotation {
+            self.set_rotation(rot);
         }
     }
 
