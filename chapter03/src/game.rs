@@ -35,6 +35,7 @@ pub struct Game {
     tick_count: u64,
     updating_actors: bool,
     ship: Option<Rc<RefCell<Ship>>>,
+    asteroids: Vec<Rc<RefCell<Asteroid>>>,
     random: Random,
 }
 
@@ -73,6 +74,7 @@ impl Game {
             tick_count: 0,
             updating_actors: false,
             ship: None,
+            asteroids: vec![],
             random: Random::new(),
         };
 
@@ -244,5 +246,9 @@ impl Game {
 
     pub fn get_random(&mut self) -> &mut Random {
         &mut self.random
+    }
+
+    pub fn get_asteroids(&self) -> &Vec<Rc<RefCell<Asteroid>>> {
+        &self.asteroids
     }
 }

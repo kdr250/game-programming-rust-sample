@@ -1,5 +1,6 @@
 pub mod anim_sprite_component;
 pub mod bg_sprite_component;
+pub mod circle_component;
 pub mod component;
 pub mod input_component;
 pub mod move_component;

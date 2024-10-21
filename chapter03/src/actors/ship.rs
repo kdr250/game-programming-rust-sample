@@ -1,7 +1,10 @@
 use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
-use sdl2::keyboard::{KeyboardState, Scancode};
+use sdl2::{
+    keyboard::{KeyboardState, Scancode},
+    render::Texture,
+};
 
 use crate::{
     actors::actor::{self, Actor, State},
@@ -14,6 +17,8 @@ use crate::{
     Game,
 };
 
+use super::laser::Laser;
+
 pub struct Ship {
     state: State,
     position: Vector2,
@@ -21,6 +26,8 @@ pub struct Ship {
     rotation: f32,
     components: Vec<Rc<RefCell<dyn Component>>>,
     game: Rc<RefCell<Game>>,
+    laser_cooldown: f32,
+    laser_texture: Rc<Texture>,
 }
 
 impl Ship {
@@ -32,6 +39,8 @@ impl Ship {
             rotation: 0.0,
             components: vec![],
             game: game.clone(),
+            laser_cooldown: 0.0,
+            laser_texture: game.borrow_mut().get_texture("Assets/Laser.png"),
         };
 
         let result = Rc::new(RefCell::new(this));
@@ -59,11 +68,18 @@ impl Ship {
 
 impl Actor for Ship {
     fn update_actor(&mut self, delta_time: f32) {
-        // TODO: Not yet implemented
+        self.laser_cooldown -= delta_time;
     }
 
-    fn actor_input(&mut self, _key_state: &KeyboardState) {
-        // TODO: Not yet implemented
+    fn actor_input(&mut self, key_state: &KeyboardState) {
+        if key_state.is_scancode_pressed(Scancode::Space) && self.laser_cooldown <= 0.0 {
+            let laser = Laser::new(self.game.clone(), self.laser_texture.clone());
+            let mut borrowed_laser = laser.borrow_mut();
+            borrowed_laser.set_position(self.position.clone());
+            borrowed_laser.set_rotation(self.rotation);
+
+            self.laser_cooldown = 0.5;
+        }
     }
 
     actor::impl_getters_setters! {}
