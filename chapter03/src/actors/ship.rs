@@ -1,10 +1,7 @@
 use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
-use sdl2::{
-    keyboard::{KeyboardState, Scancode},
-    render::Texture,
-};
+use sdl2::keyboard::{KeyboardState, Scancode};
 
 use crate::{
     actors::actor::{self, Actor, State},
@@ -13,8 +10,9 @@ use crate::{
         input_component::InputComponent,
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
+    entity_manager::EntityManager,
     math::vector2::Vector2,
-    Game,
+    texture_manager::TextureManager,
 };
 
 use super::laser::Laser;
@@ -25,31 +23,32 @@ pub struct Ship {
     scale: f32,
     rotation: f32,
     components: Vec<Rc<RefCell<dyn Component>>>,
-    game: Rc<RefCell<Game>>,
+    texture_manager: Rc<RefCell<TextureManager>>,
+    entity_manager: Rc<RefCell<EntityManager>>,
     laser_cooldown: f32,
-    laser_texture: Rc<Texture>,
 }
 
 impl Ship {
-    pub fn new(game: Rc<RefCell<Game>>) -> Rc<RefCell<Self>> {
+    pub fn new(
+        texture_manager: Rc<RefCell<TextureManager>>,
+        entity_manager: Rc<RefCell<EntityManager>>,
+    ) -> Rc<RefCell<Self>> {
         let this = Self {
             state: State::Active,
             position: Vector2::ZERO,
             scale: 1.0,
             rotation: 0.0,
             components: vec![],
-            game: game.clone(),
+            texture_manager: texture_manager.clone(),
+            entity_manager: entity_manager.clone(),
             laser_cooldown: 0.0,
-            laser_texture: game.borrow_mut().get_texture("Assets/Laser.png"),
         };
 
         let result = Rc::new(RefCell::new(this));
 
         let sprite_component = DefaultSpriteComponent::new(result.clone(), 150);
-        let mut game = game.borrow_mut();
-        sprite_component
-            .borrow_mut()
-            .set_texture(game.get_texture("Assets/Ship.png"));
+        let texture = texture_manager.borrow_mut().get_texture("Assets/Ship.png");
+        sprite_component.borrow_mut().set_texture(texture);
 
         let input_component = InputComponent::new(result.clone());
         let mut borrowed_input = input_component.borrow_mut();
@@ -60,7 +59,7 @@ impl Ship {
         borrowed_input.set_max_forward_speed(300.0);
         borrowed_input.set_max_angular_speed(f32::consts::TAU);
 
-        game.add_actor(result.clone());
+        entity_manager.borrow_mut().add_actor(result.clone());
 
         result
     }
@@ -73,7 +72,7 @@ impl Actor for Ship {
 
     fn actor_input(&mut self, key_state: &KeyboardState) {
         if key_state.is_scancode_pressed(Scancode::Space) && self.laser_cooldown <= 0.0 {
-            let laser = Laser::new(self.game.clone(), self.laser_texture.clone());
+            let laser = Laser::new(self.texture_manager.clone(), self.entity_manager.clone());
             let mut borrowed_laser = laser.borrow_mut();
             borrowed_laser.set_position(self.position.clone());
             borrowed_laser.set_rotation(self.rotation);

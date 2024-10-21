@@ -53,8 +53,8 @@ impl BGSpriteComponent {
         let mut borrowed_onwer = owner.borrow_mut();
         borrowed_onwer.add_component(result.clone());
 
-        let mut borrowed_game = borrowed_onwer.get_game().borrow_mut();
-        borrowed_game.add_sprite(result.clone());
+        let mut borrowed_texture_manager = borrowed_onwer.get_texture_manager().borrow_mut();
+        borrowed_texture_manager.add_sprite(result.clone());
 
         result
     }

@@ -2,8 +2,9 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     components::component::{Component, State as ComponentState},
+    entity_manager::EntityManager,
     math::vector2::Vector2,
-    Game,
+    texture_manager::TextureManager,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -83,9 +84,13 @@ pub trait Actor {
 
     fn set_state(&mut self, state: State);
 
-    fn get_game(&self) -> &Rc<RefCell<Game>>;
+    fn get_texture_manager(&self) -> &Rc<RefCell<TextureManager>>;
+
+    fn get_entity_manager(&self) -> &Rc<RefCell<EntityManager>>;
 
     fn get_cocmponents(&self) -> &Vec<Rc<RefCell<dyn Component>>>;
+
+    fn clear_components(&mut self);
 
     /// Add/remove components
     fn add_component(&mut self, component: Rc<RefCell<dyn Component>>);
@@ -135,10 +140,24 @@ macro_rules! impl_getters_setters {
             &self.components
         }
 
-        fn get_game(&self) -> &Rc<RefCell<Game>> {
+        fn clear_components(&mut self) {
+            self.components.clear();
+        }
+
+        fn get_texture_manager(&self) -> &Rc<RefCell<TextureManager>> {
             cfg_if::cfg_if! {
                 if #[cfg(not(test))] {
-                    &self.game
+                    &self.texture_manager
+                } else {
+                    panic!();
+                }
+            }
+        }
+
+        fn get_entity_manager(&self) -> &Rc<RefCell<EntityManager>> {
+            cfg_if::cfg_if! {
+                if #[cfg(not(test))] {
+                    &self.entity_manager
                 } else {
                     panic!();
                 }
@@ -166,6 +185,14 @@ macro_rules! impl_component_operation {
 
 pub(crate) use impl_component_operation;
 
+pub fn remove_actor(actor: Rc<RefCell<dyn Actor>>) {
+    actor.borrow_mut().set_state(State::Dead);
+    for component in actor.borrow().get_cocmponents() {
+        component.borrow_mut().set_state(ComponentState::Dead);
+    }
+    actor.borrow_mut().clear_components();
+}
+
 macro_rules! impl_drop {
     () => {
         fn drop(&mut self) {
@@ -186,23 +213,28 @@ pub struct DefaultActor {
     scale: f32,
     rotation: f32,
     components: Vec<Rc<RefCell<dyn Component>>>,
-    game: Rc<RefCell<Game>>,
+    texture_manager: Rc<RefCell<TextureManager>>,
+    entity_manager: Rc<RefCell<EntityManager>>,
 }
 
 impl DefaultActor {
-    pub fn new(game: Rc<RefCell<Game>>) -> Rc<RefCell<Self>> {
+    pub fn new(
+        texture_manager: Rc<RefCell<TextureManager>>,
+        entity_manager: Rc<RefCell<EntityManager>>,
+    ) -> Rc<RefCell<Self>> {
         let this = Self {
             state: State::Active,
             position: Vector2::ZERO,
             scale: 1.0,
             rotation: 0.0,
             components: vec![],
-            game: game.clone(),
+            texture_manager,
+            entity_manager: entity_manager.clone(),
         };
 
         let result = Rc::new(RefCell::new(this));
 
-        game.borrow_mut().add_actor(result.clone());
+        entity_manager.borrow_mut().add_actor(result.clone());
 
         result
     }
@@ -224,13 +256,12 @@ impl Drop for DefaultActor {
 pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
-    use sdl2::keyboard::KeyboardState;
-
     use crate::{
         assert_near_eq,
         components::component::{tests::TestComponent, Component, State as ComponentState},
-        game::Game,
+        entity_manager::EntityManager,
         math::{self, vector2::Vector2},
+        texture_manager::TextureManager,
     };
 
     use super::{Actor, State};

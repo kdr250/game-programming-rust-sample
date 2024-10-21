@@ -1,47 +1,31 @@
-use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
 use sdl2::{
     event::Event,
-    image::{InitFlag, LoadTexture},
+    image::InitFlag,
     keyboard::{KeyboardState, Scancode},
     pixels::Color,
-    render::{Canvas, Texture, TextureCreator},
-    video::{Window, WindowContext},
+    render::Canvas,
+    video::Window,
     EventPump, TimerSubsystem,
 };
 
-use crate::{
-    actors::{
-        actor::{Actor, DefaultActor, State},
-        asteroid::Asteroid,
-        ship::Ship,
-    },
-    components::{bg_sprite_component::BGSpriteComponent, sprite_component::SpriteComponent},
-    math::{random::Random, vector2::Vector2},
-};
+use crate::{entity_manager::EntityManager, texture_manager::TextureManager};
 
 pub struct Game {
-    this: Option<Rc<RefCell<Game>>>,
     canvas: Canvas<Window>,
     event_pump: EventPump,
     timer: TimerSubsystem,
-    texture_creator: TextureCreator<WindowContext>,
-    textures: HashMap<String, Rc<Texture>>,
-    sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
-    actors: Vec<Rc<RefCell<dyn Actor>>>,
-    pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
+    texture_manager: Rc<RefCell<TextureManager>>,
+    entity_manager: Rc<RefCell<EntityManager>>,
     is_running: bool,
     tick_count: u64,
-    updating_actors: bool,
-    ship: Option<Rc<RefCell<Ship>>>,
-    asteroids: Vec<Rc<RefCell<Asteroid>>>,
-    random: Random,
 }
 
 impl Game {
     /// Initialize game
-    pub fn initialize() -> Result<Rc<RefCell<Game>>> {
+    pub fn initialize() -> Result<Game> {
         let sdl = sdl2::init().map_err(|e| anyhow!(e))?;
 
         let video_system = sdl.video().map_err(|e| anyhow!(e))?;
@@ -59,31 +43,22 @@ impl Game {
 
         let _image_context = sdl2::image::init(InitFlag::PNG).map_err(|e| anyhow!(e))?;
         let texture_creator = canvas.texture_creator();
+        let texture_manager = TextureManager::new(texture_creator);
+
+        let entity_manager = EntityManager::new();
+        EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
         let game = Game {
-            this: None,
             canvas,
             event_pump,
             timer,
-            texture_creator,
-            textures: HashMap::new(),
-            sprites: vec![],
-            actors: vec![],
-            pending_actors: vec![],
+            texture_manager,
+            entity_manager,
             is_running: true,
             tick_count: 0,
-            updating_actors: false,
-            ship: None,
-            asteroids: vec![],
-            random: Random::new(),
         };
 
-        let result = Rc::new(RefCell::new(game));
-        let cloned = result.clone();
-        result.borrow_mut().set_this(cloned);
-        Self::load_data(result.clone());
-
-        Ok(result)
+        Ok(game)
     }
 
     /// Runs the game loop until the game is over
@@ -93,73 +68,6 @@ impl Game {
             self.update_game();
             self.generate_output();
         }
-    }
-
-    fn load_data(this: Rc<RefCell<Game>>) {
-        let ship = Ship::new(this.clone());
-        {
-            let mut s = ship.borrow_mut();
-            s.set_position(Vector2::new(100.0, 384.0));
-            s.set_scale(1.5);
-        }
-        this.borrow_mut().ship = Some(ship);
-
-        // Create asteroids
-        const num_asteroids: i32 = 20;
-        for _ in 0..num_asteroids {
-            let _ = Asteroid::new(this.clone());
-        }
-
-        let temp = DefaultActor::new(this.clone());
-        temp.borrow_mut().set_position(Vector2::new(512.0, 384.0));
-
-        let mut back_ground = BGSpriteComponent::new(temp.clone(), 10);
-        {
-            let mut bg = back_ground.borrow_mut();
-            bg.set_screen_size(Vector2::new(1024.0, 768.0));
-            let mut game = this.borrow_mut();
-            let bgtexs = vec![
-                game.get_texture("Assets/Farback01.png"),
-                game.get_texture("Assets/Farback02.png"),
-            ];
-            bg.set_bg_textures(bgtexs);
-            bg.set_scroll_speed(-100.0);
-        }
-
-        back_ground = BGSpriteComponent::new(temp.clone(), 50);
-        {
-            let mut bg = back_ground.borrow_mut();
-            bg.set_screen_size(Vector2::new(1024.0, 768.0));
-            let mut game = this.borrow_mut();
-            let bgtexs = vec![
-                game.get_texture("Assets/Stars.png"),
-                game.get_texture("Assets/Stars.png"),
-            ];
-            bg.set_bg_textures(bgtexs);
-            bg.set_scroll_speed(-200.0);
-        }
-    }
-
-    pub fn add_actor(&mut self, actor: Rc<RefCell<dyn Actor>>) {
-        if self.updating_actors {
-            self.pending_actors.push(actor);
-        } else {
-            self.actors.push(actor);
-        }
-    }
-
-    pub fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {
-        if let Some(texture) = self.textures.get(&file_name.to_string()) {
-            return texture.clone();
-        }
-        let path = Path::new(env!("OUT_DIR")).join("resources").join(file_name);
-        let texture = self
-            .texture_creator
-            .load_texture(path)
-            .expect(&format!("Failed to load texture {}", file_name));
-        let result = Rc::new(texture);
-        self.textures.insert(file_name.to_string(), result.clone());
-        result
     }
 
     /// Herlper functions for the game loop
@@ -179,8 +87,9 @@ impl Game {
             self.is_running = false;
         }
 
-        self.updating_actors = true;
-        for actor in &self.actors {
+        self.entity_manager.borrow_mut().set_updating_actors(true);
+        let actors = self.entity_manager.borrow().get_actors().clone();
+        for actor in actors {
             actor.borrow_mut().process_input(&state);
         }
     }
@@ -194,61 +103,26 @@ impl Game {
 
         self.tick_count = self.timer.ticks64();
 
-        self.updating_actors = true;
-        for actor in &self.actors {
+        self.entity_manager.borrow_mut().set_updating_actors(true);
+        let actors = self.entity_manager.borrow().get_actors().clone();
+        for actor in actors {
             actor.borrow_mut().update(delta_time);
         }
-        self.updating_actors = false;
+        self.entity_manager.borrow_mut().set_updating_actors(false);
 
-        for pending in &self.pending_actors {
-            self.actors.push(pending.clone());
-        }
-        self.pending_actors.clear();
-
-        self.actors
-            .retain(|actor| *actor.borrow().get_state() != State::Dead);
+        self.entity_manager.borrow_mut().flush_actors();
+        self.texture_manager.borrow_mut().flush_sprites();
     }
 
     fn generate_output(&mut self) {
         self.canvas.set_draw_color(Color::RGBA(0, 0, 255, 255));
         self.canvas.clear();
 
-        self.canvas.set_draw_color(Color::RGBA(255, 255, 255, 255));
-
         // Draw all sprite component
-        for sprite in &self.sprites {
+        for sprite in self.texture_manager.borrow().get_sprites() {
             sprite.borrow().draw(&mut self.canvas);
         }
 
         self.canvas.present();
-    }
-
-    pub fn add_sprite(&mut self, sprite: Rc<RefCell<dyn SpriteComponent>>) {
-        let draw_order = sprite.borrow().get_draw_order();
-        if let Some(index) = self
-            .sprites
-            .iter()
-            .position(|s| s.borrow().get_draw_order() > draw_order)
-        {
-            self.sprites.insert(index, sprite);
-        } else {
-            self.sprites.push(sprite);
-        }
-    }
-
-    fn set_this(&mut self, this: Rc<RefCell<Game>>) {
-        self.this = Some(this);
-    }
-
-    fn get_ship(&self) -> Rc<RefCell<Ship>> {
-        self.ship.clone().unwrap()
-    }
-
-    pub fn get_random(&mut self) -> &mut Random {
-        &mut self.random
-    }
-
-    pub fn get_asteroids(&self) -> &Vec<Rc<RefCell<Asteroid>>> {
-        &self.asteroids
     }
 }

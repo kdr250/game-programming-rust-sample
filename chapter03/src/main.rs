@@ -1,14 +1,16 @@
 mod actors;
 mod components;
+mod entity_manager;
 mod game;
 mod math;
+mod texture_manager;
 
 use crate::game::*;
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    let game = Game::initialize()?;
-    game.borrow_mut().run_loop();
+    let mut game = Game::initialize()?;
+    game.run_loop();
 
     Ok(())
 }
