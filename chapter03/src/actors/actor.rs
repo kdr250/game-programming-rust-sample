@@ -46,6 +46,20 @@ pub trait Actor {
     /// Any actor-specific update code (overridable)
     fn update_actor(&mut self, delta_time: f32);
 
+    // ProcessInput function called from Game (not overridable)
+    fn process_input(&mut self, key_state: &KeyboardState) {
+        if *self.get_state() != State::Active {
+            return;
+        }
+        for component in self.get_cocmponents() {
+            component.borrow_mut().process_input(&key_state);
+        }
+        self.actor_input(&key_state);
+    }
+
+    // Any actor-specific input code (overridable)
+    fn actor_input(&mut self, _key_state: &KeyboardState) {}
+
     /// Getters/setters
     fn get_forward(&self) -> Vector2;
 
@@ -160,6 +174,7 @@ macro_rules! impl_drop {
 }
 
 pub(crate) use impl_drop;
+use sdl2::keyboard::KeyboardState;
 
 pub struct DefaultActor {
     state: State,
@@ -205,6 +220,8 @@ impl Drop for DefaultActor {
 pub mod test {
     use std::{cell::RefCell, rc::Rc};
 
+    use sdl2::keyboard::KeyboardState;
+
     use crate::{
         assert_near_eq,
         components::component::{tests::TestComponent, Component, State as ComponentState},
@@ -235,7 +252,7 @@ pub mod test {
     }
 
     impl Actor for TestActor {
-        fn update_actor(&mut self, delta_time: f32) {}
+        fn update_actor(&mut self, _delta_time: f32) {}
 
         impl_getters_setters! {}
 

@@ -177,7 +177,10 @@ impl Game {
             self.is_running = false;
         }
 
-        self.get_ship().borrow_mut().process_keyboard(state);
+        self.updating_actors = true;
+        for actor in &self.actors {
+            actor.borrow_mut().process_input(&state);
+        }
     }
 
     fn update_game(&mut self) {

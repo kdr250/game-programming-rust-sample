@@ -21,6 +21,8 @@ pub trait Component {
         owner_info: &(Vector2, f32, Vector2),
     ) -> (Option<Vector2>, Option<f32>);
 
+    fn process_input(&mut self, _key_state: &KeyboardState) {}
+
     fn get_id(&self) -> u32;
 
     fn get_update_order(&self) -> i32;
@@ -63,6 +65,7 @@ macro_rules! impl_getters_setters {
 }
 
 pub(crate) use impl_getters_setters;
+use sdl2::keyboard::KeyboardState;
 
 pub fn remove_component(this: Rc<RefCell<dyn Component>>) {
     debug_assert!(*this.borrow().get_state() == State::Active, "not active");

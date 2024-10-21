@@ -1,11 +1,15 @@
+use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
 use sdl2::keyboard::{KeyboardState, Scancode};
 
 use crate::{
     actors::actor::{self, Actor, State},
-    components::anim_sprite_component::AnimSpriteComponent,
-    components::component::{Component, State as ComponentState},
+    components::{
+        component::{Component, State as ComponentState},
+        input_component::InputComponent,
+        sprite_component::{DefaultSpriteComponent, SpriteComponent},
+    },
     math::vector2::Vector2,
     Game,
 };
@@ -17,8 +21,6 @@ pub struct Ship {
     rotation: f32,
     components: Vec<Rc<RefCell<dyn Component>>>,
     game: Rc<RefCell<Game>>,
-    right_speed: f32,
-    down_speed: f32,
 }
 
 impl Ship {
@@ -30,64 +32,38 @@ impl Ship {
             rotation: 0.0,
             components: vec![],
             game: game.clone(),
-            right_speed: 0.0,
-            down_speed: 0.0,
         };
 
         let result = Rc::new(RefCell::new(this));
-        let anim_sprite_component = AnimSpriteComponent::new(result.clone(), 100);
+
+        let sprite_component = DefaultSpriteComponent::new(result.clone(), 150);
         let mut game = game.borrow_mut();
-        let anims = vec![
-            game.get_texture("Assets/Ship01.png"),
-            game.get_texture("Assets/Ship02.png"),
-            game.get_texture("Assets/Ship03.png"),
-            game.get_texture("Assets/Ship04.png"),
-        ];
-        anim_sprite_component.borrow_mut().set_anim_textures(anims);
+        sprite_component
+            .borrow_mut()
+            .set_texture(game.get_texture("Assets/Ship.png"));
+
+        let input_component = InputComponent::new(result.clone());
+        let mut borrowed_input = input_component.borrow_mut();
+        borrowed_input.set_forward_key(Scancode::W);
+        borrowed_input.set_back_key(Scancode::S);
+        borrowed_input.set_clockwise_key(Scancode::A);
+        borrowed_input.set_counter_clockwise_key(Scancode::D);
+        borrowed_input.set_max_forward_speed(300.0);
+        borrowed_input.set_max_angular_speed(f32::consts::TAU);
 
         game.add_actor(result.clone());
 
         result
     }
-
-    pub fn process_keyboard(&mut self, state: KeyboardState) {
-        self.right_speed = 0.0;
-        self.down_speed = 0.0;
-
-        if state.is_scancode_pressed(Scancode::D) {
-            self.right_speed += 250.0;
-        }
-        if state.is_scancode_pressed(Scancode::A) {
-            self.right_speed -= 250.0;
-        }
-
-        if state.is_scancode_pressed(Scancode::S) {
-            self.down_speed += 250.0;
-        }
-        if state.is_scancode_pressed(Scancode::W) {
-            self.down_speed -= 250.0;
-        }
-    }
-
-    pub fn get_right_speed(&self) -> f32 {
-        self.right_speed
-    }
-
-    pub fn get_down_speed(&self) -> f32 {
-        self.down_speed
-    }
 }
 
 impl Actor for Ship {
     fn update_actor(&mut self, delta_time: f32) {
-        let mut position = self.get_position().clone();
-        position.x += self.right_speed * delta_time;
-        position.y += self.down_speed * delta_time;
+        // TODO: Not yet implemented
+    }
 
-        position.x = position.x.clamp(25.0, 500.0);
-        position.y = position.y.clamp(25.0, 743.0);
-
-        self.set_position(position);
+    fn actor_input(&mut self, _key_state: &KeyboardState) {
+        // TODO: Not yet implemented
     }
 
     actor::impl_getters_setters! {}

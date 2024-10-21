@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     components::{
         component::{Component, State as ComponentState},
-        move_component::MoveComponent,
+        move_component::{DefaultMoveComponent, MoveComponent},
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::vector2::Vector2,
@@ -54,7 +54,8 @@ impl Asteroid {
             .set_texture(game.borrow_mut().get_texture("Assets/Asteroid.png"));
 
         // Create a move component, and set a forward speed
-        let move_component = MoveComponent::new(result.clone());
+        let move_component: Rc<RefCell<dyn MoveComponent>> =
+            DefaultMoveComponent::new(result.clone());
         move_component.borrow_mut().set_forward_speed(150.0);
 
         // TODO: add circle component
