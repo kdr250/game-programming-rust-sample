@@ -11,7 +11,7 @@ use sdl2::{
     EventPump, TimerSubsystem,
 };
 
-use crate::{entity_manager::EntityManager, texture_manager::TextureManager};
+use crate::system::{entity_manager::EntityManager, texture_manager::TextureManager};
 
 pub struct Game {
     canvas: Canvas<Window>,

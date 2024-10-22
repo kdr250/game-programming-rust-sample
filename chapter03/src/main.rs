@@ -1,9 +1,8 @@
 mod actors;
 mod components;
-mod entity_manager;
 mod game;
 mod math;
-mod texture_manager;
+mod system;
 
 use crate::game::*;
 use anyhow::Result;

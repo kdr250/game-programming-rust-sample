@@ -7,7 +7,7 @@ use crate::{
         ship::Ship,
     },
     math::{random::Random, vector2::Vector2},
-    texture_manager::TextureManager,
+    system::texture_manager::TextureManager,
 };
 
 pub struct EntityManager {

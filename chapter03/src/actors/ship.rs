@@ -10,9 +10,8 @@ use crate::{
         input_component::InputComponent,
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
-    entity_manager::EntityManager,
     math::vector2::Vector2,
-    texture_manager::TextureManager,
+    system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
 use super::laser::Laser;

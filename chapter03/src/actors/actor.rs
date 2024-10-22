@@ -2,9 +2,8 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     components::component::{Component, State as ComponentState},
-    entity_manager::EntityManager,
     math::vector2::Vector2,
-    texture_manager::TextureManager,
+    system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -259,9 +258,8 @@ pub mod test {
     use crate::{
         assert_near_eq,
         components::component::{tests::TestComponent, Component, State as ComponentState},
-        entity_manager::EntityManager,
         math::{self, vector2::Vector2},
-        texture_manager::TextureManager,
+        system::{entity_manager::EntityManager, texture_manager::TextureManager},
     };
 
     use super::{Actor, State};
