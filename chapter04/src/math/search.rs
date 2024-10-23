@@ -126,23 +126,25 @@ mod tests {
         }
 
         let mut map = NodeToParentMap::new();
-        let found = bfs(g.nodes[9].clone(), g.nodes[0].clone(), &mut map);
+        let found = bfs(g.nodes[0].clone(), g.nodes[9].clone(), &mut map);
 
         assert!(found, "BFS not found...");
 
-        let mut answer = String::new();
+        let mut answers = vec![];
 
-        answer += &g.nodes[0].borrow().to_string();
+        answers.push(g.nodes[9].borrow().to_string());
 
-        let mut path = map[&g.nodes[0].borrow().id].clone();
-        while path != g.nodes[9] {
-            answer += &path.borrow().to_string();
+        let mut path = map[&g.nodes[9].borrow().id].clone();
+        while path != g.nodes[0] {
+            answers.push(path.borrow().to_string());
             let id = path.borrow().id;
             path = map[&id].clone();
         }
 
-        answer += &path.borrow().to_string();
+        answers.push(path.borrow().to_string());
 
-        assert_eq!(answer.as_str(), "[0,0][0,1][0,2][0,3][0,4][1,4]");
+        let actual = answers.into_iter().rev().collect::<Vec<String>>().join("");
+
+        assert_eq!("[0,0][1,0][1,1][1,2][1,3][1,4]", actual);
     }
 }
