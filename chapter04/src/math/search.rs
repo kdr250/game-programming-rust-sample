@@ -1,3 +1,4 @@
+use core::f32;
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
@@ -315,19 +316,146 @@ pub fn a_ster(
 //================
 // tick-takc-toe
 //================
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SquareState {
     Empty,
     X,
     O,
 }
 
+#[derive(Debug, Clone)]
 pub struct GameState {
     board: [[SquareState; 3]; 3],
 }
 
+#[derive(Debug, Clone)]
 pub struct GTNode {
-    children: Vec<GTNode>,
+    children: Vec<Rc<RefCell<GTNode>>>,
     state: GameState,
+}
+
+fn generate_states(root: Rc<RefCell<GTNode>>, x_player: bool) {
+    for i in 0..3 {
+        for j in 0..3 {
+            let mut next = None;
+            if root.borrow().state.board[i][j] == SquareState::Empty {
+                let mut game_state = root.borrow().state.clone();
+                game_state.board[i][j] = if x_player {
+                    SquareState::X
+                } else {
+                    SquareState::O
+                };
+                let node = GTNode {
+                    children: vec![],
+                    state: game_state,
+                };
+                let node_ref = Rc::new(RefCell::new(node));
+                root.borrow_mut().children.push(node_ref.clone());
+                next = Some((node_ref, !x_player));
+            }
+
+            if let Some((next_node, next_x_player)) = next {
+                generate_states(next_node, next_x_player);
+            }
+        }
+    }
+}
+
+fn get_score(state: &GameState) -> f32 {
+    // Are any of the rows the same?
+    for i in 0..3 {
+        let mut same = true;
+        let v = &state.board[i][0];
+
+        for j in 1..3 {
+            if state.board[i][j] != *v {
+                same = false;
+            }
+        }
+
+        if same {
+            match *v {
+                SquareState::X => return 1.0,
+                _ => return -1.0,
+            };
+        }
+    }
+
+    // Are any of the columns the same?
+    for j in 0..3 {
+        let mut same = true;
+        let v = &state.board[0][j];
+
+        for i in 1..3 {
+            if state.board[i][j] != *v {
+                same = false;
+            }
+        }
+
+        if same {
+            match *v {
+                SquareState::X => return 1.0,
+                _ => return -1.0,
+            }
+        }
+    }
+
+    // What about diagonals?
+    let is_diagonals_same = ((state.board[0][0] == state.board[1][1])
+        && (state.board[1][1] == state.board[2][2]))
+        || ((state.board[2][0] == state.board[1][1]) && (state.board[1][1] == state.board[0][2]));
+
+    if is_diagonals_same {
+        match state.board[1][1] {
+            SquareState::X => return 1.0,
+            _ => return -1.0,
+        }
+    }
+
+    // We tied
+    0.0
+}
+
+fn max_player(node: Rc<RefCell<GTNode>>) -> f32 {
+    // If this is a leaf, return score
+    if node.borrow().children.is_empty() {
+        return get_score(&node.borrow().state);
+    }
+
+    // Find the subtree with the maximum value
+    let mut max_value = f32::NEG_INFINITY;
+    for child in &node.borrow().children {
+        max_value = max_value.max(min_player(child.clone()));
+    }
+    max_value
+}
+
+fn min_player(node: Rc<RefCell<GTNode>>) -> f32 {
+    // If this is a leaf, return score
+    if node.borrow().children.is_empty() {
+        return get_score(&node.borrow().state);
+    }
+
+    // Find the subtree with the minimum value
+    let mut min_value = f32::INFINITY;
+    for child in &node.borrow().children {
+        min_value = min_value.min(max_player(child.clone()));
+    }
+    min_value
+}
+
+pub fn minimax_decide(root: Rc<RefCell<GTNode>>) -> Option<Rc<RefCell<GTNode>>> {
+    // Find the subtree with the maximum value, and save the choice
+    let mut choice = None;
+    let mut max_value = f32::NEG_INFINITY;
+    for child in &root.borrow().children {
+        let v = min_player(child.clone());
+        if v > max_value {
+            max_value = v;
+            choice = Some(child.clone());
+        }
+    }
+    choice
 }
 
 #[cfg(test)]
@@ -337,8 +465,8 @@ mod tests {
     use crate::math::search::{a_ster, AStarMap};
 
     use super::{
-        bfs, gbfs, GBFSMap, Graph, GraphNode, NodeToParentMap, WeightedEdge, WeightedGraph,
-        WeightedGraphNode,
+        bfs, gbfs, generate_states, minimax_decide, GBFSMap, GTNode, GameState, Graph, GraphNode,
+        NodeToParentMap, SquareState, WeightedEdge, WeightedGraph, WeightedGraphNode,
     };
 
     #[test]
@@ -489,5 +617,44 @@ mod tests {
         let found = a_ster(g.nodes[0].clone(), g.nodes[9].clone(), &mut map);
 
         assert!(found, "AStar not found...");
+    }
+
+    #[test]
+    fn test_minimax() {
+        //  O |   | X
+        // -----------
+        //  X | O | O
+        // -----------
+        //  X |   |
+        let board = [
+            [SquareState::O, SquareState::Empty, SquareState::X],
+            [SquareState::X, SquareState::O, SquareState::O],
+            [SquareState::X, SquareState::Empty, SquareState::Empty],
+        ];
+
+        let state = GameState { board };
+        let root = GTNode {
+            children: vec![],
+            state,
+        };
+        let root_ref = Rc::new(RefCell::new(root));
+
+        generate_states(root_ref.clone(), true);
+
+        let choice = minimax_decide(root_ref).unwrap();
+        let actual = &choice.borrow().state.board;
+
+        //  O |   | X
+        // -----------
+        //  X | O | O
+        // -----------
+        //  X |   | X
+        let expectd = &[
+            [SquareState::O, SquareState::Empty, SquareState::X],
+            [SquareState::X, SquareState::O, SquareState::O],
+            [SquareState::X, SquareState::Empty, SquareState::X],
+        ];
+
+        assert_eq!(expectd, actual);
     }
 }
