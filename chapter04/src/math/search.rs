@@ -458,11 +458,61 @@ pub fn minimax_decide(root: Rc<RefCell<GTNode>>) -> Option<Rc<RefCell<GTNode>>> 
     choice
 }
 
+fn alpha_beta_max(node: Rc<RefCell<GTNode>>, mut alpha: f32, beta: f32) -> f32 {
+    // If this is a leaf, return score
+    if node.borrow().children.is_empty() {
+        return get_score(&node.borrow().state);
+    }
+
+    // Find the subtree with the maximum value
+    let mut max_value = f32::NEG_INFINITY;
+    for child in &node.borrow().children {
+        max_value = max_value.max(alpha_beta_min(child.clone(), alpha, beta));
+        if max_value >= beta {
+            return max_value; // Beta prune
+        }
+        alpha = max_value.max(alpha);
+    }
+    max_value
+}
+
+fn alpha_beta_min(node: Rc<RefCell<GTNode>>, alpha: f32, mut beta: f32) -> f32 {
+    // If this is a leaf, return score
+    if node.borrow().children.is_empty() {
+        return get_score(&node.borrow().state);
+    }
+
+    // Find the subtree with the minimum value
+    let mut min_value = f32::INFINITY;
+    for child in &node.borrow().children {
+        min_value = min_value.min(alpha_beta_max(child.clone(), alpha, beta));
+        if min_value <= alpha {
+            return min_value; // Alpha prune
+        }
+        beta = min_value.min(beta);
+    }
+    min_value
+}
+
+pub fn alpha_beta_decide(root: Rc<RefCell<GTNode>>) -> Option<Rc<RefCell<GTNode>>> {
+    let mut choice = None;
+    let mut max_value = f32::NEG_INFINITY;
+    let beta = f32::INFINITY;
+    for child in &root.borrow().children {
+        let v = alpha_beta_min(child.clone(), max_value, beta);
+        if v > max_value {
+            max_value = v;
+            choice = Some(child.clone());
+        }
+    }
+    choice
+}
+
 #[cfg(test)]
 mod tests {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::math::search::{a_ster, AStarMap};
+    use crate::math::search::{a_ster, alpha_beta_decide, AStarMap};
 
     use super::{
         bfs, gbfs, generate_states, minimax_decide, GBFSMap, GTNode, GameState, Graph, GraphNode,
@@ -642,6 +692,45 @@ mod tests {
         generate_states(root_ref.clone(), true);
 
         let choice = minimax_decide(root_ref).unwrap();
+        let actual = &choice.borrow().state.board;
+
+        //  O |   | X
+        // -----------
+        //  X | O | O
+        // -----------
+        //  X |   | X
+        let expectd = &[
+            [SquareState::O, SquareState::Empty, SquareState::X],
+            [SquareState::X, SquareState::O, SquareState::O],
+            [SquareState::X, SquareState::Empty, SquareState::X],
+        ];
+
+        assert_eq!(expectd, actual);
+    }
+
+    #[test]
+    fn test_alpha_beta_pruning() {
+        //  O |   | X
+        // -----------
+        //  X | O | O
+        // -----------
+        //  X |   |
+        let board = [
+            [SquareState::O, SquareState::Empty, SquareState::X],
+            [SquareState::X, SquareState::O, SquareState::O],
+            [SquareState::X, SquareState::Empty, SquareState::Empty],
+        ];
+
+        let state = GameState { board };
+        let root = GTNode {
+            children: vec![],
+            state,
+        };
+        let root_ref = Rc::new(RefCell::new(root));
+
+        generate_states(root_ref.clone(), true);
+
+        let choice = alpha_beta_decide(root_ref).unwrap();
         let actual = &choice.borrow().state.board;
 
         //  O |   | X
