@@ -39,46 +39,41 @@ macro_rules! impl_getters_setters {
 
 pub(crate) use impl_getters_setters;
 
-macro_rules! impl_update {
-    () => {
-        fn update(
-            &mut self,
-            delta_time: f32,
-            owner_info: &(Vector2, f32, Vector2),
-        ) -> (Option<Vector2>, Option<f32>) {
-            let mut result = (None, None);
+pub fn update_move_component(
+    move_component: &dyn MoveComponent,
+    delta_time: f32,
+    owner_info: &(Vector2, f32, Vector2),
+    mut result: (Option<Vector2>, Option<f32>),
+) -> (Option<Vector2>, Option<f32>) {
+    if !math::basic::near_zero(move_component.get_angular_speed(), 0.001) {
+        let temp_rotation = result.1.unwrap_or(0.0);
+        let mut rotation = owner_info.1 + temp_rotation;
+        rotation += move_component.get_angular_speed() * delta_time;
+        result.1 = Some(rotation);
+    }
 
-            if !math::basic::near_zero(self.angular_speed, 0.001) {
-                let mut rotation = owner_info.1;
-                rotation += self.angular_speed * delta_time;
-                result.1 = Some(rotation);
-            }
+    if !math::basic::near_zero(move_component.get_forward_speed(), 0.001) {
+        let temp_position = result.0.clone().unwrap_or(Vector2::ZERO);
+        let mut position = owner_info.0.clone() + temp_position;
+        position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
 
-            if !math::basic::near_zero(self.forward_speed, 0.001) {
-                let mut position = owner_info.0.clone();
-                position += owner_info.2.clone() * self.forward_speed * delta_time;
-
-                if position.x < 0.0 {
-                    position.x = 1022.0;
-                } else if position.x > 1024.0 {
-                    position.x = 2.0;
-                }
-
-                if position.y < 0.0 {
-                    position.y = 766.0;
-                } else if position.y > 768.0 {
-                    position.y = 2.0;
-                }
-
-                result.0 = Some(position);
-            }
-
-            result
+        if position.x < 0.0 {
+            position.x = 1022.0;
+        } else if position.x > 1024.0 {
+            position.x = 2.0;
         }
-    };
-}
 
-pub(crate) use impl_update;
+        if position.y < 0.0 {
+            position.y = 766.0;
+        } else if position.y > 768.0 {
+            position.y = 2.0;
+        }
+
+        result.0 = Some(position);
+    }
+
+    result
+}
 
 pub struct DefaultMoveComponent {
     id: u32,
@@ -114,7 +109,13 @@ impl MoveComponent for DefaultMoveComponent {
 }
 
 impl Component for DefaultMoveComponent {
-    impl_update! {}
+    fn update(
+        &mut self,
+        delta_time: f32,
+        owner_info: &(Vector2, f32, Vector2),
+    ) -> (Option<Vector2>, Option<f32>) {
+        update_move_component(self, delta_time, owner_info, (None, None))
+    }
 
     component::impl_getters_setters! {}
 }
