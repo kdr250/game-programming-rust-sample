@@ -211,9 +211,112 @@ pub fn gbfs(
     found
 }
 
+pub struct AStartScratch {
+    parent_edge: Option<Rc<RefCell<WeightedEdge>>>,
+    heuristic: f32,
+    actual_from_start: f32,
+    in_open_set: bool,
+    in_closed_set: bool,
+}
+
+impl AStartScratch {
+    pub fn new() -> Self {
+        Self {
+            parent_edge: None,
+            heuristic: 0.0,
+            actual_from_start: 0.0,
+            in_open_set: false,
+            in_closed_set: false,
+        }
+    }
+}
+
+type AStarMap = HashMap<u32, Rc<RefCell<AStartScratch>>>;
+
+pub fn a_ster(
+    start: Rc<RefCell<WeightedGraphNode>>,
+    goal: Rc<RefCell<WeightedGraphNode>>,
+    out_map: &mut AStarMap,
+) -> bool {
+    let mut open_set = vec![];
+
+    let mut current = start;
+    let mut scratch = AStartScratch::new();
+    scratch.in_closed_set = true;
+    out_map.insert(current.borrow().id, Rc::new(RefCell::new(scratch)));
+
+    let mut is_first = true;
+    while is_first || current.borrow().id != goal.borrow().id {
+        for edge in current.borrow().edges.clone() {
+            let neighbor = edge.borrow().to.clone();
+            let data = out_map
+                .entry(neighbor.borrow().id)
+                .or_insert_with(|| Rc::new(RefCell::new(AStartScratch::new())))
+                .clone();
+            let mut borrowed_data = data.borrow_mut();
+            if !borrowed_data.in_closed_set {
+                borrowed_data.parent_edge = Some(edge.clone());
+                if !borrowed_data.in_open_set {
+                    borrowed_data.heuristic = compute_heuristic(&neighbor, &goal);
+                    borrowed_data.actual_from_start =
+                        out_map[&current.borrow().id].borrow().actual_from_start
+                            + edge.borrow().weight;
+                    borrowed_data.in_open_set = true;
+                    open_set.push(neighbor);
+                } else {
+                    // Compute what new actual cost is if current becomes parent
+                    let new_g = out_map[&current.borrow().id].borrow().actual_from_start
+                        + edge.borrow().weight;
+                    if new_g < borrowed_data.actual_from_start {
+                        borrowed_data.parent_edge = Some(edge.clone());
+                        borrowed_data.actual_from_start = new_g;
+                    }
+                }
+            }
+        }
+
+        if open_set.is_empty() {
+            break;
+        }
+
+        let cloned_open_set = open_set.clone();
+        let result = cloned_open_set
+            .into_iter()
+            .min_by(|a, b| {
+                let a_value = out_map
+                    .get(&a.borrow().id)
+                    .and_then(|s| Some(s.borrow().heuristic + s.borrow().actual_from_start))
+                    .unwrap_or(0.0);
+                let b_value = out_map
+                    .get(&b.borrow().id)
+                    .and_then(|s| Some(s.borrow().heuristic + s.borrow().actual_from_start))
+                    .unwrap_or(0.0);
+                a_value.partial_cmp(&b_value).unwrap()
+            })
+            .unwrap();
+
+        current = result.clone();
+        open_set.retain(|node| node.borrow().id != result.borrow().id);
+        let current_id = current.borrow().id;
+        let update_scratch = out_map
+            .entry(current_id)
+            .or_insert_with(|| Rc::new(RefCell::new(AStartScratch::new())))
+            .clone();
+        update_scratch.borrow_mut().in_open_set = false;
+        update_scratch.borrow_mut().in_closed_set = true;
+        is_first = false;
+    }
+
+    let found = current.borrow().id == goal.borrow().id;
+
+    found
+}
+
 #[cfg(test)]
 mod tests {
     use std::{cell::RefCell, rc::Rc};
+
+    use crate::math::search::{a_ster, AStarMap};
 
     use super::{
         bfs, gbfs, GBFSMap, Graph, GraphNode, NodeToParentMap, WeightedEdge, WeightedGraph,
@@ -321,5 +424,52 @@ mod tests {
         let found = gbfs(g.nodes[0].clone(), g.nodes[9].clone(), &mut map);
 
         assert!(found, "GBFS not found...");
+    }
+
+    #[test]
+    fn test_a_star() {
+        let mut g = WeightedGraph { nodes: vec![] };
+
+        for _ in 0..5 {
+            for _ in 0..5 {
+                let node = Rc::new(RefCell::new(WeightedGraphNode::new()));
+                g.nodes.push(node);
+            }
+        }
+
+        for i in 0..5_usize {
+            for j in 0..5_usize {
+                let node = g.nodes[i * 5 + j].clone();
+                if i > 0 {
+                    let from = node.clone();
+                    let to = g.nodes[(i - 1) * 5 + j].clone();
+                    let e = WeightedEdge::new(from, to, 1.0);
+                    node.borrow_mut().edges.push(Rc::new(RefCell::new(e)));
+                }
+                if i < 4 {
+                    let from = node.clone();
+                    let to = g.nodes[(i + 1) * 5 + j].clone();
+                    let e = WeightedEdge::new(from, to, 1.0);
+                    node.borrow_mut().edges.push(Rc::new(RefCell::new(e)));
+                }
+                if j > 0 {
+                    let from = node.clone();
+                    let to = g.nodes[i * 5 + j - 1].clone();
+                    let e = WeightedEdge::new(from, to, 1.0);
+                    node.borrow_mut().edges.push(Rc::new(RefCell::new(e)));
+                }
+                if j < 4 {
+                    let from = node.clone();
+                    let to = g.nodes[i * 5 + j + 1].clone();
+                    let e = WeightedEdge::new(from, to, 1.0);
+                    node.borrow_mut().edges.push(Rc::new(RefCell::new(e)));
+                }
+            }
+        }
+
+        let mut map = AStarMap::new();
+        let found = a_ster(g.nodes[0].clone(), g.nodes[9].clone(), &mut map);
+
+        assert!(found, "AStar not found...");
     }
 }
