@@ -312,6 +312,24 @@ pub fn a_ster(
     found
 }
 
+//================
+// tick-takc-toe
+//================
+pub enum SquareState {
+    Empty,
+    X,
+    O,
+}
+
+pub struct GameState {
+    board: [[SquareState; 3]; 3],
+}
+
+pub struct GTNode {
+    children: Vec<GTNode>,
+    state: GameState,
+}
+
 #[cfg(test)]
 mod tests {
     use std::{cell::RefCell, rc::Rc};
