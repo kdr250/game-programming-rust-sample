@@ -104,11 +104,9 @@ pub fn bfs(
 
         for node in current.borrow().adjacent.clone() {
             let parent = out_map.get(&node.borrow().id);
-            if let None = parent {
-                if node != start {
-                    out_map.insert(node.borrow().id, current.clone());
-                    q.push_back(node);
-                }
+            if parent.is_none() && node != start {
+                out_map.insert(node.borrow().id, current.clone());
+                q.push_back(node);
             }
         }
     }
@@ -161,13 +159,10 @@ pub fn gbfs(
     while is_first || current.borrow().id != goal.borrow().id {
         for edge in current.borrow().edges.clone() {
             let id = edge.borrow().to.borrow().id;
-            let data = if let Some(scratch) = out_map.get(&id) {
-                scratch.clone()
-            } else {
-                let scratch = Rc::new(RefCell::new(GBFSScratch::new()));
-                out_map.insert(id, scratch.clone());
-                scratch
-            };
+            let data = out_map
+                .entry(id)
+                .or_insert_with(|| Rc::new(RefCell::new(GBFSScratch::new())))
+                .clone();
             let mut borrowed_data = data.borrow_mut();
             if !borrowed_data.in_closed_set {
                 borrowed_data.parent_edge = Some(edge.clone());
@@ -187,18 +182,14 @@ pub fn gbfs(
         let result = cloned_open_set
             .into_iter()
             .min_by(|a, b| {
-                let aa = out_map.get(&a.borrow().id);
-                let a_heuristic = if let Some(scratch) = aa {
-                    scratch.borrow().heuristic
-                } else {
-                    0.0
-                };
-                let bb = out_map.get(&b.borrow().id);
-                let b_heuristic = if let Some(scratch) = bb {
-                    scratch.borrow().heuristic
-                } else {
-                    0.0
-                };
+                let a_heuristic = out_map
+                    .get(&a.borrow().id)
+                    .and_then(|scratch| Some(scratch.borrow().heuristic))
+                    .unwrap_or(0.0);
+                let b_heuristic = out_map
+                    .get(&b.borrow().id)
+                    .and_then(|scratch| Some(scratch.borrow().heuristic))
+                    .unwrap_or(0.0);
                 a_heuristic.partial_cmp(&b_heuristic).unwrap()
             })
             .unwrap();
@@ -206,13 +197,10 @@ pub fn gbfs(
         current = result.clone();
         open_set.retain(|node| node.borrow().id != result.borrow().id);
         let current_id = current.borrow().id;
-        let update_scratch = if let Some(scratch) = out_map.get(&current_id) {
-            scratch.clone()
-        } else {
-            let scratch = Rc::new(RefCell::new(GBFSScratch::new()));
-            out_map.insert(current_id, scratch.clone());
-            scratch
-        };
+        let update_scratch = out_map
+            .entry(current_id)
+            .or_insert_with(|| Rc::new(RefCell::new(GBFSScratch::new())))
+            .clone();
         update_scratch.borrow_mut().in_open_set = false;
         update_scratch.borrow_mut().in_closed_set = true;
         is_first = false;
