@@ -1,10 +1,22 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use crate::{
     components::component::{Component, State as ComponentState},
     math::vector2::Vector2,
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
+
+static ID: AtomicU32 = AtomicU32::new(0);
+
+pub fn generate_id() -> u32 {
+    let id = ID.load(Ordering::SeqCst);
+    ID.fetch_add(1, Ordering::SeqCst);
+    id
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum State {
@@ -65,6 +77,8 @@ pub trait Actor {
     fn actor_input(&mut self, _key_state: &KeyboardState) {}
 
     /// Getters/setters
+    fn get_id(&self) -> u32;
+
     fn get_forward(&self) -> Vector2;
 
     fn get_position(&self) -> &Vector2;
@@ -99,6 +113,10 @@ pub trait Actor {
 
 macro_rules! impl_getters_setters {
     () => {
+        fn get_id(&self) -> u32 {
+            self.id
+        }
+
         fn get_forward(&self) -> Vector2 {
             Vector2::new(self.rotation.cos(), -self.rotation.sin())
         }
@@ -207,6 +225,7 @@ pub(crate) use impl_drop;
 use sdl2::keyboard::KeyboardState;
 
 pub struct DefaultActor {
+    id: u32,
     state: State,
     position: Vector2,
     scale: f32,
@@ -222,6 +241,7 @@ impl DefaultActor {
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
+            id: generate_id(),
             state: State::Active,
             position: Vector2::ZERO,
             scale: 1.0,
@@ -262,9 +282,10 @@ pub mod test {
         system::{entity_manager::EntityManager, texture_manager::TextureManager},
     };
 
-    use super::{Actor, State};
+    use super::{generate_id, Actor, State};
 
     pub struct TestActor {
+        id: u32,
         state: State,
         position: Vector2,
         scale: f32,
@@ -275,6 +296,7 @@ pub mod test {
     impl TestActor {
         pub fn new() -> Self {
             Self {
+                id: generate_id(),
                 state: State::Active,
                 position: Vector2::ZERO,
                 scale: 1.0,

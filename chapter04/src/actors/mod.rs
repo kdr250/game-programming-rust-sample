@@ -1,5 +1,6 @@
 pub mod actor;
-pub mod asteroid;
-pub mod laser;
-pub mod ship;
+pub mod bullet;
+pub mod enemy;
+pub mod grid;
 pub mod tile;
+pub mod tower;

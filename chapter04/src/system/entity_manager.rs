@@ -3,8 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     actors::{
         actor::{self, Actor, State as ActorState},
-        asteroid::Asteroid,
-        ship::Ship,
+        enemy::Enemy,
+        grid::Grid,
     },
     math::{random::Random, vector2::Vector2},
     system::texture_manager::TextureManager,
@@ -14,8 +14,8 @@ pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
     pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
     updating_actors: bool,
-    ship: Option<Rc<RefCell<Ship>>>,
-    asteroids: Vec<Rc<RefCell<Asteroid>>>,
+    enemies: Vec<Rc<RefCell<Enemy>>>,
+    grid: Option<Rc<RefCell<Grid>>>,
     random: Random,
 }
 
@@ -25,12 +25,14 @@ impl EntityManager {
             actors: vec![],
             pending_actors: vec![],
             updating_actors: false,
-            ship: None,
-            asteroids: vec![],
+            enemies: vec![],
+            grid: None,
             random: Random::new(),
         };
 
-        Rc::new(RefCell::new(this))
+        let result = Rc::new(RefCell::new(this));
+
+        result
     }
 
     pub fn add_actor(&mut self, actor: Rc<RefCell<dyn Actor>>) {
@@ -39,6 +41,10 @@ impl EntityManager {
         } else {
             self.actors.push(actor);
         }
+    }
+
+    pub fn add_enemy(&mut self, enemy: Rc<RefCell<Enemy>>) {
+        self.enemies.push(enemy);
     }
 
     pub fn flush_actors(&mut self) {
@@ -56,11 +62,11 @@ impl EntityManager {
             }
         });
 
-        self.asteroids.retain(|asteroid| {
-            if *asteroid.borrow().get_state() != ActorState::Dead {
+        self.enemies.retain(|enemy| {
+            if *enemy.borrow().get_state() != ActorState::Dead {
                 true
             } else {
-                actor::remove_actor(asteroid.clone());
+                actor::remove_actor(enemy.clone());
                 false
             }
         });
@@ -70,33 +76,42 @@ impl EntityManager {
         this: Rc<RefCell<EntityManager>>,
         texture_manager: Rc<RefCell<TextureManager>>,
     ) {
-        let ship = Ship::new(texture_manager.clone(), this.clone());
-        {
-            let mut borrowed_ship = ship.borrow_mut();
-            borrowed_ship.set_position(Vector2::new(100.0, 384.0));
-            borrowed_ship.set_scale(1.5);
-        }
-        this.borrow_mut().ship = Some(ship);
-
-        // Create asteroids
-        const NUM_ASTEROIDS: i32 = 20;
-        let asteroids: Vec<Rc<RefCell<Asteroid>>> = (0..NUM_ASTEROIDS)
-            .into_iter()
-            .map(|_| Asteroid::new(texture_manager.clone(), this.clone()))
-            .collect();
-        this.borrow_mut().set_asteroids(asteroids);
+        let grid = Grid::new(texture_manager, this.clone());
+        this.borrow_mut().grid = Some(grid);
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
         &self.actors
     }
 
-    pub fn get_asteroids(&self) -> &Vec<Rc<RefCell<Asteroid>>> {
-        &self.asteroids
+    pub fn get_enemies(&self) -> &Vec<Rc<RefCell<Enemy>>> {
+        &self.enemies
     }
 
-    pub fn set_asteroids(&mut self, asteroids: Vec<Rc<RefCell<Asteroid>>>) {
-        self.asteroids = asteroids;
+    pub fn get_nearest_enemy(&self, position: &Vector2) -> Option<Rc<RefCell<Enemy>>> {
+        if self.enemies.is_empty() {
+            return None;
+        }
+
+        let mut best = self.enemies[0].clone();
+
+        let mut best_dist_sq =
+            (position.clone() - best.borrow().get_position().clone()).length_sqrt();
+
+        for i in 1..self.enemies.len() {
+            let new_dist_sq =
+                (position.clone() - self.enemies[i].borrow().get_position().clone()).length_sqrt();
+            if new_dist_sq < best_dist_sq {
+                best_dist_sq = new_dist_sq;
+                best = self.enemies[i].clone();
+            }
+        }
+
+        Some(best)
+    }
+
+    pub fn get_grid(&self) -> Rc<RefCell<Grid>> {
+        self.grid.clone().unwrap()
     }
 
     pub fn get_random(&mut self) -> &mut Random {

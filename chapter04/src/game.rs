@@ -5,6 +5,7 @@ use sdl2::{
     event::Event,
     image::InitFlag,
     keyboard::{KeyboardState, Scancode},
+    mouse::MouseButton,
     pixels::Color,
     render::Canvas,
     video::Window,
@@ -87,11 +88,24 @@ impl Game {
             self.is_running = false;
         }
 
+        if state.is_scancode_pressed(Scancode::B) {
+            let grid = self.entity_manager.borrow().get_grid();
+            grid.borrow_mut().build_tower();
+        }
+
+        // process mouse
+        let button = self.event_pump.mouse_state();
+        if button.is_mouse_button_pressed(MouseButton::Left) {
+            let grid = self.entity_manager.borrow().get_grid();
+            grid.borrow_mut().process_click(button.x(), button.y());
+        }
+
         self.entity_manager.borrow_mut().set_updating_actors(true);
         let actors = self.entity_manager.borrow().get_actors().clone();
         for actor in actors {
             actor.borrow_mut().process_input(&state);
         }
+        self.entity_manager.borrow_mut().set_updating_actors(false);
     }
 
     fn update_game(&mut self) {
@@ -115,7 +129,7 @@ impl Game {
     }
 
     fn generate_output(&mut self) {
-        self.canvas.set_draw_color(Color::RGBA(0, 0, 255, 255));
+        self.canvas.set_draw_color(Color::RGBA(34, 139, 34, 255));
         self.canvas.clear();
 
         // Draw all sprite component

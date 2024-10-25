@@ -11,9 +11,13 @@ use crate::{
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
-use super::actor::{self, Actor, State};
+use super::{
+    actor::{self, generate_id, Actor, State},
+    enemy::Enemy,
+};
 
-pub struct Laser {
+pub struct Bullet {
+    id: u32,
     state: State,
     position: Vector2,
     scale: f32,
@@ -22,15 +26,16 @@ pub struct Laser {
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     circle: Option<Rc<RefCell<CircleComponent>>>,
-    death_timer: f32,
+    live_time: f32,
 }
 
-impl Laser {
+impl Bullet {
     pub fn new(
         texture_manager: Rc<RefCell<TextureManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
+            id: generate_id(),
             state: State::Active,
             position: Vector2::ZERO,
             scale: 1.0,
@@ -39,25 +44,22 @@ impl Laser {
             texture_manager: texture_manager.clone(),
             entity_manager: entity_manager.clone(),
             circle: None,
-            death_timer: 1.0,
+            live_time: 1.0,
         };
 
         let result = Rc::new(RefCell::new(this));
 
-        // Create a sprite component
-        let sprite_component: Rc<RefCell<dyn SpriteComponent>> =
-            DefaultSpriteComponent::new(result.clone(), 100);
-        let texture = texture_manager.borrow_mut().get_texture("Assets/Laser.png");
+        let sprite_component = DefaultSpriteComponent::new(result.clone(), 100);
+        let texture = texture_manager
+            .borrow_mut()
+            .get_texture("Assets/Projectile.png");
         sprite_component.borrow_mut().set_texture(texture);
 
-        // Create a move component, and set a forward speed
-        let move_component: Rc<RefCell<dyn MoveComponent>> =
-            DefaultMoveComponent::new(result.clone());
-        move_component.borrow_mut().set_forward_speed(800.0);
+        let move_component = DefaultMoveComponent::new(result.clone());
+        move_component.borrow_mut().set_forward_speed(400.0);
 
-        // Create a circle component (for collision)
         let circle = CircleComponent::new(result.clone());
-        circle.borrow_mut().set_radius(11.0);
+        circle.borrow_mut().set_radius(5.0);
         result.borrow_mut().circle = Some(circle);
 
         entity_manager.borrow_mut().add_actor(result.clone());
@@ -66,28 +68,24 @@ impl Laser {
     }
 }
 
-impl Actor for Laser {
+impl Actor for Bullet {
     fn update_actor(&mut self, delta_time: f32) {
-        self.death_timer -= delta_time;
-        if self.death_timer <= 0.0 {
-            self.set_state(State::Dead);
-            return;
-        }
-
-        let mut is_dead = false;
-        let binding = self.circle.clone().unwrap();
-        let circle = binding.borrow();
-
-        for asteroid in self.entity_manager.borrow().get_asteroids() {
-            let mut borrowed_asteroid = asteroid.borrow_mut();
-            if circle.intersect(borrowed_asteroid.get_circle()) {
-                is_dead = true;
-                borrowed_asteroid.set_state(State::Dead);
+        let mut result = None;
+        let circle = self.circle.clone().unwrap();
+        for enemy in self.entity_manager.borrow().get_enemies() {
+            if circle.borrow().intersect(enemy.borrow().get_circle()) {
+                result = Some(enemy.clone());
                 break;
             }
         }
 
-        if is_dead {
+        if let Some(enemy) = result {
+            enemy.borrow_mut().set_state(State::Dead);
+            self.set_state(State::Dead);
+        }
+
+        self.live_time -= delta_time;
+        if self.live_time <= 0.0 {
             self.set_state(State::Dead);
         }
     }
@@ -97,6 +95,6 @@ impl Actor for Laser {
     actor::impl_component_operation! {}
 }
 
-impl Drop for Laser {
+impl Drop for Bullet {
     actor::impl_drop! {}
 }

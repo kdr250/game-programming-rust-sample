@@ -3,13 +3,13 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     components::{
         component::{Component, State as ComponentState},
-        sprite_component::DefaultSpriteComponent,
+        sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::vector2::Vector2,
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
-use super::actor::{self, Actor, State};
+use super::actor::{self, generate_id, Actor, State};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TileState {
@@ -20,6 +20,7 @@ pub enum TileState {
 }
 
 pub struct Tile {
+    id: u32,
     state: State,
     position: Vector2,
     scale: f32,
@@ -28,17 +29,17 @@ pub struct Tile {
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     // for path finding
-    adjacent: Vec<Rc<RefCell<Tile>>>,
-    parent: Option<Rc<RefCell<Tile>>>,
-    f: f32,
-    g: f32,
-    h: f32,
-    in_open_set: bool,
-    in_closed_set: bool,
-    blocked: bool,
+    pub adjacent: Vec<Rc<RefCell<Tile>>>,
+    pub parent: Option<Rc<RefCell<Tile>>>,
+    pub f: f32,
+    pub g: f32,
+    pub h: f32,
+    pub in_open_set: bool,
+    pub in_closed_set: bool,
+    pub blocked: bool,
     sprite: Option<Rc<RefCell<DefaultSpriteComponent>>>,
-    tile_state: TileState,
-    selected: bool,
+    pub tile_state: TileState,
+    pub selected: bool,
 }
 
 impl Tile {
@@ -46,7 +47,8 @@ impl Tile {
         texture_manager: Rc<RefCell<TextureManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
-        let mut this = Self {
+        let this = Self {
+            id: generate_id(),
             state: State::Active,
             position: Vector2::ZERO,
             scale: 1.0,
@@ -69,14 +71,20 @@ impl Tile {
 
         let result = Rc::new(RefCell::new(this));
         result.borrow_mut().sprite = Some(DefaultSpriteComponent::new(result.clone(), 100));
+        result.borrow_mut().update_texture();
 
         entity_manager.borrow_mut().add_actor(result.clone());
 
         result
     }
 
+    pub fn add_adjacent(&mut self, adjacent: Rc<RefCell<Tile>>) {
+        self.adjacent.push(adjacent);
+    }
+
     pub fn set_tile_state(&mut self, state: TileState) {
-        unimplemented!()
+        self.tile_state = state;
+        self.update_texture();
     }
 
     pub fn get_tile_state(&self) -> &TileState {
@@ -84,15 +92,35 @@ impl Tile {
     }
 
     pub fn toggle_select(&mut self) {
-        unimplemented!()
-    }
-
-    pub fn get_parent(&self) -> &Option<Rc<RefCell<Tile>>> {
-        &self.parent
+        self.selected = !self.selected;
+        self.update_texture();
     }
 
     fn update_texture(&mut self) {
-        unimplemented!()
+        let text = match self.tile_state {
+            TileState::Start => "Assets/TileTan.png",
+            TileState::Base => "Assets/TileGreen.png",
+            TileState::Path => {
+                if self.selected {
+                    "Assets/TileGreySelected.png"
+                } else {
+                    "Assets/TileGrey.png"
+                }
+            }
+            TileState::Default => {
+                if self.selected {
+                    "Assets/TileBrownSelected.png"
+                } else {
+                    "Assets/TileBrown.png"
+                }
+            }
+        };
+
+        self.sprite
+            .clone()
+            .unwrap()
+            .borrow_mut()
+            .set_texture(self.texture_manager.borrow_mut().get_texture(&text));
     }
 }
 

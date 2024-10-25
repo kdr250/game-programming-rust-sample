@@ -48,8 +48,13 @@ impl NavComponent {
         angle
     }
 
-    pub fn start_path(start: Rc<RefCell<Tile>>) {
-        unimplemented!()
+    pub fn start_path(&mut self, start: Rc<RefCell<Tile>>) {
+        let binding = start.borrow();
+        let parent = binding.parent.clone();
+        self.next_node = parent.clone();
+        let target_position = parent.clone().unwrap().borrow().get_position().clone();
+        let angle = self.turn_to(&target_position);
+        self.owner.borrow_mut().set_rotation(angle);
     }
 }
 
@@ -67,11 +72,10 @@ impl Component for NavComponent {
 
         let mut result = (None, None);
 
-        let next_node = self.next_node.clone();
-        if let Some(next_node) = next_node {
+        if let Some(next_node) = self.next_node.clone() {
             let diff = owner_info.0.clone() - next_node.borrow().get_position().clone();
-            if math::basic::near_zero(diff.length(), 2.0) {
-                self.next_node = next_node.borrow().get_parent().clone();
+            if math::basic::near_zero(diff.length(), 3.0) {
+                self.next_node = next_node.borrow().parent.clone();
                 let angle = self.turn_to(self.next_node.clone().unwrap().borrow().get_position());
                 result.1 = Some(angle);
             }
