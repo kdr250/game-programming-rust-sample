@@ -1,3 +1,7 @@
+extern crate gl;
+// include the OpenGL type aliases
+use gl::types::*;
+
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
@@ -7,13 +11,14 @@ use sdl2::{
     keyboard::{KeyboardState, Scancode},
     pixels::Color,
     render::Canvas,
-    video::Window,
+    video::{GLContext, Window},
     EventPump, TimerSubsystem,
 };
 
 use crate::system::{entity_manager::EntityManager, texture_manager::TextureManager};
 
 pub struct Game {
+    context: GLContext,
     canvas: Canvas<Window>,
     event_pump: EventPump,
     timer: TimerSubsystem,
@@ -46,6 +51,9 @@ impl Game {
             .opengl()
             .build()?;
 
+        let context = window.gl_create_context().map_err(|e| anyhow!(e))?;
+        gl::load_with(|name| video_system.gl_get_proc_address(name) as *const _);
+
         let canvas = window.into_canvas().build()?;
 
         let event_pump = sdl.event_pump().map_err(|e| anyhow!(e))?;
@@ -60,6 +68,7 @@ impl Game {
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
         let game = Game {
+            context,
             canvas,
             event_pump,
             timer,
