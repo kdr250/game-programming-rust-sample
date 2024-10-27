@@ -30,9 +30,20 @@ impl Game {
 
         let video_system = sdl.video().map_err(|e| anyhow!(e))?;
 
+        let gl_attr = video_system.gl_attr();
+        gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+        gl_attr.set_context_version(3, 3);
+        gl_attr.set_red_size(8);
+        gl_attr.set_green_size(8);
+        gl_attr.set_blue_size(8);
+        gl_attr.set_alpha_size(8);
+        gl_attr.set_double_buffer(true);
+        gl_attr.set_accelerated_visual(true);
+
         let window = video_system
             .window("Game Programming in Rust", 1024, 768)
             .position(100, 100)
+            .opengl()
             .build()?;
 
         let canvas = window.into_canvas().build()?;
