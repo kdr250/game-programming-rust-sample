@@ -135,14 +135,11 @@ impl Game {
     }
 
     fn generate_output(&mut self) {
-        self.canvas.set_draw_color(Color::RGBA(0, 0, 255, 255));
-        self.canvas.clear();
-
-        // Draw all sprite component
-        for sprite in self.texture_manager.borrow().get_sprites() {
-            sprite.borrow().draw(&mut self.canvas);
+        unsafe {
+            gl::ClearColor(0.86, 0.86, 0.86, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        self.canvas.present();
+        self.canvas.window().gl_swap_window();
     }
 }
