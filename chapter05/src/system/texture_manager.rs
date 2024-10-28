@@ -16,8 +16,8 @@ pub struct TextureManager {
     texture_creator: TextureCreator<WindowContext>,
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
-    sprite_verts: VertexArray,
-    shader: Option<Shader>,
+    pub sprite_verts: VertexArray,
+    pub sprite_shader: Shader,
 }
 
 impl TextureManager {
@@ -27,7 +27,7 @@ impl TextureManager {
             textures: HashMap::new(),
             sprites: vec![],
             sprite_verts: Self::create_sprite_verts(),
-            shader: None,
+            sprite_shader: Shader::new(),
         };
 
         Rc::new(RefCell::new(this))
@@ -50,10 +50,8 @@ impl TextureManager {
     }
 
     pub fn load_shaders(&mut self) -> Result<()> {
-        let mut sprite_shader = Shader::new();
-        sprite_shader.load("Basic.vert", "Basic.frag")?;
-        sprite_shader.set_active();
-        self.shader = Some(sprite_shader);
+        self.sprite_shader.load("Basic.vert", "Basic.frag")?;
+        self.sprite_shader.set_active();
         Ok(())
     }
 

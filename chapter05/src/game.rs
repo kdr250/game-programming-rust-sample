@@ -141,6 +141,14 @@ impl Game {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
+        let texture_manager = self.texture_manager.borrow_mut();
+        texture_manager.sprite_shader.set_active();
+        texture_manager.sprite_verts.set_active();
+
+        for sprite in texture_manager.get_sprites() {
+            sprite.borrow().draw(&texture_manager.sprite_shader);
+        }
+
         self.canvas.window().gl_swap_window();
     }
 }

@@ -1,5 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ptr::null, rc::Rc};
 
+use gl::{TRIANGLES, UNSIGNED_INT};
 use sdl2::{
     rect::Rect,
     render::{Canvas, Texture},
@@ -9,33 +10,14 @@ use sdl2::{
 use crate::{
     actors::actor::Actor,
     components::component::Component,
+    graphics::shader::Shader,
     math::{self, vector2::Vector2},
 };
 
 pub trait SpriteComponent: Component {
-    fn draw(&self, canvas: &mut Canvas<Window>) {
-        if let Some(texture) = self.get_texture() {
-            let owner = self.get_owner().borrow();
-            let width = self.get_texture_width() as f32 * owner.get_scale();
-            let height = self.get_texture_height() as f32 * owner.get_scale();
-            let rect = Rect::new(
-                (owner.get_position().x - width / 2.0) as i32,
-                (owner.get_position().y - height / 2.0) as i32,
-                width as u32,
-                height as u32,
-            );
-
-            canvas
-                .copy_ex(
-                    &texture,
-                    None,
-                    Some(rect),
-                    -math::basic::to_degrees(owner.get_rotation()) as f64,
-                    None,
-                    false,
-                    false,
-                )
-                .unwrap();
+    fn draw(&self, shader: &Shader) {
+        unsafe {
+            gl::DrawElements(TRIANGLES, 6, UNSIGNED_INT, null());
         }
     }
 
