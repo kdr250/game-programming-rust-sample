@@ -1,6 +1,7 @@
 mod actors;
 mod components;
 mod game;
+mod graphics;
 mod math;
 mod system;
 
