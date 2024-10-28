@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc};
 
+use anyhow::{Ok, Result};
 use sdl2::{
     image::LoadTexture,
     render::{Texture, TextureCreator},
@@ -8,7 +9,7 @@ use sdl2::{
 
 use crate::{
     components::{component::State, sprite_component::SpriteComponent},
-    graphics::vertex_array::VertexArray,
+    graphics::{shader::Shader, vertex_array::VertexArray},
 };
 
 pub struct TextureManager {
@@ -16,6 +17,7 @@ pub struct TextureManager {
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
     sprite_verts: VertexArray,
+    shader: Option<Shader>,
 }
 
 impl TextureManager {
@@ -25,6 +27,7 @@ impl TextureManager {
             textures: HashMap::new(),
             sprites: vec![],
             sprite_verts: Self::create_sprite_verts(),
+            shader: None,
         };
 
         Rc::new(RefCell::new(this))
@@ -44,6 +47,14 @@ impl TextureManager {
         ];
 
         VertexArray::new(&vertices, 4, &index_buffer, 6)
+    }
+
+    pub fn load_shaders(&mut self) -> Result<()> {
+        let mut sprite_shader = Shader::new();
+        sprite_shader.load("Basic.vert", "Basic.frag")?;
+        sprite_shader.set_active();
+        self.shader = Some(sprite_shader);
+        Ok(())
     }
 
     pub fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {

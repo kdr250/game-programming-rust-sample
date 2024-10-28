@@ -63,6 +63,7 @@ impl Game {
         let _image_context = sdl2::image::init(InitFlag::PNG).map_err(|e| anyhow!(e))?;
         let texture_creator = canvas.texture_creator();
         let texture_manager = TextureManager::new(texture_creator);
+        texture_manager.borrow_mut().load_shaders()?;
 
         let entity_manager = EntityManager::new();
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
