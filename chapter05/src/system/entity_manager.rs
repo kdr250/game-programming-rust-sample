@@ -1,3 +1,4 @@
+use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
@@ -73,8 +74,7 @@ impl EntityManager {
         let ship = Ship::new(texture_manager.clone(), this.clone());
         {
             let mut borrowed_ship = ship.borrow_mut();
-            borrowed_ship.set_position(Vector2::new(100.0, 384.0));
-            borrowed_ship.set_scale(1.5);
+            borrowed_ship.set_rotation(f32::consts::TAU);
         }
         this.borrow_mut().ship = Some(ship);
 

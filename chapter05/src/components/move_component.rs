@@ -57,16 +57,16 @@ pub fn update_move_component(
         let mut position = owner_info.0.clone() + temp_position;
         position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
 
-        if position.x < 0.0 {
-            position.x = 1022.0;
-        } else if position.x > 1024.0 {
-            position.x = 2.0;
+        if position.x < -512.0 {
+            position.x = 510.0;
+        } else if position.x > 512.0 {
+            position.x = -510.0;
         }
 
-        if position.y < 0.0 {
-            position.y = 766.0;
-        } else if position.y > 768.0 {
-            position.y = 2.0;
+        if position.y < -384.0 {
+            position.y = 382.0;
+        } else if position.y > 384.0 {
+            position.y = -382.0;
         }
 
         result.0 = Some(position);

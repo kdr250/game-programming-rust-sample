@@ -160,6 +160,7 @@ macro_rules! impl_getters_setters {
 
         fn set_world_transform(&mut self, world_transform: Matrix4) {
             self.world_transform = world_transform;
+            self.recompute_world_transform = true;
         }
 
         fn get_recompute_world_transform(&self) -> bool {
@@ -176,6 +177,7 @@ macro_rules! impl_getters_setters {
 
         fn set_position(&mut self, position: Vector2) {
             self.position = position;
+            self.recompute_world_transform = true;
         }
 
         fn get_scale(&self) -> f32 {
@@ -184,6 +186,7 @@ macro_rules! impl_getters_setters {
 
         fn set_scale(&mut self, scale: f32) {
             self.scale = scale;
+            self.recompute_world_transform = true;
         }
 
         fn get_rotation(&self) -> f32 {
@@ -192,6 +195,7 @@ macro_rules! impl_getters_setters {
 
         fn set_rotation(&mut self, rotation: f32) {
             self.rotation = rotation;
+            self.recompute_world_transform = true;
         }
 
         fn get_state(&self) -> &State {

@@ -51,7 +51,8 @@ impl Asteroid {
         {
             let mut borrowed_entity_manager = entity_manager.borrow_mut();
             let random = borrowed_entity_manager.get_random();
-            let random_position = random.get_vector2(Vector2::ZERO, Vector2::new(1024.0, 768.0));
+            let random_position =
+                random.get_vector2(Vector2::new(-512.0, -384.0), Vector2::new(512.0, 384.0));
             let random_rotation = random.get_float_range(0.0, f32::consts::TAU);
             this.set_position(random_position);
             this.set_rotation(random_rotation);

@@ -11,12 +11,25 @@ use crate::{
     actors::actor::Actor,
     components::component::Component,
     graphics::shader::Shader,
-    math::{self, vector2::Vector2},
+    math::{self, matrix4::Matrix4, vector2::Vector2},
 };
 
 pub trait SpriteComponent: Component {
     fn draw(&self, shader: &Shader) {
+        // Scale the quad by the width/height of texture
+        let scale_mat = Matrix4::create_scale_xyz(
+            self.get_texture_width() as f32,
+            self.get_texture_height() as f32,
+            1.0,
+        );
+
+        let world = scale_mat * self.get_owner().borrow().get_world_transform().clone();
+
+        // Set world transform
+        shader.set_matrix_uniform("uWorldTransform", world);
+
         unsafe {
+            // Draw
             gl::DrawElements(TRIANGLES, 6, UNSIGNED_INT, null());
         }
     }

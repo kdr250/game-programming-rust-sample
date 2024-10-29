@@ -10,6 +10,7 @@ use sdl2::{
 use crate::{
     components::{component::State, sprite_component::SpriteComponent},
     graphics::{shader::Shader, vertex_array::VertexArray},
+    math::matrix4::Matrix4,
 };
 
 pub struct TextureManager {
@@ -50,8 +51,13 @@ impl TextureManager {
     }
 
     pub fn load_shaders(&mut self) -> Result<()> {
-        self.sprite_shader.load("Basic.vert", "Basic.frag")?;
+        self.sprite_shader.load("Transform.vert", "Basic.frag")?;
         self.sprite_shader.set_active();
+
+        let view_proj = Matrix4::create_simple_view_proj(1024.0, 768.0);
+        self.sprite_shader
+            .set_matrix_uniform("uViewProj", view_proj);
+
         Ok(())
     }
 
