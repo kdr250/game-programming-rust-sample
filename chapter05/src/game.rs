@@ -1,16 +1,11 @@
 extern crate gl;
-// include the OpenGL type aliases
-use gl::types::*;
 
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
 use sdl2::{
     event::Event,
-    image::InitFlag,
     keyboard::{KeyboardState, Scancode},
-    pixels::Color,
-    render::Canvas,
     video::{GLContext, Window},
     EventPump, TimerSubsystem,
 };
@@ -19,7 +14,7 @@ use crate::system::{entity_manager::EntityManager, texture_manager::TextureManag
 
 pub struct Game {
     context: GLContext,
-    canvas: Canvas<Window>,
+    window: Window,
     event_pump: EventPump,
     timer: TimerSubsystem,
     texture_manager: Rc<RefCell<TextureManager>>,
@@ -54,15 +49,11 @@ impl Game {
         let context = window.gl_create_context().map_err(|e| anyhow!(e))?;
         gl::load_with(|name| video_system.gl_get_proc_address(name) as *const _);
 
-        let canvas = window.into_canvas().build()?;
-
         let event_pump = sdl.event_pump().map_err(|e| anyhow!(e))?;
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
-        let _image_context = sdl2::image::init(InitFlag::PNG).map_err(|e| anyhow!(e))?;
-        let texture_creator = canvas.texture_creator();
-        let texture_manager = TextureManager::new(texture_creator);
+        let texture_manager = TextureManager::new();
         texture_manager.borrow_mut().load_shaders()?;
 
         let entity_manager = EntityManager::new();
@@ -70,7 +61,7 @@ impl Game {
 
         let game = Game {
             context,
-            canvas,
+            window,
             event_pump,
             timer,
             texture_manager,
@@ -155,6 +146,6 @@ impl Game {
             sprite.borrow().draw(&texture_manager.sprite_shader);
         }
 
-        self.canvas.window().gl_swap_window();
+        self.window.gl_swap_window();
     }
 }

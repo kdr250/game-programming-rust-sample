@@ -52,7 +52,7 @@ impl Ship {
         let result = Rc::new(RefCell::new(this));
 
         let sprite_component = DefaultSpriteComponent::new(result.clone(), 150);
-        let texture = texture_manager.borrow_mut().get_texture("Assets/Ship.png");
+        let texture = texture_manager.borrow_mut().get_texture("Ship.png");
         sprite_component.borrow_mut().set_texture(texture);
 
         let input_component = InputComponent::new(result.clone());

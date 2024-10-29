@@ -1,36 +1,35 @@
 use std::{cell::RefCell, ptr::null, rc::Rc};
 
 use gl::{TRIANGLES, UNSIGNED_INT};
-use sdl2::{
-    rect::Rect,
-    render::{Canvas, Texture},
-    video::Window,
-};
 
 use crate::{
     actors::actor::Actor,
     components::component::Component,
-    graphics::shader::Shader,
-    math::{self, matrix4::Matrix4, vector2::Vector2},
+    graphics::{shader::Shader, texture::Texture},
+    math::{matrix4::Matrix4, vector2::Vector2},
 };
 
 pub trait SpriteComponent: Component {
     fn draw(&self, shader: &Shader) {
-        // Scale the quad by the width/height of texture
-        let scale_mat = Matrix4::create_scale_xyz(
-            self.get_texture_width() as f32,
-            self.get_texture_height() as f32,
-            1.0,
-        );
+        if let Some(texture) = self.get_texture() {
+            // Scale the quad by the width/height of texture
+            let scale_mat = Matrix4::create_scale_xyz(
+                self.get_texture_width() as f32,
+                self.get_texture_height() as f32,
+                1.0,
+            );
 
-        let world = scale_mat * self.get_owner().borrow().get_world_transform().clone();
+            let world = scale_mat * self.get_owner().borrow().get_world_transform().clone();
 
-        // Set world transform
-        shader.set_matrix_uniform("uWorldTransform", world);
+            // Set world transform
+            shader.set_matrix_uniform("uWorldTransform", world);
+            // Set current texture
+            texture.set_active();
 
-        unsafe {
-            // Draw
-            gl::DrawElements(TRIANGLES, 6, UNSIGNED_INT, null());
+            unsafe {
+                // Draw
+                gl::DrawElements(TRIANGLES, 6, UNSIGNED_INT, null());
+            }
         }
     }
 
@@ -52,9 +51,8 @@ macro_rules! impl_getters_setters {
         }
 
         fn set_texture(&mut self, texture: Rc<Texture>) {
-            let query = texture.query();
-            self.texture_height = query.height;
-            self.texture_width = query.width;
+            self.texture_height = texture.get_height() as u32;
+            self.texture_width = texture.get_width() as u32;
             self.texture = Some(texture);
         }
 

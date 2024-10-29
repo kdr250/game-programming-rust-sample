@@ -53,7 +53,7 @@ impl Laser {
         // Create a sprite component
         let sprite_component: Rc<RefCell<dyn SpriteComponent>> =
             DefaultSpriteComponent::new(result.clone(), 100);
-        let texture = texture_manager.borrow_mut().get_texture("Assets/Laser.png");
+        let texture = texture_manager.borrow_mut().get_texture("Laser.png");
         sprite_component.borrow_mut().set_texture(texture);
 
         // Create a move component, and set a forward speed

@@ -1,20 +1,14 @@
 use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc};
 
 use anyhow::{Ok, Result};
-use sdl2::{
-    image::LoadTexture,
-    render::{Texture, TextureCreator},
-    video::WindowContext,
-};
 
 use crate::{
     components::{component::State, sprite_component::SpriteComponent},
-    graphics::{shader::Shader, vertex_array::VertexArray},
+    graphics::{shader::Shader, texture::Texture, vertex_array::VertexArray},
     math::matrix4::Matrix4,
 };
 
 pub struct TextureManager {
-    texture_creator: TextureCreator<WindowContext>,
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
     pub sprite_verts: VertexArray,
@@ -22,9 +16,8 @@ pub struct TextureManager {
 }
 
 impl TextureManager {
-    pub fn new(texture_creator: TextureCreator<WindowContext>) -> Rc<RefCell<Self>> {
+    pub fn new() -> Rc<RefCell<Self>> {
         let this = Self {
-            texture_creator,
             textures: HashMap::new(),
             sprites: vec![],
             sprite_verts: Self::create_sprite_verts(),
@@ -65,14 +58,15 @@ impl TextureManager {
         if let Some(texture) = self.textures.get(&file_name.to_string()) {
             return texture.clone();
         }
-        let path = Path::new(env!("OUT_DIR")).join("resources").join(file_name);
-        let texture = self
-            .texture_creator
-            .load_texture(path)
-            .expect(&format!("Failed to load texture {}", file_name));
-        let result = Rc::new(texture);
-        self.textures.insert(file_name.to_string(), result.clone());
-        result
+
+        let mut texture = Texture::new();
+        if texture.load(file_name).is_ok() {
+            let result = Rc::new(texture);
+            self.textures.insert(file_name.to_string(), result.clone());
+            return result;
+        }
+
+        panic!("failed to get texture: {}", file_name);
     }
 
     pub fn get_sprites(&self) -> &Vec<Rc<RefCell<dyn SpriteComponent>>> {

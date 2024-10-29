@@ -63,9 +63,7 @@ impl Asteroid {
 
         // Create a sprite component
         let sprite_component = DefaultSpriteComponent::new(result.clone(), 100);
-        let texture = texture_manager
-            .borrow_mut()
-            .get_texture("Assets/Asteroid.png");
+        let texture = texture_manager.borrow_mut().get_texture("Asteroid.png");
         sprite_component.borrow_mut().set_texture(texture);
 
         // Create a move component, and set a forward speed
