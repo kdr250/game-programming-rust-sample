@@ -44,7 +44,7 @@ impl TextureManager {
     }
 
     pub fn load_shaders(&mut self) -> Result<()> {
-        self.sprite_shader.load("Transform.vert", "Basic.frag")?;
+        self.sprite_shader.load("Sprite.vert", "Sprite.frag")?;
         self.sprite_shader.set_active();
 
         let view_proj = Matrix4::create_simple_view_proj(1024.0, 768.0);
