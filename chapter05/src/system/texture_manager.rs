@@ -28,14 +28,14 @@ impl TextureManager {
     }
 
     fn create_sprite_verts() -> VertexArray {
-        let vertices: [f32; 12] = [
-            -0.5, 0.5, 0.0, // top left
-            0.5, 0.5, 0.0, // top right
-            0.5, -0.5, 0.0, // bottom right
-            -0.5, -0.5, 0.0, // bottom left
+        let vertices = [
+            -0.5, 0.5, 0.0, 0.0, 0.0, // top left
+            0.5, 0.5, 0.0, 1.0, 0.0, // top right
+            0.5, -0.5, 0.0, 1.0, 1.0, // bottom right
+            -0.5, -0.5, 0.0, 0.0, 1.0, // bottom left
         ];
 
-        let index_buffer: [u32; 6] = [
+        let index_buffer = [
             0, 1, 2, // right half of triangle
             2, 3, 0, // left half of triangle
         ];

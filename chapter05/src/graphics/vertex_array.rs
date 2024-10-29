@@ -37,7 +37,7 @@ impl VertexArray {
             gl::BindBuffer(ARRAY_BUFFER, vertex_buffer);
             gl::BufferData(
                 ARRAY_BUFFER,
-                num_verts * 3 * size_of::<f32>() as isize,
+                num_verts * 5 * size_of::<f32>() as isize,
                 verts as *const c_void,
                 STATIC_DRAW,
             );
@@ -59,8 +59,18 @@ impl VertexArray {
                 3,
                 FLOAT,
                 FALSE,
-                size_of::<f32>() as i32 * 3,
+                size_of::<f32>() as i32 * 5,
                 0 as *const c_void,
+            );
+
+            gl::EnableVertexAttribArray(1);
+            gl::VertexAttribPointer(
+                1,
+                2,
+                FLOAT,
+                FALSE,
+                size_of::<f32>() as i32 * 5,
+                (size_of::<f32>() * 3) as *const c_void,
             );
         }
 
