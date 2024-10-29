@@ -36,7 +36,7 @@ impl Matrix4 {
             [x_scale, 0.0, 0.0, 0.0],
             [0.0, y_scale, 0.0, 0.0],
             [0.0, 0.0, z_scale, 0.0],
-            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
         ];
         Matrix4::from(temp)
     }
@@ -87,7 +87,18 @@ impl Matrix4 {
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [trans.x, trans.y, trans.z, 0.0],
+            [trans.x, trans.y, trans.z, 1.0],
+        ];
+        Matrix4::from(temp)
+    }
+
+    // Create "Simple" View-Projection Matrix from Chapter 5
+    pub fn create_simple_view_proj(width: f32, height: f32) -> Self {
+        let temp = [
+            [2.0 / width, 0.0, 0.0, 0.0],
+            [0.0, 2.0 / height, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0, 1.0],
         ];
         Matrix4::from(temp)
     }
@@ -101,7 +112,7 @@ impl Mul for Matrix4 {
         for row in 0..4 {
             for column in 0..4 {
                 let mut sum = 0.0;
-                for i in 0..3 {
+                for i in 0..4 {
                     sum += self.mat[row][i] * rhs.mat[i][column];
                 }
                 result.mat[row][column] = sum;
@@ -117,7 +128,7 @@ impl MulAssign for Matrix4 {
             let original_row = self.mat[row].clone();
             for column in 0..4 {
                 let mut sum = 0.0;
-                for i in 0..3 {
+                for i in 0..4 {
                     sum += original_row[i] * rhs.mat[i][column];
                 }
                 self.mat[row][column] = sum;
