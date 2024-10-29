@@ -30,6 +30,9 @@ impl Texture {
 
         let image = ImageReader::open(path)?.decode()?;
 
+        self.width = image.width() as i32;
+        self.height = image.height() as i32;
+
         let format = match image.color() {
             ColorType::Rgba8 | ColorType::Rgba16 | ColorType::Rgba32F => RGBA,
             _ => RGB,
