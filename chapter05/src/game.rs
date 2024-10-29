@@ -3,6 +3,7 @@ extern crate gl;
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
+use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use sdl2::{
     event::Event,
     keyboard::{KeyboardState, Scancode},
@@ -144,6 +145,11 @@ impl Game {
 
         for sprite in texture_manager.get_sprites() {
             sprite.borrow().draw(&texture_manager.sprite_shader);
+        }
+
+        unsafe {
+            gl::Enable(BLEND);
+            gl::BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
 
         self.window.gl_swap_window();
