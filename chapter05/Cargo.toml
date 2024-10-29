@@ -3,10 +3,6 @@ name = "chapter05"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-default = ["unsafe_textures"]
-unsafe_textures = []
-
 [dependencies]
 anyhow = "1.0.89"
 cfg-if = "1.0"
@@ -17,10 +13,10 @@ rand = "0.8.5"
 [dependencies.sdl2]
 version = "0.37"
 default-features = false
-features = ["image", "static-link", "use-vcpkg", "unsafe_textures"]
+features = ["static-link", "use-vcpkg"]
 
 [package.metadata.vcpkg]
-dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]"]
+dependencies = ["sdl2"]
 git = "https://github.com/microsoft/vcpkg"
 rev = "2024.09.30"
 
