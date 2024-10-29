@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 
 [workspace]
-members = ["chapter01", "chapter02", "chapter03", "chapter04"]
+members = ["chapter01", "chapter02", "chapter03", "chapter04", "chapter05"]
