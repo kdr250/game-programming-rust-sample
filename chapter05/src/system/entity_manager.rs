@@ -7,7 +7,7 @@ use crate::{
         asteroid::Asteroid,
         ship::Ship,
     },
-    math::{random::Random, vector2::Vector2},
+    math::random::Random,
     system::texture_manager::TextureManager,
 };
 

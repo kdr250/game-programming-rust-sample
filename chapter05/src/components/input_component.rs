@@ -2,10 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use sdl2::keyboard::{KeyboardState, Scancode};
 
-use crate::{
-    actors::actor::Actor,
-    math::{self, vector2::Vector2},
-};
+use crate::{actors::actor::Actor, math::vector2::Vector2};
 
 use super::{
     component::{self, generate_id, Component, State},
