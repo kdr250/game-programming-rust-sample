@@ -131,6 +131,12 @@ impl Game {
         }
         self.entity_manager.borrow_mut().set_updating_actors(false);
 
+        let pending_actors = self.entity_manager.borrow().get_pending_actors().clone();
+        for pending in pending_actors {
+            pending.borrow_mut().compute_world_transform();
+            self.entity_manager.borrow_mut().add_actor(pending.clone());
+        }
+
         self.entity_manager.borrow_mut().flush_actors();
         self.texture_manager.borrow_mut().flush_sprites();
     }

@@ -23,6 +23,8 @@ pub trait Component {
 
     fn process_input(&mut self, _key_state: &KeyboardState) {}
 
+    fn on_update_world_transform(&mut self) {}
+
     fn get_id(&self) -> u32;
 
     fn get_update_order(&self) -> i32;

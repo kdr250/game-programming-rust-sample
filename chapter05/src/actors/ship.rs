@@ -10,7 +10,7 @@ use crate::{
         input_component::InputComponent,
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
-    math::vector2::Vector2,
+    math::{matrix4::Matrix4, vector2::Vector2},
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
@@ -19,6 +19,8 @@ use super::{actor::generate_id, laser::Laser};
 pub struct Ship {
     id: u32,
     state: State,
+    world_transform: Matrix4,
+    recompute_world_transform: bool,
     position: Vector2,
     scale: f32,
     rotation: f32,
@@ -36,6 +38,8 @@ impl Ship {
         let this = Self {
             id: generate_id(),
             state: State::Active,
+            world_transform: Matrix4::new(),
+            recompute_world_transform: true,
             position: Vector2::ZERO,
             scale: 1.0,
             rotation: 0.0,

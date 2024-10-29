@@ -91,6 +91,10 @@ impl EntityManager {
         &self.actors
     }
 
+    pub fn get_pending_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
+        &self.pending_actors
+    }
+
     pub fn get_asteroids(&self) -> &Vec<Rc<RefCell<Asteroid>>> {
         &self.asteroids
     }
