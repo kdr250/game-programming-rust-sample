@@ -1,5 +1,7 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
+use super::quaternion::Quaternion;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Vector3 {
     pub x: f32,
@@ -18,6 +20,14 @@ impl Vector3 {
 
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn transform(&self, q: &Quaternion) -> Vector3 {
+        // v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
+        let qv = Vector3::new(q.x, q.y, q.z);
+        let mut result = qv.clone();
+        result += Vector3::cross(&qv, &(Vector3::cross(&qv, &self) + self.clone() * q.w)) * 2.0;
+        result
     }
 
     pub fn set(&mut self, x: f32, y: f32, z: f32) {

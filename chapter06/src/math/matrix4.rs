@@ -1,6 +1,6 @@
 use std::ops::{Mul, MulAssign};
 
-use super::vector3::Vector3;
+use super::{quaternion::Quaternion, vector3::Vector3};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Matrix4 {
@@ -101,6 +101,33 @@ impl Matrix4 {
             [0.0, 0.0, 1.0, 1.0],
         ];
         Matrix4::from(temp)
+    }
+
+    /// Create rotation matrix from quaternion
+    pub fn create_from_quaternion(q: &Quaternion) -> Self {
+        let mut mat = [[0.0; 4]; 4];
+
+        mat[0][0] = 1.0 - 2.0 * q.y * q.y - 2.0 * q.z * q.z;
+        mat[0][1] = 2.0 * q.x * q.y + 2.0 * q.w * q.z;
+        mat[0][2] = 2.0 * q.x * q.z - 2.0 * q.w * q.y;
+        mat[0][3] = 0.0;
+
+        mat[1][0] = 2.0 * q.x * q.y - 2.0 * q.w * q.z;
+        mat[1][1] = 1.0 - 2.0 * q.x * q.x - 2.0 * q.z * q.z;
+        mat[1][2] = 2.0 * q.y * q.z + 2.0 * q.w * q.x;
+        mat[1][3] = 0.0;
+
+        mat[2][0] = 2.0 * q.x * q.z + 2.0 * q.w * q.y;
+        mat[2][1] = 2.0 * q.y * q.z - 2.0 * q.w * q.x;
+        mat[2][2] = 1.0 - 2.0 * q.x * q.x - 2.0 * q.y * q.y;
+        mat[2][3] = 0.0;
+
+        mat[3][0] = 0.0;
+        mat[3][1] = 0.0;
+        mat[3][2] = 0.0;
+        mat[3][3] = 1.0;
+
+        Self { mat }
     }
 }
 
