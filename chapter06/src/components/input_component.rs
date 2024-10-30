@@ -2,7 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use sdl2::keyboard::{KeyboardState, Scancode};
 
-use crate::{actors::actor::Actor, math::vector2::Vector2};
+use crate::{
+    actors::actor::Actor,
+    math::{quaternion::Quaternion, vector3::Vector3},
+};
 
 use super::{
     component::{self, generate_id, Component, State},
@@ -107,9 +110,9 @@ impl Component for InputComponent {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector2, f32, Vector2),
-    ) -> (Option<Vector2>, Option<f32>) {
-        move_component::update_move_component(self, delta_time, owner_info, (None, None))
+        owner_info: &(Vector3, Quaternion, Vector3),
+    ) -> (Option<Vector3>, Option<Quaternion>) {
+        move_component::update_move_component(self, delta_time, owner_info)
     }
 
     component::impl_getters_setters! {}

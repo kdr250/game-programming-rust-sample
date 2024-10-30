@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    math::{self, vector2::Vector2},
+    math::{self, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -42,18 +42,22 @@ pub(crate) use impl_getters_setters;
 pub fn update_move_component(
     move_component: &dyn MoveComponent,
     delta_time: f32,
-    owner_info: &(Vector2, f32, Vector2),
-    mut result: (Option<Vector2>, Option<f32>),
-) -> (Option<Vector2>, Option<f32>) {
+    owner_info: &(Vector3, Quaternion, Vector3),
+) -> (Option<Vector3>, Option<Quaternion>) {
+    let mut result = (None, None);
+
     if !math::basic::near_zero(move_component.get_angular_speed(), 0.001) {
-        let temp_rotation = result.1.unwrap_or(0.0);
-        let mut rotation = owner_info.1 + temp_rotation;
-        rotation += move_component.get_angular_speed() * delta_time;
+        let mut rotation = owner_info.1.clone();
+        let angle = move_component.get_angular_speed() * delta_time;
+
+        let increment = Quaternion::new_axis_angle(&Vector3::UNIT_Z, angle);
+
+        rotation = Quaternion::concatenate(&rotation, &increment);
         result.1 = Some(rotation);
     }
 
     if !math::basic::near_zero(move_component.get_forward_speed(), 0.001) {
-        let temp_position = result.0.clone().unwrap_or(Vector2::ZERO);
+        let temp_position = result.0.clone().unwrap_or(Vector3::ZERO);
         let mut position = owner_info.0.clone() + temp_position;
         position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
 
@@ -112,9 +116,9 @@ impl Component for DefaultMoveComponent {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector2, f32, Vector2),
-    ) -> (Option<Vector2>, Option<f32>) {
-        update_move_component(self, delta_time, owner_info, (None, None))
+        owner_info: &(Vector3, Quaternion, Vector3),
+    ) -> (Option<Vector3>, Option<Quaternion>) {
+        update_move_component(self, delta_time, owner_info)
     }
 
     component::impl_getters_setters! {}

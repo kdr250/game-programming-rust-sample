@@ -6,7 +6,7 @@ use crate::{
     actors::actor::Actor,
     components::component::Component,
     graphics::{shader::Shader, texture::Texture},
-    math::{matrix4::Matrix4, vector2::Vector2},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
 };
 
 pub trait SpriteComponent: Component {
@@ -120,8 +120,8 @@ impl Component for DefaultSpriteComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        _owner_info: &(Vector2, f32, Vector2),
-    ) -> (Option<Vector2>, Option<f32>) {
+        _owner_info: &(Vector3, Quaternion, Vector3),
+    ) -> (Option<Vector3>, Option<Quaternion>) {
         (None, None)
     }
 

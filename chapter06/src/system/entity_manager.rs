@@ -1,4 +1,3 @@
-use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
@@ -72,10 +71,6 @@ impl EntityManager {
         texture_manager: Rc<RefCell<TextureManager>>,
     ) {
         let ship = Ship::new(texture_manager.clone(), this.clone());
-        {
-            let mut borrowed_ship = ship.borrow_mut();
-            borrowed_ship.set_rotation(f32::consts::TAU);
-        }
         this.borrow_mut().ship = Some(ship);
 
         // Create asteroids

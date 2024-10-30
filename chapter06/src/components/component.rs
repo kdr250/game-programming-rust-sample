@@ -4,7 +4,10 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use crate::{actors::actor::Actor, math::vector2::Vector2};
+use crate::{
+    actors::actor::Actor,
+    math::{quaternion::Quaternion, vector3::Vector3},
+};
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
@@ -18,8 +21,8 @@ pub trait Component {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector2, f32, Vector2),
-    ) -> (Option<Vector2>, Option<f32>);
+        owner_info: &(Vector3, Quaternion, Vector3),
+    ) -> (Option<Vector3>, Option<Quaternion>);
 
     fn process_input(&mut self, _key_state: &KeyboardState) {}
 
@@ -85,7 +88,7 @@ pub mod tests {
     use crate::{
         actors::actor::{test::TestActor, Actor},
         components::component::remove_component,
-        math::vector2::Vector2,
+        math::{quaternion::Quaternion, vector3::Vector3},
     };
 
     use super::{generate_id, Component, State};
@@ -118,8 +121,8 @@ pub mod tests {
         fn update(
             &mut self,
             _delta_time: f32,
-            _owner_info: &(Vector2, f32, Vector2),
-        ) -> (Option<Vector2>, Option<f32>) {
+            _owner_info: &(Vector3, Quaternion, Vector3),
+        ) -> (Option<Vector3>, Option<Quaternion>) {
             (None, None)
         }
 

@@ -1,6 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{actors::actor::Actor, math::vector2::Vector2};
+use crate::{
+    actors::actor::Actor,
+    math::{quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
+};
 
 use super::component::{self, generate_id, Component, State};
 
@@ -9,7 +12,7 @@ pub struct CircleComponent {
     owner: Rc<RefCell<dyn Actor>>,
     update_order: i32,
     state: State,
-    center: Vector2,
+    center: Vector3,
     radius: f32,
 }
 
@@ -36,7 +39,7 @@ impl CircleComponent {
         self.radius
     }
 
-    pub fn get_center(&self) -> &Vector2 {
+    pub fn get_center(&self) -> &Vector3 {
         &self.center
     }
 
@@ -56,8 +59,8 @@ impl Component for CircleComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        owner_info: &(Vector2, f32, Vector2),
-    ) -> (Option<Vector2>, Option<f32>) {
+        owner_info: &(Vector3, Quaternion, Vector3),
+    ) -> (Option<Vector3>, Option<Quaternion>) {
         self.center = owner_info.0.clone();
         (None, None)
     }
@@ -71,7 +74,7 @@ mod tests {
 
     use crate::{
         actors::actor::{test::TestActor, Actor},
-        math::vector2::Vector2,
+        math::vector3::Vector3,
     };
 
     use super::CircleComponent;
@@ -79,13 +82,13 @@ mod tests {
     #[test]
     fn test_intersect_true() {
         let mut test_actor1 = TestActor::new();
-        test_actor1.set_position(Vector2::new(0.0, 0.0));
+        test_actor1.set_position(Vector3::new(0.0, 0.0, 0.0));
         let owner1: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor1));
         let circle1 = CircleComponent::new(owner1);
         circle1.borrow_mut().set_radius(5.0);
 
         let mut test_actor2 = TestActor::new();
-        test_actor2.set_position(Vector2::new(7.0, 7.0));
+        test_actor2.set_position(Vector3::new(7.0, 7.0, 0.0));
         let owner2: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor2));
         let circle2 = CircleComponent::new(owner2);
         circle2.borrow_mut().set_radius(5.0);
@@ -98,13 +101,13 @@ mod tests {
     #[test]
     fn test_intersect_false() {
         let mut test_actor1 = TestActor::new();
-        test_actor1.set_position(Vector2::new(0.0, 0.0));
+        test_actor1.set_position(Vector3::new(0.0, 0.0, 0.0));
         let owner1: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor1));
         let circle1 = CircleComponent::new(owner1);
         circle1.borrow_mut().set_radius(5.0);
 
         let mut test_actor2 = TestActor::new();
-        test_actor2.set_position(Vector2::new(8.0, 8.0));
+        test_actor2.set_position(Vector3::new(8.0, 8.0, 0.0));
         let owner2: Rc<RefCell<dyn Actor>> = Rc::new(RefCell::new(test_actor2));
         let circle2 = CircleComponent::new(owner2);
         circle2.borrow_mut().set_radius(5.0);

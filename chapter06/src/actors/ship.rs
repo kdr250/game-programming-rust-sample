@@ -10,7 +10,7 @@ use crate::{
         input_component::InputComponent,
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
-    math::{matrix4::Matrix4, vector2::Vector2},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
@@ -21,9 +21,9 @@ pub struct Ship {
     state: State,
     world_transform: Matrix4,
     recompute_world_transform: bool,
-    position: Vector2,
+    position: Vector3,
     scale: f32,
-    rotation: f32,
+    rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
@@ -40,9 +40,9 @@ impl Ship {
             state: State::Active,
             world_transform: Matrix4::new(),
             recompute_world_transform: true,
-            position: Vector2::ZERO,
+            position: Vector3::ZERO,
             scale: 1.0,
-            rotation: 0.0,
+            rotation: Quaternion::new(),
             components: vec![],
             texture_manager: texture_manager.clone(),
             entity_manager: entity_manager.clone(),
@@ -80,7 +80,7 @@ impl Actor for Ship {
             let laser = Laser::new(self.texture_manager.clone(), self.entity_manager.clone());
             let mut borrowed_laser = laser.borrow_mut();
             borrowed_laser.set_position(self.position.clone());
-            borrowed_laser.set_rotation(self.rotation);
+            borrowed_laser.set_rotation(self.rotation.clone());
 
             self.laser_cooldown = 0.5;
         }

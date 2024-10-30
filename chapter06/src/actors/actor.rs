@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     components::component::{Component, State as ComponentState},
-    math::{matrix4::Matrix4, vector2::Vector2, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
@@ -38,10 +38,10 @@ pub trait Actor {
 
     /// Updates all the components attached to the actor (not overridable)
     fn update_component(&mut self, delta_time: f32) {
-        let mut changes: Vec<(Option<Vector2>, Option<f32>)> = vec![];
+        let mut changes = vec![];
         let actor_info = (
             self.get_position().clone(),
-            self.get_rotation(),
+            self.get_rotation().clone(),
             self.get_forward(),
         );
 
@@ -87,7 +87,7 @@ pub trait Actor {
 
         // Scale, then rotate, then translate
         let mut world_transform = Matrix4::create_scale(self.get_scale());
-        world_transform *= Matrix4::create_rotation_z(self.get_rotation());
+        world_transform *= Matrix4::create_from_quaternion(self.get_rotation());
         world_transform *= Matrix4::create_translation(&Vector3::new(
             self.get_position().x,
             self.get_position().y,
@@ -104,7 +104,7 @@ pub trait Actor {
     /// Getters/setters
     fn get_id(&self) -> u32;
 
-    fn get_forward(&self) -> Vector2;
+    fn get_forward(&self) -> Vector3;
 
     fn get_world_transform(&self) -> &Matrix4;
 
@@ -114,17 +114,17 @@ pub trait Actor {
 
     fn set_recompute_world_transform(&mut self, recompute: bool);
 
-    fn get_position(&self) -> &Vector2;
+    fn get_position(&self) -> &Vector3;
 
-    fn set_position(&mut self, position: Vector2);
+    fn set_position(&mut self, position: Vector3);
 
     fn get_scale(&self) -> f32;
 
     fn set_scale(&mut self, scale: f32);
 
-    fn get_rotation(&self) -> f32;
+    fn get_rotation(&self) -> &Quaternion;
 
-    fn set_rotation(&mut self, rotation: f32);
+    fn set_rotation(&mut self, rotation: Quaternion);
 
     fn get_state(&self) -> &State;
 
@@ -150,8 +150,8 @@ macro_rules! impl_getters_setters {
             self.id
         }
 
-        fn get_forward(&self) -> Vector2 {
-            Vector2::new(self.rotation.cos(), self.rotation.sin())
+        fn get_forward(&self) -> Vector3 {
+            Vector3::transform(&Vector3::UNIT_X, &self.rotation)
         }
 
         fn get_world_transform(&self) -> &Matrix4 {
@@ -171,11 +171,11 @@ macro_rules! impl_getters_setters {
             self.recompute_world_transform = recompute;
         }
 
-        fn get_position(&self) -> &Vector2 {
+        fn get_position(&self) -> &Vector3 {
             &self.position
         }
 
-        fn set_position(&mut self, position: Vector2) {
+        fn set_position(&mut self, position: Vector3) {
             self.position = position;
             self.recompute_world_transform = true;
         }
@@ -189,11 +189,11 @@ macro_rules! impl_getters_setters {
             self.recompute_world_transform = true;
         }
 
-        fn get_rotation(&self) -> f32 {
-            self.rotation
+        fn get_rotation(&self) -> &Quaternion {
+            &self.rotation
         }
 
-        fn set_rotation(&mut self, rotation: f32) {
+        fn set_rotation(&mut self, rotation: Quaternion) {
             self.rotation = rotation;
             self.recompute_world_transform = true;
         }
@@ -282,9 +282,9 @@ pub struct DefaultActor {
     state: State,
     world_transform: Matrix4,
     recompute_world_transform: bool,
-    position: Vector2,
+    position: Vector3,
     scale: f32,
-    rotation: f32,
+    rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
@@ -300,9 +300,9 @@ impl DefaultActor {
             state: State::Active,
             world_transform: Matrix4::new(),
             recompute_world_transform: true,
-            position: Vector2::ZERO,
+            position: Vector3::ZERO,
             scale: 1.0,
-            rotation: 0.0,
+            rotation: Quaternion::new(),
             components: vec![],
             texture_manager,
             entity_manager: entity_manager.clone(),
@@ -335,7 +335,9 @@ pub mod test {
     use crate::{
         assert_near_eq,
         components::component::{tests::TestComponent, Component, State as ComponentState},
-        math::{self, matrix4::Matrix4, vector2::Vector2},
+        math::{
+            self, matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3,
+        },
         system::{entity_manager::EntityManager, texture_manager::TextureManager},
     };
 
@@ -346,9 +348,9 @@ pub mod test {
         state: State,
         world_transform: Matrix4,
         recompute_world_transform: bool,
-        position: Vector2,
+        position: Vector3,
         scale: f32,
-        rotation: f32,
+        rotation: Quaternion,
         components: Vec<Rc<RefCell<dyn Component>>>,
     }
 
@@ -359,9 +361,9 @@ pub mod test {
                 state: State::Active,
                 world_transform: Matrix4::new(),
                 recompute_world_transform: true,
-                position: Vector2::ZERO,
+                position: Vector3::ZERO,
                 scale: 1.0,
-                rotation: 0.0,
+                rotation: Quaternion::new(),
                 components: vec![],
             }
         }
@@ -398,11 +400,13 @@ pub mod test {
 
     #[test]
     fn test_get_forward() {
-        let expected = Vector2::new(1.0 / 2.0, 3.0_f32.sqrt() / 2.0);
+        let expected = Vector2::new(-1.0 / 2.0, 3.0_f32.sqrt() / 2.0);
 
         let radian = math::basic::to_radians(60.0);
+        let rotation = Quaternion::new_axis_angle(&Vector3::UNIT_Z, radian);
+
         let mut test_actor = TestActor::new();
-        test_actor.set_rotation(radian);
+        test_actor.set_rotation(rotation);
         let actual = test_actor.get_forward();
 
         assert_near_eq!(expected.x, actual.x, 0.001);

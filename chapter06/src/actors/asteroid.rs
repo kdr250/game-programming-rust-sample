@@ -8,7 +8,7 @@ use crate::{
         move_component::{DefaultMoveComponent, MoveComponent},
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
-    math::{matrix4::Matrix4, vector2::Vector2},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{entity_manager::EntityManager, texture_manager::TextureManager},
 };
 
@@ -19,9 +19,9 @@ pub struct Asteroid {
     state: State,
     world_transform: Matrix4,
     recompute_world_transform: bool,
-    position: Vector2,
+    position: Vector3,
     scale: f32,
-    rotation: f32,
+    rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
@@ -38,9 +38,9 @@ impl Asteroid {
             state: State::Active,
             world_transform: Matrix4::new(),
             recompute_world_transform: true,
-            position: Vector2::ZERO,
+            position: Vector3::ZERO,
             scale: 1.0,
-            rotation: 0.0,
+            rotation: Quaternion::new(),
             components: vec![],
             texture_manager: texture_manager.clone(),
             entity_manager: entity_manager.clone(),
@@ -51,9 +51,12 @@ impl Asteroid {
         {
             let mut borrowed_entity_manager = entity_manager.borrow_mut();
             let random = borrowed_entity_manager.get_random();
-            let random_position =
-                random.get_vector2(Vector2::new(-512.0, -384.0), Vector2::new(512.0, 384.0));
+            let random_position = random.get_vector3(
+                Vector3::new(-512.0, -384.0, 0.0),
+                Vector3::new(512.0, 384.0, 0.0),
+            );
             let random_rotation = random.get_float_range(0.0, f32::consts::TAU);
+            let random_rotation = Quaternion::new_axis_angle(&Vector3::UNIT_Z, random_rotation);
             this.set_position(random_position);
             this.set_rotation(random_rotation);
         }
