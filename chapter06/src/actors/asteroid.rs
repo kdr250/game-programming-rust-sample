@@ -56,7 +56,7 @@ impl Asteroid {
                 Vector3::new(512.0, 384.0, 0.0),
             );
             let random_rotation = random.get_float_range(0.0, f32::consts::TAU);
-            let random_rotation = Quaternion::new_axis_angle(&Vector3::UNIT_Z, random_rotation);
+            let random_rotation = Quaternion::from_axis_angle(&Vector3::UNIT_Z, random_rotation);
             this.set_position(random_position);
             this.set_rotation(random_rotation);
         }

@@ -21,14 +21,14 @@ impl Quaternion {
     }
 
     /// This directly sets the quaternion components
-    pub fn new_xyzw(x: f32, y: f32, z: f32, w: f32) -> Self {
+    pub fn from_xyzw(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w }
     }
 
     /// Construct the quaternion from an axis and angle
     /// It is assumed that axis is already normalized,
     /// and the angle is in radians
-    pub fn new_axis_angle(axis: &Vector3, angle: f32) -> Self {
+    pub fn from_axis_angle(axis: &Vector3, angle: f32) -> Self {
         let scalar = (angle / 2.0).sin();
         let x = axis.x * scalar;
         let y = axis.y * scalar;
@@ -80,7 +80,7 @@ impl Quaternion {
         let z = basic::lerp(self.z, other.z, f);
         let w = basic::lerp(self.w, other.w, f);
 
-        let mut result = Quaternion::new_xyzw(x, y, z, w);
+        let mut result = Quaternion::from_xyzw(x, y, z, w);
         result.normalize_mut();
         result
     }
@@ -113,7 +113,7 @@ impl Quaternion {
         let z = scale0 * self.z + scale1 * other.z;
         let w = scale0 * self.w + scale1 * other.w;
 
-        let mut result = Quaternion::new_xyzw(x, y, z, w);
+        let mut result = Quaternion::from_xyzw(x, y, z, w);
         result.normalize_mut();
         result
     }
@@ -131,7 +131,7 @@ impl Quaternion {
         // ps * qs - pv . qv
         let w = other.w * self.w - Vector3::dot(&pv, &qv);
 
-        Quaternion::new_xyzw(x, y, z, w)
+        Quaternion::from_xyzw(x, y, z, w)
     }
 }
 
@@ -143,9 +143,9 @@ mod tests {
 
     #[test]
     fn test_normalize() {
-        let expected = Quaternion::new_xyzw(0.0695048049, 0.347524017, 0.625543237, 0.695048034);
+        let expected = Quaternion::from_xyzw(0.0695048049, 0.347524017, 0.625543237, 0.695048034);
 
-        let mut actual = Quaternion::new_xyzw(0.1, 0.5, 0.9, 1.0);
+        let mut actual = Quaternion::from_xyzw(0.1, 0.5, 0.9, 1.0);
         actual.normalize_mut();
 
         assert_eq!(expected, actual);
@@ -155,7 +155,7 @@ mod tests {
     fn test_slerp() {
         let p = Quaternion::IDENTITY;
         let q =
-            Quaternion::new_axis_angle(&Vector3::new(1.0, 0.0, 0.0), std::f32::consts::FRAC_PI_2);
+            Quaternion::from_axis_angle(&Vector3::new(1.0, 0.0, 0.0), std::f32::consts::FRAC_PI_2);
 
         let actual = Quaternion::slerp(&p, &q, 0.5);
 

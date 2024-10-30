@@ -50,7 +50,7 @@ pub fn update_move_component(
         let mut rotation = owner_info.1.clone();
         let angle = move_component.get_angular_speed() * delta_time;
 
-        let increment = Quaternion::new_axis_angle(&Vector3::UNIT_Z, angle);
+        let increment = Quaternion::from_axis_angle(&Vector3::UNIT_Z, angle);
 
         rotation = Quaternion::concatenate(&rotation, &increment);
         result.1 = Some(rotation);

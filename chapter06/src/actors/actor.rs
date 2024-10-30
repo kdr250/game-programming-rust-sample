@@ -403,7 +403,7 @@ pub mod test {
         let expected = Vector2::new(-1.0 / 2.0, 3.0_f32.sqrt() / 2.0);
 
         let radian = math::basic::to_radians(60.0);
-        let rotation = Quaternion::new_axis_angle(&Vector3::UNIT_Z, radian);
+        let rotation = Quaternion::from_axis_angle(&Vector3::UNIT_Z, radian);
 
         let mut test_actor = TestActor::new();
         test_actor.set_rotation(rotation);
