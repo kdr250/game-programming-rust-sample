@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
-use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
+use gl::{BLEND, DEPTH_TEST, FUNC_ADD, ONE, ONE_MINUS_SRC_ALPHA, SRC_ALPHA, ZERO};
 use sdl2::{
     video::{GLContext, Window},
     VideoSubsystem,
@@ -45,6 +45,7 @@ impl Renderer {
         gl_attr.set_alpha_size(8);
         gl_attr.set_double_buffer(true);
         gl_attr.set_accelerated_visual(true);
+        gl_attr.set_depth_size(24);
 
         let window = video_system
             .window("Rust Game", screen_width as u32, screen_height as u32)
@@ -72,22 +73,35 @@ impl Renderer {
     pub fn draw(&mut self) {
         unsafe {
             gl::ClearColor(0.86, 0.86, 0.86, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+
+            // Draw mesh components. Enable depth buffering/disable alpha blend
+            gl::Enable(DEPTH_TEST);
+            gl::Disable(BLEND);
         }
 
-        let assert_manager = self.asset_manager.borrow_mut();
-        assert_manager.sprite_shader.set_active();
-        assert_manager.sprite_verts.set_active();
+        // TODO: Set the mesh shader active
 
-        for sprite in assert_manager.get_sprites() {
-            sprite.borrow().draw(&assert_manager.sprite_shader);
-        }
+        // TODO: Update view-projection matrix
 
         unsafe {
+            // Draw all sprite components. Disable depth buffering
+            gl::Disable(DEPTH_TEST);
             gl::Enable(BLEND);
-            gl::BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
+            gl::BlendEquationSeparate(FUNC_ADD, FUNC_ADD);
+            gl::BlendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ZERO);
         }
 
+        // Set shader/vao as active
+        let asset_manager = self.asset_manager.borrow_mut();
+        asset_manager.sprite_shader.set_active();
+        asset_manager.sprite_verts.set_active();
+
+        for sprite in asset_manager.get_sprites() {
+            sprite.borrow().draw(&asset_manager.sprite_shader);
+        }
+
+        // Swap the buffers
         self.window.gl_swap_window();
     }
 
