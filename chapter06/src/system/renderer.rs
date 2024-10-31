@@ -57,12 +57,14 @@ impl Renderer {
         gl::load_with(|name| video_system.gl_get_proc_address(name) as *const _);
 
         let asset_manager = AssetManager::new();
-        asset_manager.borrow_mut().load_shaders()?;
+        let (view, projection) = asset_manager
+            .borrow_mut()
+            .load_shaders(screen_width_height.0, screen_width_height.1)?;
 
         Ok(Self {
             asset_manager,
-            view: Matrix4::new(),
-            projection: Matrix4::new(),
+            view,
+            projection,
             screen_width,
             screen_height,
             window,

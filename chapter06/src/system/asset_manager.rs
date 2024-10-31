@@ -5,15 +5,16 @@ use anyhow::{Ok, Result};
 use crate::{
     components::{component::State, sprite_component::SpriteComponent},
     graphics::{mesh::Mesh, shader::Shader, texture::Texture, vertex_array::VertexArray},
-    math::matrix4::Matrix4,
+    math::{self, matrix4::Matrix4, vector3::Vector3},
 };
 
 pub struct AssetManager {
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
-    meshes: HashMap<String, Rc<Mesh>>,
     pub sprite_verts: VertexArray,
     pub sprite_shader: Shader,
+    meshes: HashMap<String, Rc<Mesh>>,
+    pub mesh_shader: Shader,
 }
 
 impl AssetManager {
@@ -21,9 +22,10 @@ impl AssetManager {
         let this = Self {
             textures: HashMap::new(),
             sprites: vec![],
-            meshes: HashMap::new(),
             sprite_verts: Self::create_sprite_verts(),
             sprite_shader: Shader::new(),
+            meshes: HashMap::new(),
+            mesh_shader: Shader::new(),
         };
 
         Rc::new(RefCell::new(this))
@@ -45,7 +47,11 @@ impl AssetManager {
         VertexArray::new(&vertices, 4, &index_buffer, 6)
     }
 
-    pub fn load_shaders(&mut self) -> Result<()> {
+    pub fn load_shaders(
+        &mut self,
+        screen_width: f32,
+        screen_height: f32,
+    ) -> Result<(Matrix4, Matrix4)> {
         self.sprite_shader.load("Sprite.vert", "Sprite.frag")?;
         self.sprite_shader.set_active();
 
@@ -53,7 +59,21 @@ impl AssetManager {
         self.sprite_shader
             .set_matrix_uniform("uViewProj", view_proj);
 
-        Ok(())
+        self.mesh_shader.load("BasicMesh.vert", "BasicMesh.frag")?;
+        self.mesh_shader.set_active();
+
+        let view = Matrix4::create_look_at(&Vector3::ZERO, &Vector3::UNIT_X, &Vector3::UNIT_Z);
+        let projection = Matrix4::create_perspective_fov(
+            math::basic::to_radians(70.0),
+            screen_width,
+            screen_height,
+            25.0,
+            10000.0,
+        );
+        self.mesh_shader
+            .set_matrix_uniform("uViewProj", view.clone() * projection.clone());
+
+        Ok((view, projection))
     }
 
     pub fn get_texture(&mut self, file_name: &str) -> Rc<Texture> {
