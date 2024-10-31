@@ -52,25 +52,38 @@ impl VertexArray {
                 STATIC_DRAW,
             );
 
-            // Specify the vertex attributes (For now, assume one vertex format) Position is 3 floats starting at offset 0
+            // Specify the vertex attributes (For now, assume one vertex format)
+            // Position is 3 floats
             gl::EnableVertexAttribArray(0);
             gl::VertexAttribPointer(
                 0,
                 3,
                 FLOAT,
                 FALSE,
-                size_of::<f32>() as i32 * 5,
+                size_of::<f32>() as i32 * 8,
                 0 as *const c_void,
             );
 
+            // Normal is 3 floats
             gl::EnableVertexAttribArray(1);
             gl::VertexAttribPointer(
                 1,
+                3,
+                FLOAT,
+                FALSE,
+                size_of::<f32>() as i32 * 8,
+                (size_of::<f32>() * 3) as *const c_void,
+            );
+
+            // Texture coordinate is 2 floats
+            gl::EnableVertexAttribArray(2);
+            gl::VertexAttribPointer(
+                2,
                 2,
                 FLOAT,
                 FALSE,
-                size_of::<f32>() as i32 * 5,
-                (size_of::<f32>() * 3) as *const c_void,
+                size_of::<f32>() as i32 * 8,
+                (size_of::<f32>() * 6) as *const c_void,
             );
         }
 

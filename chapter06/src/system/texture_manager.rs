@@ -29,10 +29,10 @@ impl TextureManager {
 
     fn create_sprite_verts() -> VertexArray {
         let vertices = [
-            -0.5, 0.5, 0.0, 0.0, 0.0, // top left
-            0.5, 0.5, 0.0, 1.0, 0.0, // top right
-            0.5, -0.5, 0.0, 1.0, 1.0, // bottom right
-            -0.5, -0.5, 0.0, 0.0, 1.0, // bottom left
+            -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, // top left
+            0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0, // top right
+            0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0, // bottom right
+            -0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 1.0, // bottom left
         ];
 
         let index_buffer = [
