@@ -25,7 +25,7 @@ impl Vector3 {
     pub fn transform(&self, q: &Quaternion) -> Vector3 {
         // v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
         let qv = Vector3::new(q.x, q.y, q.z);
-        let mut result = qv.clone();
+        let mut result = self.clone();
         result += Vector3::cross(&qv, &(Vector3::cross(&qv, &self) + self.clone() * q.w)) * 2.0;
         result
     }
