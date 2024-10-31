@@ -3,7 +3,6 @@ extern crate gl;
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
-use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use sdl2::{
     event::Event,
     keyboard::{KeyboardState, Scancode},
@@ -15,7 +14,7 @@ use crate::system::{
 };
 
 pub struct Game {
-    renderer: Renderer,
+    renderer: Rc<RefCell<Renderer>>,
     event_pump: EventPump,
     timer: TimerSubsystem,
     asset_manager: Rc<RefCell<AssetManager>>,
@@ -36,9 +35,13 @@ impl Game {
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
-        let asset_manager = renderer.get_asset_manager().clone();
+        let asset_manager = renderer.borrow().get_asset_manager().clone();
         let entity_manager = EntityManager::new();
-        EntityManager::load_data(entity_manager.clone(), asset_manager.clone());
+        EntityManager::load_data(
+            entity_manager.clone(),
+            asset_manager.clone(),
+            renderer.clone(),
+        );
 
         let game = Game {
             renderer,
@@ -113,6 +116,6 @@ impl Game {
     }
 
     fn generate_output(&mut self) {
-        self.renderer.draw();
+        self.renderer.borrow_mut().draw();
     }
 }

@@ -1,21 +1,23 @@
+use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::{
-        actor::{self, Actor, State as ActorState},
-        asteroid::Asteroid,
-        ship::Ship,
+        actor::{self, Actor, DefaultActor, State as ActorState},
+        camera_actor::CameraActor,
     },
-    math::random::Random,
+    components::mesh_component::MeshComponent,
+    math::{quaternion::Quaternion, random::Random, vector3::Vector3},
     system::asset_manager::AssetManager,
 };
+
+use super::renderer::Renderer;
 
 pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
     pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
     updating_actors: bool,
-    ship: Option<Rc<RefCell<Ship>>>,
-    asteroids: Vec<Rc<RefCell<Asteroid>>>,
+    camera_actor: Option<Rc<RefCell<CameraActor>>>,
     random: Random,
 }
 
@@ -25,8 +27,7 @@ impl EntityManager {
             actors: vec![],
             pending_actors: vec![],
             updating_actors: false,
-            ship: None,
-            asteroids: vec![],
+            camera_actor: None,
             random: Random::new(),
         };
 
@@ -55,28 +56,41 @@ impl EntityManager {
                 false
             }
         });
-
-        self.asteroids.retain(|asteroid| {
-            if *asteroid.borrow().get_state() != ActorState::Dead {
-                true
-            } else {
-                actor::remove_actor(asteroid.clone());
-                false
-            }
-        });
     }
 
-    pub fn load_data(this: Rc<RefCell<EntityManager>>, asset_manager: Rc<RefCell<AssetManager>>) {
-        let ship = Ship::new(asset_manager.clone(), this.clone());
-        this.borrow_mut().ship = Some(ship);
+    pub fn load_data(
+        this: Rc<RefCell<EntityManager>>,
+        asset_manager: Rc<RefCell<AssetManager>>,
+        renderer: Rc<RefCell<Renderer>>,
+    ) {
+        // Create actors
+        let a = DefaultActor::new(asset_manager.clone(), this.clone());
+        a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
+        a.borrow_mut().set_scale(100.0);
 
-        // Create asteroids
-        const NUM_ASTEROIDS: i32 = 20;
-        let asteroids: Vec<Rc<RefCell<Asteroid>>> = (0..NUM_ASTEROIDS)
-            .into_iter()
-            .map(|_| Asteroid::new(asset_manager.clone(), this.clone()))
-            .collect();
-        this.borrow_mut().set_asteroids(asteroids);
+        let mut q = Quaternion::from_axis_angle(&Vector3::UNIT_Y, -std::f32::consts::FRAC_PI_2);
+        q = Quaternion::concatenate(
+            &q,
+            &Quaternion::from_axis_angle(&Vector3::UNIT_Z, f32::consts::PI + f32::consts::PI / 4.0),
+        );
+        a.borrow_mut().set_rotation(q);
+
+        let mesh = MeshComponent::new(a.clone());
+        mesh.borrow_mut()
+            .set_mesh(asset_manager.borrow_mut().get_mesh("Cube.gpmesh"));
+
+        let b = DefaultActor::new(asset_manager.clone(), this.clone());
+        b.borrow_mut().set_position(Vector3::new(200.0, -75.0, 0.0));
+        b.borrow_mut().set_scale(3.0);
+        let mesh = MeshComponent::new(b.clone());
+        mesh.borrow_mut()
+            .set_mesh(asset_manager.borrow_mut().get_mesh("Sphere.gpmesh"));
+
+        // Camera actor
+        let camera_actor = CameraActor::new(asset_manager.clone(), this.clone(), renderer);
+        this.borrow_mut().camera_actor = Some(camera_actor);
+
+        // TODO: Setup floor
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
@@ -85,14 +99,6 @@ impl EntityManager {
 
     pub fn get_pending_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
         &self.pending_actors
-    }
-
-    pub fn get_asteroids(&self) -> &Vec<Rc<RefCell<Asteroid>>> {
-        &self.asteroids
-    }
-
-    pub fn set_asteroids(&mut self, asteroids: Vec<Rc<RefCell<Asteroid>>>) {
-        self.asteroids = asteroids;
     }
 
     pub fn get_random(&mut self) -> &mut Random {

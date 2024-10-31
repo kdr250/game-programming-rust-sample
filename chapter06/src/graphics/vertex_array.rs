@@ -37,7 +37,7 @@ impl VertexArray {
             gl::BindBuffer(ARRAY_BUFFER, vertex_buffer);
             gl::BufferData(
                 ARRAY_BUFFER,
-                num_verts * 5 * size_of::<f32>() as isize,
+                num_verts * 8 * size_of::<f32>() as isize,
                 verts as *const c_void,
                 STATIC_DRAW,
             );

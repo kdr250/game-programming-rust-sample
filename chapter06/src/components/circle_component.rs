@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    math::{quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
+    math::{quaternion::Quaternion, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};

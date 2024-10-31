@@ -33,7 +33,7 @@ impl Renderer {
     pub fn initialize(
         video_system: VideoSubsystem,
         screen_width_height: (f32, f32),
-    ) -> Result<Self> {
+    ) -> Result<Rc<RefCell<Self>>> {
         let (screen_width, screen_height) = screen_width_height;
 
         let gl_attr = video_system.gl_attr();
@@ -61,7 +61,7 @@ impl Renderer {
             .borrow_mut()
             .load_shaders(screen_width_height.0, screen_width_height.1)?;
 
-        Ok(Self {
+        let this = Self {
             asset_manager,
             view,
             projection,
@@ -69,12 +69,14 @@ impl Renderer {
             screen_height,
             window,
             context,
-        })
+        };
+
+        Ok(Rc::new(RefCell::new(this)))
     }
 
     pub fn draw(&mut self) {
         unsafe {
-            gl::ClearColor(0.86, 0.86, 0.86, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // Draw mesh components. Enable depth buffering/disable alpha blend
@@ -82,9 +84,20 @@ impl Renderer {
             gl::Disable(BLEND);
         }
 
-        // TODO: Set the mesh shader active
+        // Set the mesh shader active
+        let asset_manager = self.asset_manager.borrow_mut();
+        asset_manager.mesh_shader.set_active();
 
-        // TODO: Update view-projection matrix
+        // Update view-projection matrix
+        asset_manager
+            .mesh_shader
+            .set_matrix_uniform("uViewProj", self.view.clone() * self.projection.clone());
+
+        // Draw mesh components
+        let mesh_components = asset_manager.get_mesh_components().clone();
+        for mesh_component in mesh_components {
+            mesh_component.borrow().draw(&asset_manager.mesh_shader);
+        }
 
         unsafe {
             // Draw all sprite components. Disable depth buffering
@@ -95,7 +108,6 @@ impl Renderer {
         }
 
         // Set shader/vao as active
-        let asset_manager = self.asset_manager.borrow_mut();
         asset_manager.sprite_shader.set_active();
         asset_manager.sprite_verts.set_active();
 
@@ -109,5 +121,9 @@ impl Renderer {
 
     pub fn get_asset_manager(&self) -> &Rc<RefCell<AssetManager>> {
         &self.asset_manager
+    }
+
+    pub fn set_view_matrix(&mut self, view: Matrix4) {
+        self.view = view;
     }
 }
