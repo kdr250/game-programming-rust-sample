@@ -1,6 +1,6 @@
 use std::ops::{Mul, MulAssign};
 
-use super::{quaternion::Quaternion, vector3::Vector3};
+use super::{basic, quaternion::Quaternion, vector3::Vector3};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Matrix4 {
@@ -128,6 +128,55 @@ impl Matrix4 {
         mat[3][3] = 1.0;
 
         Self { mat }
+    }
+
+    pub fn create_look_at(eye: &Vector3, target: &Vector3, up: &Vector3) -> Self {
+        let zaxis = (target.clone() - eye.clone()).normalize();
+        let xaxis = Vector3::cross(up, &zaxis).normalize();
+        let yaxis = Vector3::cross(&zaxis, &xaxis).normalize();
+
+        let trans = Vector3::new(
+            -Vector3::dot(&xaxis, &eye),
+            -Vector3::dot(&yaxis, &eye),
+            -Vector3::dot(&zaxis, &eye),
+        );
+
+        let temp = [
+            [xaxis.x, yaxis.x, zaxis.x, 0.0],
+            [xaxis.y, yaxis.y, zaxis.y, 0.0],
+            [xaxis.z, yaxis.z, zaxis.z, 0.0],
+            [trans.x, trans.y, trans.z, 1.0],
+        ];
+
+        Matrix4::from(temp)
+    }
+
+    pub fn create_ortho(width: f32, height: f32, near: f32, far: f32) -> Self {
+        let temp = [
+            [2.0 / width, 0.0, 0.0, 0.0],
+            [0.0, 2.0 / height, 0.0, 0.0],
+            [0.0, 0.0, 1.0 / (far - near), 0.0],
+            [0.0, 0.0, near / (near - far), 1.0],
+        ];
+        Matrix4::from(temp)
+    }
+
+    pub fn create_perspective_fov(
+        fov_y: f32,
+        width: f32,
+        height: f32,
+        near: f32,
+        far: f32,
+    ) -> Self {
+        let y_scale = basic::cot(fov_y / 2.0);
+        let x_scale = y_scale * height / width;
+        let temp = [
+            [x_scale, 0.0, 0.0, 0.0],
+            [0.0, y_scale, 0.0, 0.0],
+            [0.0, 0.0, far / (far - near), 1.0],
+            [0.0, 0.0, -near * far / (far - near), 0.0],
+        ];
+        Matrix4::from(temp)
     }
 }
 
