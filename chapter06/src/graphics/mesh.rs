@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc};
 use anyhow::{anyhow, Ok, Result};
 use serde_json::{json, Value};
 
-use crate::{math::vector3::Vector3, system::texture_manager::TextureManager};
+use crate::{math::vector3::Vector3, system::asset_manager::AssetManager};
 
 use super::{texture::Texture, vertex_array::VertexArray};
 
@@ -24,11 +24,7 @@ impl Mesh {
         }
     }
 
-    pub fn load(
-        &mut self,
-        file_name: &str,
-        texture_manager: Rc<RefCell<TextureManager>>,
-    ) -> Result<()> {
+    pub fn load(&mut self, file_name: &str, asset_manager: &mut AssetManager) -> Result<()> {
         let path = Path::new(env!("OUT_DIR"))
             .join("resources")
             .join("Assets")
@@ -61,7 +57,7 @@ impl Mesh {
         for i in 0..textures.len() {
             // Is this texture already loaded?
             let texture_name = textures[i].as_str().unwrap();
-            let texture = texture_manager.borrow_mut().get_texture(texture_name);
+            let texture = asset_manager.get_texture(texture_name);
             self.textures.push(texture);
         }
 

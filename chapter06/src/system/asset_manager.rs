@@ -4,22 +4,24 @@ use anyhow::{Ok, Result};
 
 use crate::{
     components::{component::State, sprite_component::SpriteComponent},
-    graphics::{shader::Shader, texture::Texture, vertex_array::VertexArray},
+    graphics::{mesh::Mesh, shader::Shader, texture::Texture, vertex_array::VertexArray},
     math::matrix4::Matrix4,
 };
 
-pub struct TextureManager {
+pub struct AssetManager {
     textures: HashMap<String, Rc<Texture>>,
     sprites: Vec<Rc<RefCell<dyn SpriteComponent>>>,
+    meshes: HashMap<String, Rc<Mesh>>,
     pub sprite_verts: VertexArray,
     pub sprite_shader: Shader,
 }
 
-impl TextureManager {
+impl AssetManager {
     pub fn new() -> Rc<RefCell<Self>> {
         let this = Self {
             textures: HashMap::new(),
             sprites: vec![],
+            meshes: HashMap::new(),
             sprite_verts: Self::create_sprite_verts(),
             sprite_shader: Shader::new(),
         };
@@ -80,6 +82,21 @@ impl TextureManager {
         let result = Rc::new(texture);
         self.textures.insert(file_name.to_string(), result.clone());
         return result;
+    }
+
+    pub fn get_mesh(&mut self, file_name: &str) -> Rc<Mesh> {
+        if let Some(mesh) = self.meshes.get(&file_name.to_string()) {
+            return mesh.clone();
+        }
+
+        let mut mesh = Mesh::new();
+        if mesh.load(file_name, self).is_ok() {
+            let result = Rc::new(mesh);
+            self.meshes.insert(file_name.to_string(), result.clone());
+            return result;
+        }
+
+        panic!()
     }
 
     pub fn get_sprites(&self) -> &Vec<Rc<RefCell<dyn SpriteComponent>>> {

@@ -7,18 +7,18 @@ use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use sdl2::{
     event::Event,
     keyboard::{KeyboardState, Scancode},
-    video::{GLContext, Window},
     EventPump, TimerSubsystem,
 };
 
-use crate::system::{entity_manager::EntityManager, texture_manager::TextureManager};
+use crate::system::{
+    asset_manager::AssetManager, entity_manager::EntityManager, renderer::Renderer,
+};
 
 pub struct Game {
-    context: GLContext,
-    window: Window,
+    renderer: Renderer,
     event_pump: EventPump,
     timer: TimerSubsystem,
-    texture_manager: Rc<RefCell<TextureManager>>,
+    asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     is_running: bool,
     tick_count: u64,
@@ -28,44 +28,23 @@ impl Game {
     /// Initialize game
     pub fn initialize() -> Result<Game> {
         let sdl = sdl2::init().map_err(|e| anyhow!(e))?;
-
         let video_system = sdl.video().map_err(|e| anyhow!(e))?;
 
-        let gl_attr = video_system.gl_attr();
-        gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
-        gl_attr.set_context_version(3, 3);
-        gl_attr.set_red_size(8);
-        gl_attr.set_green_size(8);
-        gl_attr.set_blue_size(8);
-        gl_attr.set_alpha_size(8);
-        gl_attr.set_double_buffer(true);
-        gl_attr.set_accelerated_visual(true);
-
-        let window = video_system
-            .window("Game Programming in Rust", 1024, 768)
-            .position(100, 100)
-            .opengl()
-            .build()?;
-
-        let context = window.gl_create_context().map_err(|e| anyhow!(e))?;
-        gl::load_with(|name| video_system.gl_get_proc_address(name) as *const _);
+        let renderer = Renderer::initialize(video_system, (1024.0, 768.0))?;
 
         let event_pump = sdl.event_pump().map_err(|e| anyhow!(e))?;
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
-        let texture_manager = TextureManager::new();
-        texture_manager.borrow_mut().load_shaders()?;
-
+        let asset_manager = renderer.get_asset_manager().clone();
         let entity_manager = EntityManager::new();
-        EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
+        EntityManager::load_data(entity_manager.clone(), asset_manager.clone());
 
         let game = Game {
-            context,
-            window,
+            renderer,
             event_pump,
             timer,
-            texture_manager,
+            asset_manager,
             entity_manager,
             is_running: true,
             tick_count: 0,
@@ -130,28 +109,10 @@ impl Game {
         }
 
         self.entity_manager.borrow_mut().flush_actors();
-        self.texture_manager.borrow_mut().flush_sprites();
+        self.asset_manager.borrow_mut().flush_sprites();
     }
 
     fn generate_output(&mut self) {
-        unsafe {
-            gl::ClearColor(0.86, 0.86, 0.86, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
-
-        let texture_manager = self.texture_manager.borrow_mut();
-        texture_manager.sprite_shader.set_active();
-        texture_manager.sprite_verts.set_active();
-
-        for sprite in texture_manager.get_sprites() {
-            sprite.borrow().draw(&texture_manager.sprite_shader);
-        }
-
-        unsafe {
-            gl::Enable(BLEND);
-            gl::BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
-        }
-
-        self.window.gl_swap_window();
+        self.renderer.draw();
     }
 }

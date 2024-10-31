@@ -7,7 +7,7 @@ use crate::{
         ship::Ship,
     },
     math::random::Random,
-    system::texture_manager::TextureManager,
+    system::asset_manager::AssetManager,
 };
 
 pub struct EntityManager {
@@ -66,18 +66,15 @@ impl EntityManager {
         });
     }
 
-    pub fn load_data(
-        this: Rc<RefCell<EntityManager>>,
-        texture_manager: Rc<RefCell<TextureManager>>,
-    ) {
-        let ship = Ship::new(texture_manager.clone(), this.clone());
+    pub fn load_data(this: Rc<RefCell<EntityManager>>, asset_manager: Rc<RefCell<AssetManager>>) {
+        let ship = Ship::new(asset_manager.clone(), this.clone());
         this.borrow_mut().ship = Some(ship);
 
         // Create asteroids
         const NUM_ASTEROIDS: i32 = 20;
         let asteroids: Vec<Rc<RefCell<Asteroid>>> = (0..NUM_ASTEROIDS)
             .into_iter()
-            .map(|_| Asteroid::new(texture_manager.clone(), this.clone()))
+            .map(|_| Asteroid::new(asset_manager.clone(), this.clone()))
             .collect();
         this.borrow_mut().set_asteroids(asteroids);
     }

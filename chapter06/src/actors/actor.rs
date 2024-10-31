@@ -7,7 +7,7 @@ use std::{
 use crate::{
     components::component::{Component, State as ComponentState},
     math::{matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
-    system::{entity_manager::EntityManager, texture_manager::TextureManager},
+    system::{asset_manager::AssetManager, entity_manager::EntityManager},
 };
 
 static ID: AtomicU32 = AtomicU32::new(0);
@@ -130,7 +130,7 @@ pub trait Actor {
 
     fn set_state(&mut self, state: State);
 
-    fn get_texture_manager(&self) -> &Rc<RefCell<TextureManager>>;
+    fn get_asset_manager(&self) -> &Rc<RefCell<AssetManager>>;
 
     fn get_entity_manager(&self) -> &Rc<RefCell<EntityManager>>;
 
@@ -214,10 +214,10 @@ macro_rules! impl_getters_setters {
             self.components.clear();
         }
 
-        fn get_texture_manager(&self) -> &Rc<RefCell<TextureManager>> {
+        fn get_asset_manager(&self) -> &Rc<RefCell<AssetManager>> {
             cfg_if::cfg_if! {
                 if #[cfg(not(test))] {
-                    &self.texture_manager
+                    &self.asset_manager
                 } else {
                     panic!();
                 }
@@ -286,13 +286,13 @@ pub struct DefaultActor {
     scale: f32,
     rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
-    texture_manager: Rc<RefCell<TextureManager>>,
+    asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
 }
 
 impl DefaultActor {
     pub fn new(
-        texture_manager: Rc<RefCell<TextureManager>>,
+        asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
@@ -304,7 +304,7 @@ impl DefaultActor {
             scale: 1.0,
             rotation: Quaternion::new(),
             components: vec![],
-            texture_manager,
+            asset_manager,
             entity_manager: entity_manager.clone(),
         };
 
@@ -338,7 +338,7 @@ pub mod test {
         math::{
             self, matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3,
         },
-        system::{entity_manager::EntityManager, texture_manager::TextureManager},
+        system::{asset_manager::AssetManager, entity_manager::EntityManager},
     };
 
     use super::{generate_id, Actor, State};

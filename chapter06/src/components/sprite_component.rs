@@ -104,7 +104,7 @@ impl DefaultSpriteComponent {
 
         owner
             .borrow()
-            .get_texture_manager()
+            .get_asset_manager()
             .borrow_mut()
             .add_sprite(result.clone());
 

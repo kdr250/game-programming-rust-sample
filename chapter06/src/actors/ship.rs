@@ -11,7 +11,7 @@ use crate::{
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
-    system::{entity_manager::EntityManager, texture_manager::TextureManager},
+    system::{asset_manager::AssetManager, entity_manager::EntityManager},
 };
 
 use super::{actor::generate_id, laser::Laser};
@@ -25,14 +25,14 @@ pub struct Ship {
     scale: f32,
     rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
-    texture_manager: Rc<RefCell<TextureManager>>,
+    asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     laser_cooldown: f32,
 }
 
 impl Ship {
     pub fn new(
-        texture_manager: Rc<RefCell<TextureManager>>,
+        asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
@@ -44,7 +44,7 @@ impl Ship {
             scale: 1.0,
             rotation: Quaternion::new(),
             components: vec![],
-            texture_manager: texture_manager.clone(),
+            asset_manager: asset_manager.clone(),
             entity_manager: entity_manager.clone(),
             laser_cooldown: 0.0,
         };
@@ -52,7 +52,7 @@ impl Ship {
         let result = Rc::new(RefCell::new(this));
 
         let sprite_component = DefaultSpriteComponent::new(result.clone(), 150);
-        let texture = texture_manager.borrow_mut().get_texture("Ship.png");
+        let texture = asset_manager.borrow_mut().get_texture("Ship.png");
         sprite_component.borrow_mut().set_texture(texture);
 
         let input_component = InputComponent::new(result.clone());
@@ -77,7 +77,7 @@ impl Actor for Ship {
 
     fn actor_input(&mut self, key_state: &KeyboardState) {
         if key_state.is_scancode_pressed(Scancode::Space) && self.laser_cooldown <= 0.0 {
-            let laser = Laser::new(self.texture_manager.clone(), self.entity_manager.clone());
+            let laser = Laser::new(self.asset_manager.clone(), self.entity_manager.clone());
             let mut borrowed_laser = laser.borrow_mut();
             borrowed_laser.set_position(self.position.clone());
             borrowed_laser.set_rotation(self.rotation.clone());

@@ -9,7 +9,7 @@ use crate::{
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
-    system::{entity_manager::EntityManager, texture_manager::TextureManager},
+    system::{asset_manager::AssetManager, entity_manager::EntityManager},
 };
 
 use super::actor::{self, generate_id, Actor, State};
@@ -23,14 +23,14 @@ pub struct Asteroid {
     scale: f32,
     rotation: Quaternion,
     components: Vec<Rc<RefCell<dyn Component>>>,
-    texture_manager: Rc<RefCell<TextureManager>>,
+    asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     circle: Option<Rc<RefCell<CircleComponent>>>,
 }
 
 impl Asteroid {
     pub fn new(
-        texture_manager: Rc<RefCell<TextureManager>>,
+        asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
     ) -> Rc<RefCell<Self>> {
         let mut this = Self {
@@ -42,7 +42,7 @@ impl Asteroid {
             scale: 1.0,
             rotation: Quaternion::new(),
             components: vec![],
-            texture_manager: texture_manager.clone(),
+            asset_manager: asset_manager.clone(),
             entity_manager: entity_manager.clone(),
             circle: None,
         };
@@ -66,7 +66,7 @@ impl Asteroid {
 
         // Create a sprite component
         let sprite_component = DefaultSpriteComponent::new(result.clone(), 100);
-        let texture = texture_manager.borrow_mut().get_texture("Asteroid.png");
+        let texture = asset_manager.borrow_mut().get_texture("Asteroid.png");
         sprite_component.borrow_mut().set_texture(texture);
 
         // Create a move component, and set a forward speed
