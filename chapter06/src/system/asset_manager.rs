@@ -3,7 +3,9 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use anyhow::{Ok, Result};
 
 use crate::{
-    components::{component::State, sprite_component::SpriteComponent},
+    components::{
+        component::State, mesh_component::MeshComponent, sprite_component::SpriteComponent,
+    },
     graphics::{mesh::Mesh, shader::Shader, texture::Texture, vertex_array::VertexArray},
     math::{self, matrix4::Matrix4, vector3::Vector3},
 };
@@ -15,6 +17,7 @@ pub struct AssetManager {
     pub sprite_shader: Shader,
     meshes: HashMap<String, Rc<Mesh>>,
     pub mesh_shader: Shader,
+    mesh_components: Vec<Rc<RefCell<MeshComponent>>>,
 }
 
 impl AssetManager {
@@ -26,6 +29,7 @@ impl AssetManager {
             sprite_shader: Shader::new(),
             meshes: HashMap::new(),
             mesh_shader: Shader::new(),
+            mesh_components: vec![],
         };
 
         Rc::new(RefCell::new(this))
@@ -104,21 +108,6 @@ impl AssetManager {
         return result;
     }
 
-    pub fn get_mesh(&mut self, file_name: &str) -> Rc<Mesh> {
-        if let Some(mesh) = self.meshes.get(&file_name.to_string()) {
-            return mesh.clone();
-        }
-
-        let mut mesh = Mesh::new();
-        if mesh.load(file_name, self).is_ok() {
-            let result = Rc::new(mesh);
-            self.meshes.insert(file_name.to_string(), result.clone());
-            return result;
-        }
-
-        panic!()
-    }
-
     pub fn get_sprites(&self) -> &Vec<Rc<RefCell<dyn SpriteComponent>>> {
         &self.sprites
     }
@@ -139,5 +128,28 @@ impl AssetManager {
     pub fn flush_sprites(&mut self) {
         self.sprites
             .retain(|sprite| *sprite.borrow().get_state() == State::Active {});
+    }
+
+    pub fn get_mesh(&mut self, file_name: &str) -> Rc<Mesh> {
+        if let Some(mesh) = self.meshes.get(&file_name.to_string()) {
+            return mesh.clone();
+        }
+
+        let mut mesh = Mesh::new();
+        if mesh.load(file_name, self).is_ok() {
+            let result = Rc::new(mesh);
+            self.meshes.insert(file_name.to_string(), result.clone());
+            return result;
+        }
+
+        panic!()
+    }
+
+    pub fn add_mesh_component(&mut self, mesh: Rc<RefCell<MeshComponent>>) {
+        self.mesh_components.push(mesh);
+    }
+
+    pub fn get_mesh_components(&self) -> &Vec<Rc<RefCell<MeshComponent>>> {
+        &self.mesh_components
     }
 }
