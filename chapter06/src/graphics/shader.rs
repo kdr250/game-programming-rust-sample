@@ -101,7 +101,7 @@ impl Shader {
         let mut status = 0;
         unsafe {
             gl::GetShaderiv(shader, COMPILE_STATUS, &mut status);
-            if status != TRUE.into() {
+            if status != TRUE as i32 {
                 let mut buffer = [0_i8; 512];
                 gl::GetShaderInfoLog(shader, 511, null_mut(), buffer.as_mut_ptr());
                 let buf = Vec::from(buffer).into_iter().map(|b| b as u8).collect();
@@ -117,7 +117,7 @@ impl Shader {
         let mut status = 0;
         unsafe {
             gl::GetProgramiv(self.shader_program, LINK_STATUS, &mut status);
-            if status != TRUE.into() {
+            if status != TRUE as i32 {
                 let mut buffer = [0_i8; 512];
                 gl::GetShaderInfoLog(self.shader_program, 511, null_mut(), buffer.as_mut_ptr());
                 let buf = Vec::from(buffer).into_iter().map(|b| b as u8).collect();

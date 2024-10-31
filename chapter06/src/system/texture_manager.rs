@@ -66,7 +66,20 @@ impl TextureManager {
             return result;
         }
 
-        panic!("failed to get texture: {}", file_name);
+        self.get_default_texture()
+    }
+
+    pub fn get_default_texture(&mut self) -> Rc<Texture> {
+        let file_name = "Default.png";
+        if let Some(texture) = self.textures.get(&file_name.to_string()) {
+            return texture.clone();
+        }
+
+        let mut texture = Texture::new();
+        texture.load(file_name).unwrap();
+        let result = Rc::new(texture);
+        self.textures.insert(file_name.to_string(), result.clone());
+        return result;
     }
 
     pub fn get_sprites(&self) -> &Vec<Rc<RefCell<dyn SpriteComponent>>> {
