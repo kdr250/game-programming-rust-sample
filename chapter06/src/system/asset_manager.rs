@@ -63,7 +63,7 @@ impl AssetManager {
         self.sprite_shader
             .set_matrix_uniform("uViewProj", view_proj);
 
-        self.mesh_shader.load("BasicMesh.vert", "BasicMesh.frag")?;
+        self.mesh_shader.load("Phong.vert", "Phong.frag")?;
         self.mesh_shader.set_active();
 
         let view = Matrix4::create_look_at(&Vector3::ZERO, &Vector3::UNIT_X, &Vector3::UNIT_Z);

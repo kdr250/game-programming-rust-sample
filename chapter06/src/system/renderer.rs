@@ -102,6 +102,9 @@ impl Renderer {
             .mesh_shader
             .set_matrix_uniform("uViewProj", self.view.clone() * self.projection.clone());
 
+        // Update lighting uniforms
+        self.set_light_uniforms(&asset_manager.mesh_shader);
+
         // Draw mesh components
         let mesh_components = asset_manager.get_mesh_components().clone();
         for mesh_component in mesh_components {
@@ -128,7 +131,7 @@ impl Renderer {
         self.window.gl_swap_window();
     }
 
-    pub fn set_light_uniforms(&mut self, shader: &mut Shader) {
+    pub fn set_light_uniforms(&self, shader: &Shader) {
         // Camera position is from inverted view
         let mut inverted_view = self.view.clone();
         inverted_view.invert();
@@ -144,6 +147,14 @@ impl Renderer {
             &self.directional_light.diffuse_color,
         );
         shader.set_vector_uniform("uDirLight.mSpecColor", &self.directional_light.spec_color);
+    }
+
+    pub fn set_ambient_light(&mut self, ambient_light: Vector3) {
+        self.ambient_light = ambient_light;
+    }
+
+    pub fn get_directional_light_mut(&mut self) -> &mut DirectionalLight {
+        &mut self.directional_light
     }
 
     pub fn get_asset_manager(&self) -> &Rc<RefCell<AssetManager>> {

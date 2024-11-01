@@ -8,10 +8,8 @@ use crate::{
     },
     components::mesh_component::MeshComponent,
     math::{quaternion::Quaternion, random::Random, vector3::Vector3},
-    system::asset_manager::AssetManager,
+    system::{asset_manager::AssetManager, renderer::Renderer},
 };
-
-use super::renderer::Renderer;
 
 pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
@@ -87,8 +85,18 @@ impl EntityManager {
             .set_mesh(asset_manager.borrow_mut().get_mesh("Sphere.gpmesh"));
 
         // Camera actor
-        let camera_actor = CameraActor::new(asset_manager.clone(), this.clone(), renderer);
+        let camera_actor = CameraActor::new(asset_manager.clone(), this.clone(), renderer.clone());
         this.borrow_mut().camera_actor = Some(camera_actor);
+
+        // Setup lights
+        {
+            let mut borrowed_renderer = renderer.borrow_mut();
+            borrowed_renderer.set_ambient_light(Vector3::new(0.2, 0.2, 0.2));
+            let directional_light = borrowed_renderer.get_directional_light_mut();
+            directional_light.direction = Vector3::new(0.0, -0.707, -0.707);
+            directional_light.diffuse_color = Vector3::new(0.78, 0.88, 1.0);
+            directional_light.spec_color = Vector3::new(0.8, 0.8, 0.8);
+        }
 
         // TODO: Setup floor
     }
