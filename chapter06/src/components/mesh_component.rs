@@ -50,6 +50,9 @@ impl MeshComponent {
                 self.owner.borrow().get_world_transform().clone(),
             );
 
+            // Set specular power
+            shader.set_float_uniform("uSpecPower", mesh.get_spec_power());
+
             // Set the active texture
             if let Some(texture) = mesh.get_texture(self.texture_index) {
                 texture.set_active();

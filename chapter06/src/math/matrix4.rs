@@ -178,6 +178,121 @@ impl Matrix4 {
         ];
         Matrix4::from(temp)
     }
+
+    // Get the translation component of the matrix
+    pub fn get_translation(&self) -> Vector3 {
+        Vector3::new(self.mat[3][0], self.mat[3][1], self.mat[3][2])
+    }
+
+    // Invert the matrix - super slow
+    pub fn invert(&mut self) {
+        let mut tmp = [0.0; 12];
+        let mut src = [0.0; 16];
+        let mut dst = [0.0; 16];
+        let mut det = 0.0;
+
+        // Transpose matrix
+        // row 1 to col 1
+        src[0] = self.mat[0][0];
+        src[4] = self.mat[0][1];
+        src[8] = self.mat[0][2];
+        src[12] = self.mat[0][3];
+
+        // row 2 to col 2
+        src[1] = self.mat[1][0];
+        src[5] = self.mat[1][1];
+        src[9] = self.mat[1][2];
+        src[13] = self.mat[1][3];
+
+        // row 3 to col 3
+        src[2] = self.mat[2][0];
+        src[6] = self.mat[2][1];
+        src[10] = self.mat[2][2];
+        src[14] = self.mat[2][3];
+
+        // row 4 to col 4
+        src[3] = self.mat[3][0];
+        src[7] = self.mat[3][1];
+        src[11] = self.mat[3][2];
+        src[15] = self.mat[3][3];
+
+        // Calculate cofactors
+        tmp[0] = src[10] * src[15];
+        tmp[1] = src[11] * src[14];
+        tmp[2] = src[9] * src[15];
+        tmp[3] = src[11] * src[13];
+        tmp[4] = src[9] * src[14];
+        tmp[5] = src[10] * src[13];
+        tmp[6] = src[8] * src[15];
+        tmp[7] = src[11] * src[12];
+        tmp[8] = src[8] * src[14];
+        tmp[9] = src[10] * src[12];
+        tmp[10] = src[8] * src[13];
+        tmp[11] = src[9] * src[12];
+
+        dst[0] = tmp[0] * src[5] + tmp[3] * src[6] + tmp[4] * src[7];
+        dst[0] -= tmp[1] * src[5] + tmp[2] * src[6] + tmp[5] * src[7];
+        dst[1] = tmp[1] * src[4] + tmp[6] * src[6] + tmp[9] * src[7];
+        dst[1] -= tmp[0] * src[4] + tmp[7] * src[6] + tmp[8] * src[7];
+        dst[2] = tmp[2] * src[4] + tmp[7] * src[5] + tmp[10] * src[7];
+        dst[2] -= tmp[3] * src[4] + tmp[6] * src[5] + tmp[11] * src[7];
+        dst[3] = tmp[5] * src[4] + tmp[8] * src[5] + tmp[11] * src[6];
+        dst[3] -= tmp[4] * src[4] + tmp[9] * src[5] + tmp[10] * src[6];
+        dst[4] = tmp[1] * src[1] + tmp[2] * src[2] + tmp[5] * src[3];
+        dst[4] -= tmp[0] * src[1] + tmp[3] * src[2] + tmp[4] * src[3];
+        dst[5] = tmp[0] * src[0] + tmp[7] * src[2] + tmp[8] * src[3];
+        dst[5] -= tmp[1] * src[0] + tmp[6] * src[2] + tmp[9] * src[3];
+        dst[6] = tmp[3] * src[0] + tmp[6] * src[1] + tmp[11] * src[3];
+        dst[6] -= tmp[2] * src[0] + tmp[7] * src[1] + tmp[10] * src[3];
+        dst[7] = tmp[4] * src[0] + tmp[9] * src[1] + tmp[10] * src[2];
+        dst[7] -= tmp[5] * src[0] + tmp[8] * src[1] + tmp[11] * src[2];
+
+        tmp[0] = src[2] * src[7];
+        tmp[1] = src[3] * src[6];
+        tmp[2] = src[1] * src[7];
+        tmp[3] = src[3] * src[5];
+        tmp[4] = src[1] * src[6];
+        tmp[5] = src[2] * src[5];
+        tmp[6] = src[0] * src[7];
+        tmp[7] = src[3] * src[4];
+        tmp[8] = src[0] * src[6];
+        tmp[9] = src[2] * src[4];
+        tmp[10] = src[0] * src[5];
+        tmp[11] = src[1] * src[4];
+
+        dst[8] = tmp[0] * src[13] + tmp[3] * src[14] + tmp[4] * src[15];
+        dst[8] -= tmp[1] * src[13] + tmp[2] * src[14] + tmp[5] * src[15];
+        dst[9] = tmp[1] * src[12] + tmp[6] * src[14] + tmp[9] * src[15];
+        dst[9] -= tmp[0] * src[12] + tmp[7] * src[14] + tmp[8] * src[15];
+        dst[10] = tmp[2] * src[12] + tmp[7] * src[13] + tmp[10] * src[15];
+        dst[10] -= tmp[3] * src[12] + tmp[6] * src[13] + tmp[11] * src[15];
+        dst[11] = tmp[5] * src[12] + tmp[8] * src[13] + tmp[11] * src[14];
+        dst[11] -= tmp[4] * src[12] + tmp[9] * src[13] + tmp[10] * src[14];
+        dst[12] = tmp[2] * src[10] + tmp[5] * src[11] + tmp[1] * src[9];
+        dst[12] -= tmp[4] * src[11] + tmp[0] * src[9] + tmp[3] * src[10];
+        dst[13] = tmp[8] * src[11] + tmp[0] * src[8] + tmp[7] * src[10];
+        dst[13] -= tmp[6] * src[10] + tmp[9] * src[11] + tmp[1] * src[8];
+        dst[14] = tmp[6] * src[9] + tmp[11] * src[11] + tmp[3] * src[8];
+        dst[14] -= tmp[10] * src[11] + tmp[2] * src[8] + tmp[7] * src[9];
+        dst[15] = tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9];
+        dst[15] -= tmp[8] * src[9] + tmp[11] * src[10] + tmp[5] * src[8];
+
+        // Calculate determinant
+        det = src[0] * dst[0] + src[1] * dst[1] + src[2] * dst[2] + src[3] * dst[3];
+
+        // Inverse of matrix is divided by determinant
+        det = 1.0 / det;
+        for j in 0..16 {
+            dst[j] *= det;
+        }
+
+        // Set it back
+        for i in 0..4 {
+            for j in 0..4 {
+                self.mat[i][j] = dst[i * 4 + j];
+            }
+        }
+    }
 }
 
 impl Mul for Matrix4 {

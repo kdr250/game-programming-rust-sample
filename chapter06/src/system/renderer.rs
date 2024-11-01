@@ -7,7 +7,10 @@ use sdl2::{
     VideoSubsystem,
 };
 
-use crate::math::matrix4::Matrix4;
+use crate::{
+    graphics::{directional_light::DirectionalLight, shader::Shader},
+    math::{matrix4::Matrix4, vector3::Vector3},
+};
 
 use super::asset_manager::AssetManager;
 
@@ -21,6 +24,10 @@ pub struct Renderer {
     // Width/height of screen
     screen_width: f32,
     screen_height: f32,
+
+    // Lighting data
+    ambient_light: Vector3,
+    directional_light: DirectionalLight,
 
     // Window
     window: Window,
@@ -67,6 +74,8 @@ impl Renderer {
             projection,
             screen_width,
             screen_height,
+            ambient_light: Vector3::ZERO,
+            directional_light: DirectionalLight::new(),
             window,
             context,
         };
@@ -117,6 +126,24 @@ impl Renderer {
 
         // Swap the buffers
         self.window.gl_swap_window();
+    }
+
+    pub fn set_light_uniforms(&mut self, shader: &mut Shader) {
+        // Camera position is from inverted view
+        let mut inverted_view = self.view.clone();
+        inverted_view.invert();
+        shader.set_vector_uniform("uCameraPos", &inverted_view.get_translation());
+
+        // Ambient light
+        shader.set_vector_uniform("uAmbientLight", &self.ambient_light);
+
+        // Directional light
+        shader.set_vector_uniform("uDirLight.mDirection", &self.directional_light.direction);
+        shader.set_vector_uniform(
+            "uDirLight.mDiffuseColor",
+            &self.directional_light.diffuse_color,
+        );
+        shader.set_vector_uniform("uDirLight.mSpecColor", &self.directional_light.spec_color);
     }
 
     pub fn get_asset_manager(&self) -> &Rc<RefCell<AssetManager>> {

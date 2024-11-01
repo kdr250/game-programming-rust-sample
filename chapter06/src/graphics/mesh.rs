@@ -1,7 +1,7 @@
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{path::Path, rc::Rc};
 
 use anyhow::{anyhow, Ok, Result};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use crate::{math::vector3::Vector3, system::asset_manager::AssetManager};
 
@@ -11,6 +11,7 @@ pub struct Mesh {
     textures: Vec<Rc<Texture>>,
     vertex_array: Option<Rc<VertexArray>>,
     shader_name: String,
+    spec_power: f32,
     radius: f32,
 }
 
@@ -20,6 +21,7 @@ impl Mesh {
             textures: vec![],
             vertex_array: None,
             shader_name: String::new(),
+            spec_power: 0.0,
             radius: 0.0,
         }
     }
@@ -60,6 +62,8 @@ impl Mesh {
             let texture = asset_manager.get_texture(texture_name);
             self.textures.push(texture);
         }
+
+        self.spec_power = json["specularPower"].as_f64().unwrap() as f32;
 
         // Load in the vertices
         let verts_json = &json["vertices"];
@@ -137,6 +141,10 @@ impl Mesh {
 
     pub fn get_shader_name(&self) -> &String {
         &self.shader_name
+    }
+
+    pub fn get_spec_power(&self) -> f32 {
+        self.spec_power
     }
 
     pub fn get_radius(&self) -> f32 {

@@ -6,7 +6,7 @@ use gl::{
     COMPILE_STATUS, FRAGMENT_SHADER, LINK_STATUS, TRUE, VERTEX_SHADER,
 };
 
-use crate::math::matrix4::Matrix4;
+use crate::math::{matrix4::Matrix4, vector3::Vector3};
 
 pub struct Shader {
     // OpenGL IDs of the vertex shader
@@ -67,6 +67,22 @@ impl Shader {
             let location_id = gl::GetUniformLocation(self.shader_program, name.as_ptr());
             // Send the matrix data to the uniform
             gl::UniformMatrix4fv(location_id, 1, TRUE, matrix.get_as_float_ptr());
+        }
+    }
+
+    pub fn set_vector_uniform(&self, name: &str, vector: &Vector3) {
+        unsafe {
+            let name = CString::new(name).unwrap();
+            let location_id = gl::GetUniformLocation(self.shader_program, name.as_ptr());
+            gl::Uniform3fv(location_id, 1, vector.get_as_float_ptr());
+        }
+    }
+
+    pub fn set_float_uniform(&self, name: &str, value: f32) {
+        unsafe {
+            let name = CString::new(name).unwrap();
+            let location_id = gl::GetUniformLocation(self.shader_program, name.as_ptr());
+            gl::Uniform1f(location_id, value);
         }
     }
 

@@ -36,6 +36,10 @@ impl Vector3 {
         self.z = z;
     }
 
+    pub fn get_as_float_ptr(&self) -> *const f32 {
+        &self.x
+    }
+
     pub fn length_sqrt(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
