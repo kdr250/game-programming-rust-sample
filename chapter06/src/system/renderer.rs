@@ -106,8 +106,7 @@ impl Renderer {
         self.set_light_uniforms(&asset_manager.mesh_shader);
 
         // Draw mesh components
-        let mesh_components = asset_manager.get_mesh_components().clone();
-        for mesh_component in mesh_components {
+        for mesh_component in asset_manager.get_mesh_components() {
             mesh_component.borrow().draw(&asset_manager.mesh_shader);
         }
 

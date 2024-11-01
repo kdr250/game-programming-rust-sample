@@ -88,11 +88,7 @@ pub trait Actor {
         // Scale, then rotate, then translate
         let mut world_transform = Matrix4::create_scale(self.get_scale());
         world_transform *= Matrix4::create_from_quaternion(self.get_rotation());
-        world_transform *= Matrix4::create_translation(&Vector3::new(
-            self.get_position().x,
-            self.get_position().y,
-            0.0,
-        ));
+        world_transform *= Matrix4::create_translation(self.get_position());
         self.set_world_transform(world_transform);
 
         // Inform components world transform updated

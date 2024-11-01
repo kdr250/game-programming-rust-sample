@@ -56,13 +56,15 @@ impl AssetManager {
         screen_width: f32,
         screen_height: f32,
     ) -> Result<(Matrix4, Matrix4)> {
+        // Create sprite shader
         self.sprite_shader.load("Sprite.vert", "Sprite.frag")?;
         self.sprite_shader.set_active();
 
-        let view_proj = Matrix4::create_simple_view_proj(1024.0, 768.0);
+        let view_proj = Matrix4::create_simple_view_proj(screen_width, screen_height);
         self.sprite_shader
             .set_matrix_uniform("uViewProj", view_proj);
 
+        // Create basic mesh shader
         self.mesh_shader.load("Phong.vert", "Phong.frag")?;
         self.mesh_shader.set_active();
 
