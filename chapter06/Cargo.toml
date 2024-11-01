@@ -1,0 +1,27 @@
+[package]
+name = "chapter06"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+cfg-if = "1.0"
+gl = "0.14.0"
+image = "0.25.4"
+rand = "0.8.5"
+serde_json = "1.0.132"
+
+[dependencies.sdl2]
+version = "0.37"
+default-features = false
+features = ["static-link", "use-vcpkg"]
+
+[package.metadata.vcpkg]
+dependencies = ["sdl2"]
+git = "https://github.com/microsoft/vcpkg"
+rev = "2024.09.30"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"
