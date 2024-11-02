@@ -87,7 +87,7 @@ impl Mesh {
                 vert[1].as_f64().unwrap() as f32,
                 vert[2].as_f64().unwrap() as f32,
             );
-            self.radius = self.radius.max(position.length_sqrt());
+            self.radius = self.radius.max(position.length_sq());
 
             // Add the floats
             for i in 0..vert.len() {

@@ -96,11 +96,11 @@ impl EntityManager {
         let mut best = self.enemies[0].clone();
 
         let mut best_dist_sq =
-            (position.clone() - best.borrow().get_position().clone()).length_sqrt();
+            (position.clone() - best.borrow().get_position().clone()).length_sq();
 
         for i in 1..self.enemies.len() {
             let new_dist_sq =
-                (position.clone() - self.enemies[i].borrow().get_position().clone()).length_sqrt();
+                (position.clone() - self.enemies[i].borrow().get_position().clone()).length_sq();
             if new_dist_sq < best_dist_sq {
                 best_dist_sq = new_dist_sq;
                 best = self.enemies[i].clone();
