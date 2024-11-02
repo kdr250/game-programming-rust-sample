@@ -45,7 +45,7 @@ impl Vector2 {
         self.y = y;
     }
 
-    pub fn length_sqrt(&self) -> f32 {
+    pub fn length_sq(&self) -> f32 {
         self.x * self.x + self.y * self.y
     }
 }
@@ -215,11 +215,11 @@ mod tests {
         }
 
         #[test]
-        fn test_length_sqrt() {
+        fn test_length_sq() {
             let expected = 25.0;
 
             let a = Vector2::new(3.0, 4.0);
-            let actual = a.length_sqrt();
+            let actual = a.length_sq();
 
             assert_eq!(expected, actual);
         }

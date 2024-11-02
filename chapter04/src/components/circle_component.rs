@@ -43,7 +43,7 @@ impl CircleComponent {
     pub fn intersect(&self, other: Rc<RefCell<CircleComponent>>) -> bool {
         let borrowed_other = other.borrow();
         let diff = self.center.clone() - borrowed_other.center.clone();
-        let distance_sq = diff.length_sqrt();
+        let distance_sq = diff.length_sq();
 
         let radius_diff = self.radius + borrowed_other.radius;
         let radius_sq = radius_diff * radius_diff;
