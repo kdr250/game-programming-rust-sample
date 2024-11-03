@@ -68,7 +68,7 @@ impl EntityManager {
         asset_manager: Rc<RefCell<AssetManager>>,
         renderer: Rc<RefCell<Renderer>>,
         audio_system: Rc<RefCell<AudioSystem>>,
-    ) {
+    ) -> Rc<RefCell<CameraActor>> {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
         a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
@@ -144,7 +144,7 @@ impl EntityManager {
             renderer.clone(),
             audio_system.clone(),
         );
-        this.borrow_mut().camera_actor = Some(camera_actor);
+        this.borrow_mut().camera_actor = Some(camera_actor.clone());
 
         // Setup lights
         {
@@ -181,6 +181,8 @@ impl EntityManager {
         mc.borrow_mut().set_mesh(mesh);
         let ac = AudioComponent::new(m, audio_system);
         ac.borrow_mut().play_event("event:/FireLoop");
+
+        camera_actor
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

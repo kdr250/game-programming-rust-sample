@@ -9,9 +9,12 @@ use sdl2::{
     EventPump, TimerSubsystem,
 };
 
-use crate::system::{
-    asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-    renderer::Renderer, sound_event::SoundEvent,
+use crate::{
+    actors::camera_actor::{self, CameraActor},
+    system::{
+        asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
+        renderer::Renderer, sound_event::SoundEvent,
+    },
 };
 
 pub struct Game {
@@ -24,6 +27,8 @@ pub struct Game {
     is_running: bool,
     tick_count: u64,
     music_event: SoundEvent,
+    reverb_snap: Option<SoundEvent>,
+    camera_actor: Rc<RefCell<CameraActor>>,
 }
 
 impl Game {
@@ -44,7 +49,7 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
-        EntityManager::load_data(
+        let camera_actor = EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
@@ -61,6 +66,8 @@ impl Game {
             is_running: true,
             tick_count: 0,
             music_event,
+            reverb_snap: None,
+            camera_actor,
         };
 
         Ok(game)
@@ -87,11 +94,15 @@ impl Game {
                     scancode, repeat, ..
                 } => {
                     if !repeat && scancode.is_some() {
-                        Game::handle_key_pressed(
+                        if let Some(reverb) = Game::handle_key_pressed(
                             scancode.unwrap(),
                             &mut self.music_event,
+                            &mut self.reverb_snap,
                             self.audio_system.clone(),
-                        );
+                            self.camera_actor.clone(),
+                        ) {
+                            self.reverb_snap = Some(reverb);
+                        }
                     }
                 }
                 _ => {}
@@ -113,17 +124,51 @@ impl Game {
     fn handle_key_pressed(
         key: Scancode,
         music_event: &mut SoundEvent,
+        reverb_snap: &mut Option<SoundEvent>,
         audio_system: Rc<RefCell<AudioSystem>>,
-    ) {
+        camera_actor: Rc<RefCell<CameraActor>>,
+    ) -> Option<SoundEvent> {
         match key {
+            Scancode::Minus => {
+                // Reduce master volume
+                let mut volume = audio_system.borrow().get_bus_volume("bus:/");
+                volume = f32::max(0.0, volume - 0.1);
+                audio_system.borrow_mut().set_bus_volume("bus:/", volume);
+            }
+            Scancode::Equals => {
+                // Increase master volume
+                let mut volume = audio_system.borrow().get_bus_volume("bus:/");
+                volume = f32::min(1.0, volume + 0.1);
+                audio_system.borrow_mut().set_bus_volume("bus:/", volume);
+            }
             Scancode::E => {
                 audio_system.borrow_mut().play_event("event:/Explosion2D");
             }
             Scancode::M => {
                 music_event.set_paused(!music_event.get_paused());
             }
+            Scancode::R => {
+                // FIXME: An error will happen when switching four times...
+                if let Some(reverb) = reverb_snap {
+                    if reverb.is_valid() {
+                        reverb.stop(true);
+                        return None;
+                    }
+                }
+                let reverb = audio_system.borrow_mut().play_event("snapshot:/WithReverb");
+                return Some(reverb);
+            }
+            Scancode::Num1 => {
+                // Set default footstep surface
+                camera_actor.borrow_mut().set_foot_step_surface(0.0);
+            }
+            Scancode::Num2 => {
+                // Set grass footstep surface
+                camera_actor.borrow_mut().set_foot_step_surface(0.5);
+            }
             _ => {}
         };
+        return None;
     }
 
     fn update_game(&mut self) {
