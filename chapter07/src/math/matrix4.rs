@@ -184,6 +184,18 @@ impl Matrix4 {
         Vector3::new(self.mat[3][0], self.mat[3][1], self.mat[3][2])
     }
 
+    pub fn get_x_axis(&self) -> Vector3 {
+        Vector3::new(self.mat[0][0], self.mat[0][1], self.mat[0][2]).normalize()
+    }
+
+    pub fn get_y_axis(&self) -> Vector3 {
+        Vector3::new(self.mat[1][0], self.mat[1][1], self.mat[1][2]).normalize()
+    }
+
+    pub fn get_z_axis(&self) -> Vector3 {
+        Vector3::new(self.mat[2][0], self.mat[2][1], self.mat[2][2]).normalize()
+    }
+
     // Invert the matrix - super slow
     pub fn invert(&mut self) {
         let mut tmp = [0.0; 12];

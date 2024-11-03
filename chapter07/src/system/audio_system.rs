@@ -9,8 +9,11 @@ use std::{
 use anyhow::Result;
 use libfmod::{
     ffi::{FMOD_INIT_NORMAL, FMOD_STUDIO_INIT_NORMAL, FMOD_STUDIO_PLAYBACK_STOPPED},
-    Bank, EventDescription, EventInstance, LoadBank, PlaybackState, Studio, System,
+    Attributes3d, Bank, EventDescription, EventInstance, LoadBank, PlaybackState, Studio, System,
+    Vector,
 };
+
+use crate::math::{matrix4::Matrix4, vector3::Vector3};
 
 use super::{asset_manager::AssetManager, sound_event::SoundEvent};
 
@@ -111,6 +114,26 @@ impl AudioSystem {
         }
 
         self.system.update().unwrap();
+    }
+
+    pub fn set_listener(&mut self, view_matrix: &Matrix4) {
+        let mut inverted_view = view_matrix.clone();
+        inverted_view.invert();
+
+        let attributes = Attributes3d {
+            position: AudioSystem::vector_to_fmod(&inverted_view.get_translation()),
+            forward: AudioSystem::vector_to_fmod(&inverted_view.get_z_axis()),
+            up: AudioSystem::vector_to_fmod(&inverted_view.get_y_axis()),
+            velocity: AudioSystem::vector_to_fmod(&Vector3::ZERO),
+        };
+
+        self.system
+            .set_listener_attributes(0, attributes, None)
+            .unwrap();
+    }
+
+    fn vector_to_fmod(in_vector: &Vector3) -> Vector {
+        Vector::new(in_vector.y, in_vector.z, in_vector.x)
     }
 }
 
