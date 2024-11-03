@@ -8,9 +8,9 @@ use std::{
 
 use anyhow::Result;
 use libfmod::{
-    ffi::{FMOD_INIT_NORMAL, FMOD_STUDIO_INIT_NORMAL, FMOD_STUDIO_PLAYBACK_STOPPED},
-    Attributes3d, Bank, EventDescription, EventInstance, LoadBank, PlaybackState, Studio, System,
-    Vector,
+    ffi::{FMOD_INIT_NORMAL, FMOD_STUDIO_INIT_NORMAL},
+    Attributes3d, Bank, Bus, EventDescription, EventInstance, LoadBank, PlaybackState, Studio,
+    System, Vector,
 };
 
 use crate::math::{matrix4::Matrix4, vector3::Vector3};
@@ -32,6 +32,7 @@ pub struct AudioSystem {
     banks: HashMap<String, Bank>,
     events: HashMap<String, EventDescription>,
     event_instances: HashMap<u32, Rc<RefCell<EventInstance>>>,
+    buses: HashMap<String, Bus>,
 }
 
 impl AudioSystem {
@@ -50,6 +51,7 @@ impl AudioSystem {
             banks: HashMap::new(),
             events: HashMap::new(),
             event_instances: HashMap::new(),
+            buses: HashMap::new(),
         };
 
         this.load_bank("Master Bank.strings.bank")?;
@@ -134,6 +136,33 @@ impl AudioSystem {
 
     pub fn vector_to_fmod(in_vector: &Vector3) -> Vector {
         Vector::new(in_vector.y, in_vector.z, in_vector.x)
+    }
+
+    pub fn get_bus_volume(&self, name: &str) -> f32 {
+        self.buses
+            .get(name)
+            .and_then(|bus| bus.get_volume().ok())
+            .and_then(|volumes| Some(volumes.0))
+            .unwrap_or(0.0)
+    }
+
+    pub fn get_bus_paused(&self, name: &str) -> bool {
+        self.buses
+            .get(name)
+            .and_then(|bus| bus.get_paused().ok())
+            .is_some_and(|paused| paused)
+    }
+
+    pub fn set_bus_volume(&mut self, name: &str, volume: f32) {
+        self.buses
+            .get_mut(name)
+            .and_then(|bus| bus.set_volume(volume).ok());
+    }
+
+    pub fn set_bus_paused(&mut self, name: &str, pause: bool) {
+        self.buses
+            .get_mut(name)
+            .and_then(|bus| bus.set_paused(pause).ok());
     }
 }
 
