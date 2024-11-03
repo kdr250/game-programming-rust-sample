@@ -10,7 +10,8 @@ use sdl2::{
 };
 
 use crate::system::{
-    asset_manager::AssetManager, entity_manager::EntityManager, renderer::Renderer,
+    asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
+    renderer::Renderer,
 };
 
 pub struct Game {
@@ -19,6 +20,7 @@ pub struct Game {
     timer: TimerSubsystem,
     asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
+    audio_system: Rc<RefCell<AudioSystem>>,
     is_running: bool,
     tick_count: u64,
 }
@@ -43,12 +45,15 @@ impl Game {
             renderer.clone(),
         );
 
+        let audio_system = AudioSystem::initialize(asset_manager.clone())?;
+
         let game = Game {
             renderer,
             event_pump,
             timer,
             asset_manager,
             entity_manager,
+            audio_system,
             is_running: true,
             tick_count: 0,
         };
@@ -113,6 +118,8 @@ impl Game {
 
         self.entity_manager.borrow_mut().flush_actors();
         self.asset_manager.borrow_mut().flush_sprites();
+
+        self.audio_system.borrow_mut().update(delta_time);
     }
 
     fn generate_output(&mut self) {
