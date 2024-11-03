@@ -2,8 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use libfmod::{
     ffi::{FMOD_STUDIO_STOP_ALLOWFADEOUT, FMOD_STUDIO_STOP_IMMEDIATE},
-    EventInstance, PlaybackState, StopMode,
+    Attributes3d, EventInstance, PlaybackState, StopMode,
 };
+
+use crate::math::{matrix4::Matrix4, vector3::Vector3};
+
+use super::audio_system::AudioSystem;
 
 pub struct SoundEvent {
     id: u32,
@@ -70,5 +74,27 @@ impl SoundEvent {
             .get_parameter_by_name(name)
             .unwrap()
             .0
+    }
+
+    pub fn is_3d(&self) -> bool {
+        self.event_instance
+            .borrow()
+            .get_description()
+            .and_then(|description| description.is_3d())
+            .is_ok_and(|is_3d| is_3d)
+    }
+
+    pub fn set_3d_attributes(&mut self, world_trans: &Matrix4) {
+        let attributes = Attributes3d {
+            position: AudioSystem::vector_to_fmod(&world_trans.get_translation()),
+            forward: AudioSystem::vector_to_fmod(&world_trans.get_x_axis()),
+            up: AudioSystem::vector_to_fmod(&world_trans.get_z_axis()),
+            velocity: AudioSystem::vector_to_fmod(&Vector3::ZERO),
+        };
+
+        self.event_instance
+            .borrow_mut()
+            .set_3d_attributes(attributes)
+            .unwrap();
     }
 }

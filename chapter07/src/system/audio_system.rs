@@ -132,7 +132,7 @@ impl AudioSystem {
             .unwrap();
     }
 
-    fn vector_to_fmod(in_vector: &Vector3) -> Vector {
+    pub fn vector_to_fmod(in_vector: &Vector3) -> Vector {
         Vector::new(in_vector.y, in_vector.z, in_vector.x)
     }
 }
