@@ -43,6 +43,7 @@ pub trait Actor {
             self.get_position().clone(),
             self.get_rotation().clone(),
             self.get_forward(),
+            self.get_world_transform().clone(),
         );
 
         for component in self.get_cocmponents() {

@@ -19,7 +19,7 @@ use super::{asset_manager::AssetManager, sound_event::SoundEvent};
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
-pub fn generate_id() -> u32 {
+fn generate_id() -> u32 {
     let id = ID.load(Ordering::SeqCst);
     ID.fetch_add(1, Ordering::SeqCst);
     id

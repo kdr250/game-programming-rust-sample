@@ -5,7 +5,7 @@ use gl::{TRIANGLES, UNSIGNED_INT};
 use crate::{
     actors::actor::Actor,
     graphics::{mesh::Mesh, shader::Shader},
-    math::{quaternion::Quaternion, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -83,7 +83,7 @@ impl Component for MeshComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        _owner_info: &(Vector3, Quaternion, Vector3),
+        _owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
     ) -> (Option<Vector3>, Option<Quaternion>) {
         (None, None)
     }

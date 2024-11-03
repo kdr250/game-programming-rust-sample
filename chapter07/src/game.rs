@@ -40,14 +40,16 @@ impl Game {
 
         let asset_manager = renderer.borrow().get_asset_manager().clone();
         let entity_manager = EntityManager::new();
+
+        let audio_system = AudioSystem::initialize(asset_manager.clone())?;
+        let music_event = audio_system.borrow_mut().play_event("event:/Music");
+
         EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
+            audio_system.clone(),
         );
-
-        let audio_system = AudioSystem::initialize(asset_manager.clone())?;
-        let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
         let game = Game {
             renderer,
@@ -85,7 +87,11 @@ impl Game {
                     scancode, repeat, ..
                 } => {
                     if !repeat && scancode.is_some() {
-                        Game::handle_key_pressed(scancode.unwrap(), &mut self.music_event);
+                        Game::handle_key_pressed(
+                            scancode.unwrap(),
+                            &mut self.music_event,
+                            self.audio_system.clone(),
+                        );
                     }
                 }
                 _ => {}
@@ -104,11 +110,20 @@ impl Game {
         }
     }
 
-    fn handle_key_pressed(key: Scancode, music_event: &mut SoundEvent) {
+    fn handle_key_pressed(
+        key: Scancode,
+        music_event: &mut SoundEvent,
+        audio_system: Rc<RefCell<AudioSystem>>,
+    ) {
         match key {
-            Scancode::M => music_event.set_paused(!music_event.get_paused()),
+            Scancode::E => {
+                audio_system.borrow_mut().play_event("event:/Explosion2D");
+            }
+            Scancode::M => {
+                music_event.set_paused(!music_event.get_paused());
+            }
             _ => {}
-        }
+        };
     }
 
     fn update_game(&mut self) {

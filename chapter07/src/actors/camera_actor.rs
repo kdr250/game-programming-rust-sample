@@ -9,7 +9,10 @@ use crate::{
         move_component::{DefaultMoveComponent, MoveComponent},
     },
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
-    system::{asset_manager::AssetManager, entity_manager::EntityManager, renderer::Renderer},
+    system::{
+        asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
+        renderer::Renderer,
+    },
 };
 
 use super::actor::{self, generate_id, Actor, State};
@@ -26,6 +29,7 @@ pub struct CameraActor {
     asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     renderer: Rc<RefCell<Renderer>>,
+    audio_system: Rc<RefCell<AudioSystem>>,
     move_component: Option<Rc<RefCell<DefaultMoveComponent>>>,
 }
 
@@ -34,6 +38,7 @@ impl CameraActor {
         asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
         renderer: Rc<RefCell<Renderer>>,
+        audio_system: Rc<RefCell<AudioSystem>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
@@ -47,6 +52,7 @@ impl CameraActor {
             asset_manager,
             entity_manager: entity_manager.clone(),
             renderer,
+            audio_system,
             move_component: None,
         };
 
@@ -70,6 +76,7 @@ impl Actor for CameraActor {
 
         let view = Matrix4::create_look_at(&camera_position, &target, &up);
 
+        self.audio_system.borrow_mut().set_listener(&view);
         self.renderer.borrow_mut().set_view_matrix(view);
     }
 

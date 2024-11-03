@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    math::{quaternion::Quaternion, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -59,7 +59,7 @@ impl Component for CircleComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
     ) -> (Option<Vector3>, Option<Quaternion>) {
         self.center = owner_info.0.clone();
         (None, None)

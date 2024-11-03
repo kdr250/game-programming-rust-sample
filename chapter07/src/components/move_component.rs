@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    math::{self, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
+    math::{self, matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -42,7 +42,7 @@ pub(crate) use impl_getters_setters;
 pub fn update_move_component(
     move_component: &dyn MoveComponent,
     delta_time: f32,
-    owner_info: &(Vector3, Quaternion, Vector3),
+    owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
 ) -> (Option<Vector3>, Option<Quaternion>) {
     let mut result = (None, None);
 
@@ -60,19 +60,6 @@ pub fn update_move_component(
         let temp_position = result.0.clone().unwrap_or(Vector3::ZERO);
         let mut position = owner_info.0.clone() + temp_position;
         position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
-
-        if position.x < -512.0 {
-            position.x = 510.0;
-        } else if position.x > 512.0 {
-            position.x = -510.0;
-        }
-
-        if position.y < -384.0 {
-            position.y = 382.0;
-        } else if position.y > 384.0 {
-            position.y = -382.0;
-        }
-
         result.0 = Some(position);
     }
 
@@ -116,7 +103,7 @@ impl Component for DefaultMoveComponent {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
     ) -> (Option<Vector3>, Option<Quaternion>) {
         update_move_component(self, delta_time, owner_info)
     }

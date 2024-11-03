@@ -8,12 +8,15 @@ use crate::{
         plane_actor::PlaneActor,
     },
     components::{
+        audio_component::AudioComponent,
         mesh_component::MeshComponent,
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::{quaternion::Quaternion, random::Random, vector3::Vector3},
     system::{asset_manager::AssetManager, renderer::Renderer},
 };
+
+use super::audio_system::AudioSystem;
 
 pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
@@ -64,6 +67,7 @@ impl EntityManager {
         this: Rc<RefCell<EntityManager>>,
         asset_manager: Rc<RefCell<AssetManager>>,
         renderer: Rc<RefCell<Renderer>>,
+        audio_system: Rc<RefCell<AudioSystem>>,
     ) {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
@@ -134,7 +138,12 @@ impl EntityManager {
         }
 
         // Camera actor
-        let camera_actor = CameraActor::new(asset_manager.clone(), this.clone(), renderer.clone());
+        let camera_actor = CameraActor::new(
+            asset_manager.clone(),
+            this.clone(),
+            renderer.clone(),
+            audio_system.clone(),
+        );
         this.borrow_mut().camera_actor = Some(camera_actor);
 
         // Setup lights
@@ -162,6 +171,16 @@ impl EntityManager {
         let sprite_component = DefaultSpriteComponent::new(ui.clone(), 100);
         let texture = asset_manager.borrow_mut().get_texture("Radar.png");
         sprite_component.borrow_mut().set_texture(texture);
+
+        // Create spheres with audio components playing different sounds
+        let m = DefaultActor::new(asset_manager.clone(), this);
+        m.borrow_mut().set_position(Vector3::new(500.0, -75.0, 0.0));
+        m.borrow_mut().set_scale(1.0);
+        let mc = MeshComponent::new(m.clone());
+        let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
+        mc.borrow_mut().set_mesh(mesh);
+        let ac = AudioComponent::new(m, audio_system);
+        ac.borrow_mut().play_event("event:/FireLoop");
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
