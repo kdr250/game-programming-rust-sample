@@ -235,6 +235,7 @@ dependencies = [
  "gl",
  "glob",
  "image",
+ "libfmod",
  "rand",
  "sdl2",
  "serde_json",
@@ -534,6 +535,15 @@ name = "libc"
 version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
+
+[[package]]
+name = "libfmod"
+version = "2.222.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75defbe5991c324e74ac5021dece895eabe5cb5b8976bb33c7e9a13c478826ad"
+dependencies = [
+ "bitflags",
+]
 
 [[package]]
 name = "libfuzzer-sys"
