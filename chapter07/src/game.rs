@@ -11,7 +11,7 @@ use sdl2::{
 
 use crate::system::{
     asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-    renderer::Renderer,
+    renderer::Renderer, sound_event::SoundEvent,
 };
 
 pub struct Game {
@@ -23,6 +23,7 @@ pub struct Game {
     audio_system: Rc<RefCell<AudioSystem>>,
     is_running: bool,
     tick_count: u64,
+    music_event: SoundEvent,
 }
 
 impl Game {
@@ -46,6 +47,7 @@ impl Game {
         );
 
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
+        let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
         let game = Game {
             renderer,
@@ -56,6 +58,7 @@ impl Game {
             audio_system,
             is_running: true,
             tick_count: 0,
+            music_event,
         };
 
         Ok(game)
@@ -78,6 +81,13 @@ impl Game {
                     self.is_running = false;
                     break;
                 }
+                Event::KeyDown {
+                    scancode, repeat, ..
+                } => {
+                    if !repeat && scancode.is_some() {
+                        Game::handle_key_pressed(scancode.unwrap(), &mut self.music_event);
+                    }
+                }
                 _ => {}
             }
         }
@@ -91,6 +101,13 @@ impl Game {
         let actors = self.entity_manager.borrow().get_actors().clone();
         for actor in actors {
             actor.borrow_mut().process_input(&state);
+        }
+    }
+
+    fn handle_key_pressed(key: Scancode, music_event: &mut SoundEvent) {
+        match key {
+            Scancode::M => music_event.set_paused(!music_event.get_paused()),
+            _ => {}
         }
     }
 

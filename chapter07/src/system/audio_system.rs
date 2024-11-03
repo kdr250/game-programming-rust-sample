@@ -1,12 +1,26 @@
-use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    path::Path,
+    rc::Rc,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use anyhow::Result;
 use libfmod::{
-    ffi::{FMOD_INIT_NORMAL, FMOD_STUDIO_INIT_NORMAL},
-    Bank, EventDescription, LoadBank, Studio, System,
+    ffi::{FMOD_INIT_NORMAL, FMOD_STUDIO_INIT_NORMAL, FMOD_STUDIO_PLAYBACK_STOPPED},
+    Bank, EventDescription, EventInstance, LoadBank, PlaybackState, Studio, System,
 };
 
-use super::asset_manager::AssetManager;
+use super::{asset_manager::AssetManager, sound_event::SoundEvent};
+
+static ID: AtomicU32 = AtomicU32::new(0);
+
+pub fn generate_id() -> u32 {
+    let id = ID.load(Ordering::SeqCst);
+    ID.fetch_add(1, Ordering::SeqCst);
+    id
+}
 
 pub struct AudioSystem {
     asset_manager: Rc<RefCell<AssetManager>>,
@@ -14,6 +28,7 @@ pub struct AudioSystem {
     low_level_system: System,
     banks: HashMap<String, Bank>,
     events: HashMap<String, EventDescription>,
+    event_instances: HashMap<u32, Rc<RefCell<EventInstance>>>,
 }
 
 impl AudioSystem {
@@ -31,6 +46,7 @@ impl AudioSystem {
             low_level_system,
             banks: HashMap::new(),
             events: HashMap::new(),
+            event_instances: HashMap::new(),
         };
 
         this.load_bank("Master Bank.strings.bank")?;
@@ -70,16 +86,30 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn play_event(&mut self, name: &str) {
-        if let Some(event_description) = self.events.get(name) {
-            if let Ok(event_instance) = event_description.create_instance() {
-                let _ = event_instance.start();
-                let _ = event_instance.release();
-            }
-        }
+    pub fn play_event(&mut self, name: &str) -> SoundEvent {
+        let event_description = self.events.get(name).unwrap();
+        let event_instance = event_description.create_instance().unwrap();
+        event_instance.start().unwrap();
+        let id = generate_id();
+        let result = Rc::new(RefCell::new(event_instance));
+        self.event_instances.insert(id, result.clone());
+        SoundEvent::new(id, result)
     }
 
     pub fn update(&mut self, _delta_time: f32) {
+        let mut done = vec![];
+        for (id, instance) in self.event_instances.clone() {
+            let state = instance.borrow().get_playback_state().unwrap();
+            if state == PlaybackState::Stopped {
+                instance.borrow_mut().release().unwrap();
+                done.push(id);
+            }
+        }
+
+        for id in done {
+            self.event_instances.remove(&id);
+        }
+
         self.system.update().unwrap();
     }
 }
