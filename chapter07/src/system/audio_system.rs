@@ -50,9 +50,9 @@ impl AudioSystem {
             .join("resources")
             .join("Assets")
             .join(name);
-        let name = path.to_str().unwrap();
+        let file_name = path.to_str().unwrap();
 
-        let bank = self.system.load_bank_file(name, LoadBank::NORMAL)?;
+        let bank = self.system.load_bank_file(file_name, LoadBank::NORMAL)?;
         self.banks.insert(name.to_string(), bank);
         bank.load_sample_data()?;
 
