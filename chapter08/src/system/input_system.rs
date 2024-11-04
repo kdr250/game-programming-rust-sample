@@ -19,24 +19,10 @@ pub struct KeyboardState {
 }
 
 impl KeyboardState {
-    pub fn new(keyboard_state: &sdl2::keyboard::KeyboardState) -> Self {
-        // Assign current state
-        let scancodes = keyboard_state
-            .scancodes()
-            .map(|(key, pressed)| (key as i32, pressed))
-            .collect::<HashMap<_, _>>();
-
-        let current_state = (0..Scancode::Num as i32)
-            .into_iter()
-            .map(|key| *scancodes.get(&key).unwrap_or(&false))
-            .collect::<Vec<_>>();
-
-        // Clear previous state
-        let previous_state = [false; Scancode::Num as usize];
-
+    pub fn new() -> Self {
         Self {
-            current_state,
-            previous_state,
+            current_state: vec![false; Scancode::Num as usize],
+            previous_state: [false; Scancode::Num as usize],
         }
     }
 
@@ -46,14 +32,18 @@ impl KeyboardState {
     }
 
     pub fn update(&mut self, keyboard_state: &sdl2::keyboard::KeyboardState) {
-        let scancodes = keyboard_state
-            .scancodes()
-            .map(|(key, pressed)| (key as i32, pressed))
-            .collect::<HashMap<_, _>>();
+        let current_state = (0..Scancode::Num as i32)
+            .into_iter()
+            .map(|code| {
+                if let Some(key) = Scancode::from_i32(code) {
+                    keyboard_state.is_scancode_pressed(key)
+                } else {
+                    false
+                }
+            })
+            .collect::<Vec<_>>();
 
-        for i in 0..Scancode::Num as i32 {
-            self.current_state[i as usize] = *scancodes.get(&i).unwrap_or(&false);
-        }
+        self.current_state = current_state;
     }
 
     pub fn get_key_state(&self, key_code: Scancode) -> ButtonState {
@@ -87,8 +77,8 @@ pub struct InputSystem {
 }
 
 impl InputSystem {
-    pub fn initialize(event_pump: &EventPump) -> Result<Rc<RefCell<Self>>> {
-        let keyboard = KeyboardState::new(&event_pump.keyboard_state());
+    pub fn initialize() -> Result<Rc<RefCell<Self>>> {
+        let keyboard = KeyboardState::new();
 
         let state = InputState { keyboard };
 

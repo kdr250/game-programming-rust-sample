@@ -65,7 +65,7 @@ impl Game {
         let entity_manager = EntityManager::new();
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
-        let input_system = InputSystem::initialize(&event_pump)?;
+        let input_system = InputSystem::initialize()?;
 
         let game = Game {
             context,
