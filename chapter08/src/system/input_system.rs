@@ -74,6 +74,7 @@ pub struct MouseState {
     mouse_position: Vector2,
     current_button: Vec<MouseButton>,
     previous_button: Vec<MouseButton>,
+    is_relative: bool,
 }
 
 impl MouseState {
@@ -82,6 +83,7 @@ impl MouseState {
             mouse_position: Vector2::ZERO,
             current_button: vec![],
             previous_button: vec![],
+            is_relative: false,
         }
     }
 
@@ -152,13 +154,24 @@ impl InputSystem {
     pub fn update(&mut self, event_pump: &EventPump) {
         self.state.keyboard.update(&event_pump.keyboard_state());
 
-        let mouse_state = event_pump.mouse_state();
-        self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
-        self.state.mouse.mouse_position.x = mouse_state.x() as f32;
-        self.state.mouse.mouse_position.y = mouse_state.y() as f32;
+        if self.state.mouse.is_relative {
+            let mouse_state = event_pump.relative_mouse_state();
+            self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
+            self.state.mouse.mouse_position.x = mouse_state.x() as f32;
+            self.state.mouse.mouse_position.y = mouse_state.y() as f32;
+        } else {
+            let mouse_state = event_pump.mouse_state();
+            self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
+            self.state.mouse.mouse_position.x = mouse_state.x() as f32;
+            self.state.mouse.mouse_position.y = mouse_state.y() as f32;
+        }
     }
 
     pub fn get_state(&self) -> &InputState {
         &self.state
+    }
+
+    pub fn set_relative_mouse_mode(&mut self, is_relative: bool) {
+        self.state.mouse.is_relative = is_relative;
     }
 }
