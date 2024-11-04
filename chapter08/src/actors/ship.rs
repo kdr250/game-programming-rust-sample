@@ -84,7 +84,18 @@ impl Actor for Ship {
             borrowed_laser.set_position(self.position.clone());
             borrowed_laser.set_rotation(self.rotation);
 
-            self.laser_cooldown = 0.5;
+            self.laser_cooldown = 0.25;
+            return;
+        }
+
+        if state.controller.get_right_trigger() > 0.25 && self.laser_cooldown <= 0.0 {
+            let laser = Laser::new(self.texture_manager.clone(), self.entity_manager.clone());
+            let mut borrowed_laser = laser.borrow_mut();
+            borrowed_laser.set_position(self.position.clone());
+            borrowed_laser.set_rotation(self.rotation);
+
+            self.laser_cooldown = 0.25;
+            return;
         }
     }
 
