@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use crate::{actors::actor::Actor, math::vector2::Vector2};
+use crate::{actors::actor::Actor, math::vector2::Vector2, system::input_system::InputState};
 
 static ID: AtomicU32 = AtomicU32::new(0);
 
@@ -21,7 +21,7 @@ pub trait Component {
         owner_info: &(Vector2, f32, Vector2),
     ) -> (Option<Vector2>, Option<f32>);
 
-    fn process_input(&mut self, _key_state: &KeyboardState) {}
+    fn process_input(&mut self, _state: &InputState) {}
 
     fn on_update_world_transform(&mut self) {}
 

@@ -6,13 +6,15 @@ use anyhow::{anyhow, Result};
 use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use sdl2::{
     event::Event,
-    keyboard::{KeyboardState, Scancode},
+    keyboard::{KeyboardState, Keycode, Scancode},
     video::{GLContext, Window},
     EventPump, TimerSubsystem,
 };
 
 use crate::system::{
-    entity_manager::EntityManager, input_system::InputSystem, texture_manager::TextureManager,
+    entity_manager::EntityManager,
+    input_system::{ButtonState, InputSystem},
+    texture_manager::TextureManager,
 };
 
 pub struct Game {
@@ -63,7 +65,7 @@ impl Game {
         let entity_manager = EntityManager::new();
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
-        let input_system = InputSystem::initialize()?;
+        let input_system = InputSystem::initialize(&event_pump)?;
 
         let game = Game {
             context,
@@ -103,11 +105,12 @@ impl Game {
             }
         }
 
-        self.input_system.borrow_mut().update();
-        let state = self.input_system.borrow().get_state();
+        self.input_system.borrow_mut().update(&self.event_pump);
 
-        let state = KeyboardState::new(&self.event_pump);
-        if state.is_scancode_pressed(Scancode::Escape) {
+        let borrowed_input_system = self.input_system.borrow();
+        let state = borrowed_input_system.get_state();
+
+        if state.keyboard.get_key_state(Scancode::Escape) == ButtonState::Released {
             self.is_running = false;
         }
 
@@ -116,6 +119,7 @@ impl Game {
         for actor in actors {
             actor.borrow_mut().process_input(&state);
         }
+        self.entity_manager.borrow_mut().set_updating_actors(false);
     }
 
     fn update_game(&mut self) {

@@ -11,7 +11,9 @@ use crate::{
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::{matrix4::Matrix4, vector2::Vector2},
-    system::{entity_manager::EntityManager, texture_manager::TextureManager},
+    system::{
+        entity_manager::EntityManager, input_system::InputState, texture_manager::TextureManager,
+    },
 };
 
 use super::{actor::generate_id, laser::Laser};
@@ -75,8 +77,8 @@ impl Actor for Ship {
         self.laser_cooldown -= delta_time;
     }
 
-    fn actor_input(&mut self, key_state: &KeyboardState) {
-        if key_state.is_scancode_pressed(Scancode::Space) && self.laser_cooldown <= 0.0 {
+    fn actor_input(&mut self, state: &InputState) {
+        if state.keyboard.get_key_value(Scancode::Space) && self.laser_cooldown <= 0.0 {
             let laser = Laser::new(self.texture_manager.clone(), self.entity_manager.clone());
             let mut borrowed_laser = laser.borrow_mut();
             borrowed_laser.set_position(self.position.clone());

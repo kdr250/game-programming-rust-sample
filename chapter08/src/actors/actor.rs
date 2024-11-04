@@ -7,7 +7,9 @@ use std::{
 use crate::{
     components::component::{Component, State as ComponentState},
     math::{matrix4::Matrix4, vector2::Vector2, vector3::Vector3},
-    system::{entity_manager::EntityManager, texture_manager::TextureManager},
+    system::{
+        entity_manager::EntityManager, input_system::InputState, texture_manager::TextureManager,
+    },
 };
 
 static ID: AtomicU32 = AtomicU32::new(0);
@@ -65,18 +67,18 @@ pub trait Actor {
     fn update_actor(&mut self, delta_time: f32);
 
     // ProcessInput function called from Game (not overridable)
-    fn process_input(&mut self, key_state: &KeyboardState) {
+    fn process_input(&mut self, state: &InputState) {
         if *self.get_state() != State::Active {
             return;
         }
         for component in self.get_cocmponents() {
-            component.borrow_mut().process_input(&key_state);
+            component.borrow_mut().process_input(&state);
         }
-        self.actor_input(&key_state);
+        self.actor_input(&state);
     }
 
     // Any actor-specific input code (overridable)
-    fn actor_input(&mut self, _key_state: &KeyboardState) {}
+    fn actor_input(&mut self, _state: &InputState) {}
 
     fn compute_world_transform(&mut self) {
         if !self.get_recompute_world_transform() {

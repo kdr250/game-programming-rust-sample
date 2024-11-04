@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use sdl2::keyboard::{KeyboardState, Scancode};
 
-use crate::{actors::actor::Actor, math::vector2::Vector2};
+use crate::{actors::actor::Actor, math::vector2::Vector2, system::input_system::InputState};
 
 use super::{
     component::{self, generate_id, Component, State},
@@ -114,21 +114,21 @@ impl Component for InputComponent {
 
     component::impl_getters_setters! {}
 
-    fn process_input(&mut self, key_state: &KeyboardState) {
+    fn process_input(&mut self, state: &InputState) {
         let mut forward_speed = 0.0;
-        if key_state.is_scancode_pressed(self.forward_key) {
+        if state.keyboard.get_key_value(self.forward_key) {
             forward_speed += self.max_forward_speed;
         }
-        if key_state.is_scancode_pressed(self.back_key) {
+        if state.keyboard.get_key_value(self.back_key) {
             forward_speed -= self.max_forward_speed;
         }
         self.set_forward_speed(forward_speed);
 
         let mut angular_speed = 0.0;
-        if key_state.is_scancode_pressed(self.clockwise_key) {
+        if state.keyboard.get_key_value(self.clockwise_key) {
             angular_speed += self.max_angular_speed;
         }
-        if key_state.is_scancode_pressed(self.counter_clockwise_key) {
+        if state.keyboard.get_key_value(self.counter_clockwise_key) {
             angular_speed -= self.max_angular_speed;
         }
         self.set_angular_speed(angular_speed);
