@@ -89,14 +89,13 @@ impl MouseState {
         &self.mouse_position
     }
 
-    pub fn get_button_value(&self, button: u8) -> bool {
-        MouseButton::from_ll(button) == self.current_button
+    pub fn get_button_value(&self, button: MouseButton) -> bool {
+        button == self.current_button
     }
 
-    pub fn get_button_state(&self, button: u8) -> ButtonState {
-        let mask = MouseButton::from_ll(button);
-        let previous = mask == self.previous_button;
-        let current = mask == self.current_button;
+    pub fn get_button_state(&self, button: MouseButton) -> ButtonState {
+        let previous = button == self.previous_button;
+        let current = button == self.current_button;
 
         match (previous, current) {
             (false, false) => ButtonState::None,
