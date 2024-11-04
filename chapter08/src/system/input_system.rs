@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
 use sdl2::{
-    controller::{Button, GameController},
+    controller::{Axis, Button, GameController},
     event::Event,
     keyboard::Scancode,
     mouse::MouseButton,
@@ -154,6 +154,8 @@ impl MouseState {
 pub struct ControllerState {
     current_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
     previous_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+    left_trigger: f32,
+    right_trigger: f32,
     is_connected: bool,
 }
 
@@ -162,15 +164,23 @@ impl ControllerState {
         Self {
             current_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
             previous_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+            left_trigger: 0.0,
+            right_trigger: 0.0,
             is_connected: controller.is_some(),
         }
     }
 
     pub fn update(&mut self, game_controller: &GameController) {
+        // Buttons
         for i in 0..SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize {
             let button = unsafe { std::mem::transmute::<_, Button>(i as i32) };
             self.current_buttons[i] = game_controller.button(Button::from(button));
         }
+
+        // Triggers
+        self.left_trigger = InputSystem::filter_1d(game_controller.axis(Axis::TriggerLeft) as i32);
+        self.right_trigger =
+            InputSystem::filter_1d(game_controller.axis(Axis::TriggerRight) as i32);
     }
 
     pub fn get_button_state(&self, button: Button) -> ButtonState {
@@ -195,6 +205,14 @@ impl ControllerState {
 
     pub fn get_is_connected(&self) -> bool {
         self.is_connected
+    }
+
+    pub fn get_left_trigger(&self) -> f32 {
+        self.left_trigger
+    }
+
+    pub fn get_right_trigger(&self) -> f32 {
+        self.right_trigger
     }
 
     pub fn copy_current_to_previous(&mut self) {
@@ -276,5 +294,23 @@ impl InputSystem {
 
     pub fn set_relative_mouse_mode(&mut self, is_relative: bool) {
         self.state.mouse.is_relative = is_relative;
+    }
+
+    pub fn filter_1d(input: i32) -> f32 {
+        // A value < deadZone is interpreted as 0%. A value > maxValue is interpreted as 100%
+        let dead_zone = 250;
+        let max_value = 30000;
+
+        let mut result = 0.0;
+
+        let abs_value = input.abs();
+        if abs_value > dead_zone {
+            // compute fractional value between deadZone and maxValue
+            result = (abs_value - dead_zone) as f32 / (max_value - dead_zone) as f32;
+            result = if input > 0 { result } else { -result };
+            result = result.clamp(-1.0, 1.0);
+        }
+
+        result
     }
 }
