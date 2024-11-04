@@ -153,10 +153,7 @@ impl InputSystem {
         self.state.keyboard.update(&event_pump.keyboard_state());
 
         let mouse_state = event_pump.mouse_state();
-        self.state.mouse.current_button = mouse_state
-            .mouse_buttons()
-            .map(|(button, _pressed)| button)
-            .collect::<Vec<_>>();
+        self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
         self.state.mouse.mouse_position.x = mouse_state.x() as f32;
         self.state.mouse.mouse_position.y = mouse_state.y() as f32;
     }
