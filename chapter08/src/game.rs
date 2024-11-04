@@ -101,6 +101,7 @@ impl Game {
                     self.is_running = false;
                     break;
                 }
+                Event::MouseWheel { .. } => self.input_system.borrow_mut().process_event(&event),
                 _ => {}
             }
         }

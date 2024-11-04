@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
-use sdl2::{keyboard::Scancode, mouse::MouseButton, EventPump};
+use sdl2::{event::Event, keyboard::Scancode, mouse::MouseButton, EventPump};
 
 use crate::math::vector2::Vector2;
 
@@ -75,6 +75,7 @@ pub struct MouseState {
     current_button: Vec<MouseButton>,
     previous_button: Vec<MouseButton>,
     is_relative: bool,
+    scroll_wheel: Vector2,
 }
 
 impl MouseState {
@@ -84,6 +85,7 @@ impl MouseState {
             current_button: vec![],
             previous_button: vec![],
             is_relative: false,
+            scroll_wheel: Vector2::ZERO,
         }
     }
 
@@ -94,6 +96,10 @@ impl MouseState {
 
     pub fn get_position(&self) -> &Vector2 {
         &self.mouse_position
+    }
+
+    pub fn get_scroll_wheel(&self) -> &Vector2 {
+        &self.scroll_wheel
     }
 
     pub fn get_button_state(&self, button: MouseButton) -> ButtonState {
@@ -164,6 +170,20 @@ impl InputSystem {
             self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
             self.state.mouse.mouse_position.x = mouse_state.x() as f32;
             self.state.mouse.mouse_position.y = mouse_state.y() as f32;
+        }
+    }
+
+    pub fn process_event(&mut self, event: &Event) {
+        match *event {
+            Event::MouseWheel {
+                precise_x,
+                precise_y,
+                ..
+            } => {
+                self.state.mouse.scroll_wheel.x = precise_x;
+                self.state.mouse.scroll_wheel.y = precise_y;
+            }
+            _ => {}
         }
     }
 
