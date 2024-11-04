@@ -2,7 +2,12 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
 use sdl2::{
-    controller::GameController, event::Event, keyboard::Scancode, mouse::MouseButton, EventPump,
+    controller::{Button, GameController},
+    event::Event,
+    keyboard::Scancode,
+    mouse::MouseButton,
+    sys::SDL_GameControllerButton,
+    EventPump,
 };
 
 use crate::math::vector2::Vector2;
@@ -91,6 +96,20 @@ impl MouseState {
         }
     }
 
+    pub fn update(&mut self, event_pump: &EventPump) {
+        if self.is_relative {
+            let mouse_state = event_pump.relative_mouse_state();
+            self.current_button = mouse_state.pressed_mouse_buttons().collect();
+            self.mouse_position.x = mouse_state.x() as f32;
+            self.mouse_position.y = mouse_state.y() as f32;
+        } else {
+            let mouse_state = event_pump.mouse_state();
+            self.current_button = mouse_state.pressed_mouse_buttons().collect();
+            self.mouse_position.x = mouse_state.x() as f32;
+            self.mouse_position.y = mouse_state.y() as f32;
+        }
+    }
+
     /// Copy current state to previous
     pub fn clone_current_to_previous(&mut self) {
         self.previous_button = self.current_button.clone();
@@ -128,26 +147,88 @@ impl MouseState {
     }
 }
 
+/// Helper for controller input
+pub struct ControllerState {
+    current_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+    previous_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+    is_connected: bool,
+}
+
+impl ControllerState {
+    pub fn new(controller: &Option<GameController>) -> Self {
+        Self {
+            current_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+            previous_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+            is_connected: controller.is_some(),
+        }
+    }
+
+    pub fn update(&mut self, game_controller: &GameController) {
+        for i in 0..SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize {
+            let button = unsafe { std::mem::transmute::<_, Button>(i as i32) };
+            self.current_buttons[i] = game_controller.button(Button::from(button));
+        }
+    }
+
+    pub fn get_button_state(&self, button: Button) -> ButtonState {
+        let previous = self.get_previous_value(button);
+        let current = self.get_button_value(button);
+
+        match (previous, current) {
+            (false, false) => ButtonState::None,
+            (false, true) => ButtonState::Pressed,
+            (true, false) => ButtonState::Released,
+            (true, true) => ButtonState::Held,
+        }
+    }
+
+    pub fn get_button_value(&self, button: Button) -> bool {
+        self.current_buttons[button as usize]
+    }
+
+    fn get_previous_value(&self, button: Button) -> bool {
+        self.previous_buttons[button as usize]
+    }
+
+    pub fn get_is_connected(&self) -> bool {
+        self.is_connected
+    }
+
+    pub fn copy_current_to_previous(&mut self) {
+        self.previous_buttons.copy_from_slice(&self.current_buttons);
+    }
+}
+
 /// Wrapper that contains current state of input
 pub struct InputState {
     pub keyboard: KeyboardState,
     pub mouse: MouseState,
+    pub controller: ControllerState,
 }
 
 pub struct InputSystem {
     state: InputState,
-    controller: Option<GameController>,
+    game_controller: Option<GameController>,
 }
 
 impl InputSystem {
-    pub fn initialize(controller: Option<GameController>) -> Result<Rc<RefCell<Self>>> {
+    pub fn initialize(game_controller: Option<GameController>) -> Result<Rc<RefCell<Self>>> {
         let keyboard = KeyboardState::new();
 
         let mouse = MouseState::new();
 
-        let state = InputState { keyboard, mouse };
+        let controller = ControllerState::new(&game_controller);
 
-        let this = Self { state, controller };
+        let state = InputState {
+            keyboard,
+            mouse,
+            controller,
+        };
+
+        let this = Self {
+            state,
+            game_controller,
+        };
 
         Ok(Rc::new(RefCell::new(this)))
     }
@@ -157,22 +238,18 @@ impl InputSystem {
         self.state.keyboard.copy_current_to_previous();
 
         self.state.mouse.clone_current_to_previous();
+
+        self.state.controller.copy_current_to_previous();
     }
 
     // Called after SDL_PollEvents loop
     pub fn update(&mut self, event_pump: &EventPump) {
         self.state.keyboard.update(&event_pump.keyboard_state());
 
-        if self.state.mouse.is_relative {
-            let mouse_state = event_pump.relative_mouse_state();
-            self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
-            self.state.mouse.mouse_position.x = mouse_state.x() as f32;
-            self.state.mouse.mouse_position.y = mouse_state.y() as f32;
-        } else {
-            let mouse_state = event_pump.mouse_state();
-            self.state.mouse.current_button = mouse_state.pressed_mouse_buttons().collect();
-            self.state.mouse.mouse_position.x = mouse_state.x() as f32;
-            self.state.mouse.mouse_position.y = mouse_state.y() as f32;
+        self.state.mouse.update(&event_pump);
+
+        if let Some(game_controller) = &self.game_controller {
+            self.state.controller.update(game_controller);
         }
     }
 
