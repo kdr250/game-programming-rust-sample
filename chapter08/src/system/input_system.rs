@@ -154,6 +154,8 @@ impl MouseState {
 pub struct ControllerState {
     current_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
     previous_buttons: [bool; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+    left_stick: Vector2,
+    right_stick: Vector2,
     left_trigger: f32,
     right_trigger: f32,
     is_connected: bool,
@@ -164,6 +166,8 @@ impl ControllerState {
         Self {
             current_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
             previous_buttons: [false; SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as usize],
+            left_stick: Vector2::ZERO,
+            right_stick: Vector2::ZERO,
             left_trigger: 0.0,
             right_trigger: 0.0,
             is_connected: controller.is_some(),
@@ -181,6 +185,15 @@ impl ControllerState {
         self.left_trigger = InputSystem::filter_1d(game_controller.axis(Axis::TriggerLeft) as i32);
         self.right_trigger =
             InputSystem::filter_1d(game_controller.axis(Axis::TriggerRight) as i32);
+
+        // Sticks
+        let x = game_controller.axis(Axis::LeftX) as i32;
+        let y = game_controller.axis(Axis::LeftY) as i32;
+        self.left_stick = InputSystem::filter_2d(x, y);
+
+        let x = game_controller.axis(Axis::RightX) as i32;
+        let y = game_controller.axis(Axis::RightY) as i32;
+        self.right_stick = InputSystem::filter_2d(x, y);
     }
 
     pub fn get_button_state(&self, button: Button) -> ButtonState {
@@ -310,6 +323,25 @@ impl InputSystem {
             result = if input > 0 { result } else { -result };
             result = result.clamp(-1.0, 1.0);
         }
+
+        result
+    }
+
+    pub fn filter_2d(input_x: i32, input_y: i32) -> Vector2 {
+        let dead_zone = 8000.0;
+        let max_value = 30000.0;
+
+        let dir = Vector2::new(input_x as f32, input_y as f32);
+
+        let length = dir.length();
+
+        let result = if length < dead_zone {
+            Vector2::ZERO
+        } else {
+            let mut f = (length - dead_zone) / (max_value - dead_zone);
+            f = f.clamp(0.0, 1.0);
+            dir * (f / length)
+        };
 
         result
     }
