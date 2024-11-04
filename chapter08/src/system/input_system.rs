@@ -72,30 +72,31 @@ impl KeyboardState {
 /// Helper for mouse input
 pub struct MouseState {
     mouse_position: Vector2,
-    current_button: MouseButton,
-    previous_button: MouseButton,
+    current_button: Vec<MouseButton>,
+    previous_button: Vec<MouseButton>,
 }
 
 impl MouseState {
     pub fn new() -> Self {
         Self {
             mouse_position: Vector2::ZERO,
-            current_button: MouseButton::Unknown,
-            previous_button: MouseButton::Unknown,
+            current_button: vec![],
+            previous_button: vec![],
         }
+    }
+
+    /// Copy current state to previous
+    pub fn clone_current_to_previous(&mut self) {
+        self.previous_button = self.current_button.clone();
     }
 
     pub fn get_position(&self) -> &Vector2 {
         &self.mouse_position
     }
 
-    pub fn get_button_value(&self, button: MouseButton) -> bool {
-        button == self.current_button
-    }
-
     pub fn get_button_state(&self, button: MouseButton) -> ButtonState {
-        let previous = button == self.previous_button;
-        let current = button == self.current_button;
+        let previous = self.get_previous_value(button);
+        let current = self.get_button_value(button);
 
         match (previous, current) {
             (false, false) => ButtonState::None,
@@ -103,6 +104,17 @@ impl MouseState {
             (true, false) => ButtonState::Released,
             (true, true) => ButtonState::Held,
         }
+    }
+
+    pub fn get_button_value(&self, button: MouseButton) -> bool {
+        self.current_button.iter().find(|&b| *b == button).is_some()
+    }
+
+    fn get_previous_value(&self, button: MouseButton) -> bool {
+        self.previous_button
+            .iter()
+            .find(|&b| *b == button)
+            .is_some()
     }
 }
 
@@ -133,7 +145,7 @@ impl InputSystem {
     pub fn prepare_for_update(&mut self) {
         self.state.keyboard.copy_current_to_previous();
 
-        self.state.mouse.previous_button = self.state.mouse.current_button;
+        self.state.mouse.clone_current_to_previous();
     }
 
     // Called after SDL_PollEvents loop
@@ -144,8 +156,7 @@ impl InputSystem {
         self.state.mouse.current_button = mouse_state
             .mouse_buttons()
             .map(|(button, _pressed)| button)
-            .last()
-            .unwrap_or(MouseButton::Unknown);
+            .collect::<Vec<_>>();
         self.state.mouse.mouse_position.x = mouse_state.x() as f32;
         self.state.mouse.mouse_position.y = mouse_state.y() as f32;
     }
