@@ -1,7 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
-use sdl2::{keyboard::Scancode, EventPump};
+use sdl2::{keyboard::Scancode, mouse::MouseButton, EventPump};
+
+use crate::math::vector2::Vector2;
 
 /// The different button states
 #[derive(Debug, PartialEq, Eq)]
@@ -67,9 +69,48 @@ impl KeyboardState {
     }
 }
 
+/// Helper for mouse input
+pub struct MouseState {
+    mouse_position: Vector2,
+    current_button: MouseButton,
+    previous_button: MouseButton,
+}
+
+impl MouseState {
+    pub fn new() -> Self {
+        Self {
+            mouse_position: Vector2::ZERO,
+            current_button: MouseButton::Unknown,
+            previous_button: MouseButton::Unknown,
+        }
+    }
+
+    pub fn get_position(&self) -> &Vector2 {
+        &self.mouse_position
+    }
+
+    pub fn get_button_value(&self, button: u8) -> bool {
+        MouseButton::from_ll(button) == self.current_button
+    }
+
+    pub fn get_button_state(&self, button: u8) -> ButtonState {
+        let mask = MouseButton::from_ll(button);
+        let previous = mask == self.previous_button;
+        let current = mask == self.current_button;
+
+        match (previous, current) {
+            (false, false) => ButtonState::None,
+            (false, true) => ButtonState::Pressed,
+            (true, false) => ButtonState::Released,
+            (true, true) => ButtonState::Held,
+        }
+    }
+}
+
 /// Wrapper that contains current state of input
 pub struct InputState {
     pub keyboard: KeyboardState,
+    pub mouse: MouseState,
 }
 
 pub struct InputSystem {
@@ -80,7 +121,9 @@ impl InputSystem {
     pub fn initialize() -> Result<Rc<RefCell<Self>>> {
         let keyboard = KeyboardState::new();
 
-        let state = InputState { keyboard };
+        let mouse = MouseState::new();
+
+        let state = InputState { keyboard, mouse };
 
         let this = Self { state };
 
@@ -90,11 +133,22 @@ impl InputSystem {
     // Called right before SDL_PollEvents loop
     pub fn prepare_for_update(&mut self) {
         self.state.keyboard.copy_current_to_previous();
+
+        self.state.mouse.previous_button = self.state.mouse.current_button;
     }
 
     // Called after SDL_PollEvents loop
     pub fn update(&mut self, event_pump: &EventPump) {
         self.state.keyboard.update(&event_pump.keyboard_state());
+
+        let mouse_state = event_pump.mouse_state();
+        self.state.mouse.current_button = mouse_state
+            .mouse_buttons()
+            .map(|(button, _pressed)| button)
+            .last()
+            .unwrap_or(MouseButton::Unknown);
+        self.state.mouse.mouse_position.x = mouse_state.x() as f32;
+        self.state.mouse.mouse_position.y = mouse_state.y() as f32;
     }
 
     pub fn get_state(&self) -> &InputState {
