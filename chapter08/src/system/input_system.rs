@@ -1,7 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
-use sdl2::{event::Event, keyboard::Scancode, mouse::MouseButton, EventPump};
+use sdl2::{
+    controller::GameController, event::Event, keyboard::Scancode, mouse::MouseButton, EventPump,
+};
 
 use crate::math::vector2::Vector2;
 
@@ -134,17 +136,18 @@ pub struct InputState {
 
 pub struct InputSystem {
     state: InputState,
+    controller: Option<GameController>,
 }
 
 impl InputSystem {
-    pub fn initialize() -> Result<Rc<RefCell<Self>>> {
+    pub fn initialize(controller: Option<GameController>) -> Result<Rc<RefCell<Self>>> {
         let keyboard = KeyboardState::new();
 
         let mouse = MouseState::new();
 
         let state = InputState { keyboard, mouse };
 
-        let this = Self { state };
+        let this = Self { state, controller };
 
         Ok(Rc::new(RefCell::new(this)))
     }

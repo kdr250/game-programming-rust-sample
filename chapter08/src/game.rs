@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use sdl2::{
     event::Event,
-    keyboard::{KeyboardState, Keycode, Scancode},
+    keyboard::Scancode,
     video::{GLContext, Window},
     EventPump, TimerSubsystem,
 };
@@ -59,13 +59,16 @@ impl Game {
 
         let timer = sdl.timer().map_err(|e| anyhow!(e))?;
 
+        let controller_subsystem = sdl.game_controller().map_err(|e| anyhow!(e))?;
+        let controller = controller_subsystem.open(0).ok();
+
         let texture_manager = TextureManager::new();
         texture_manager.borrow_mut().load_shaders()?;
 
         let entity_manager = EntityManager::new();
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
-        let input_system = InputSystem::initialize()?;
+        let input_system = InputSystem::initialize(controller)?;
 
         let game = Game {
             context,
