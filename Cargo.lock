@@ -244,6 +244,16 @@ dependencies = [
 [[package]]
 name = "chapter08"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "fs_extra",
+ "gl",
+ "glob",
+ "image",
+ "rand",
+ "sdl2",
+]
 
 [[package]]
 name = "color_quant"
