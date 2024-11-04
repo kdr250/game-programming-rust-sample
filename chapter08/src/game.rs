@@ -11,7 +11,9 @@ use sdl2::{
     EventPump, TimerSubsystem,
 };
 
-use crate::system::{entity_manager::EntityManager, texture_manager::TextureManager};
+use crate::system::{
+    entity_manager::EntityManager, input_system::InputSystem, texture_manager::TextureManager,
+};
 
 pub struct Game {
     context: GLContext,
@@ -20,6 +22,7 @@ pub struct Game {
     timer: TimerSubsystem,
     texture_manager: Rc<RefCell<TextureManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
+    input_system: Rc<RefCell<InputSystem>>,
     is_running: bool,
     tick_count: u64,
 }
@@ -60,6 +63,8 @@ impl Game {
         let entity_manager = EntityManager::new();
         EntityManager::load_data(entity_manager.clone(), texture_manager.clone());
 
+        let input_system = InputSystem::initialize()?;
+
         let game = Game {
             context,
             window,
@@ -67,6 +72,7 @@ impl Game {
             timer,
             texture_manager,
             entity_manager,
+            input_system,
             is_running: true,
             tick_count: 0,
         };
@@ -85,6 +91,8 @@ impl Game {
 
     /// Herlper functions for the game loop
     fn process_input(&mut self) {
+        self.input_system.borrow_mut().prepare_for_update();
+
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => {
@@ -94,6 +102,9 @@ impl Game {
                 _ => {}
             }
         }
+
+        self.input_system.borrow_mut().update();
+        let state = self.input_system.borrow().get_state();
 
         let state = KeyboardState::new(&self.event_pump);
         if state.is_scancode_pressed(Scancode::Escape) {
