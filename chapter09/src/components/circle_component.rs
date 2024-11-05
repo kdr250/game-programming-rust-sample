@@ -59,7 +59,7 @@ impl Component for CircleComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>) {
         self.center = owner_info.0.clone();
         (None, None)

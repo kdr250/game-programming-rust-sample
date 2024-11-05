@@ -21,7 +21,7 @@ pub trait Component {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3), // 0:location, 1:rotation, 2:forward, 3:world_transform, 4: right
     ) -> (Option<Vector3>, Option<Quaternion>);
 
     fn process_input(&mut self, _key_state: &KeyboardState) {}
@@ -121,7 +121,7 @@ pub mod tests {
         fn update(
             &mut self,
             _delta_time: f32,
-            _owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+            _owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
         ) -> (Option<Vector3>, Option<Quaternion>) {
             (None, None)
         }

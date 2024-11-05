@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    math::{self, matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
+    math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -12,9 +12,13 @@ pub trait MoveComponent: Component {
 
     fn get_forward_speed(&self) -> f32;
 
+    fn get_strafe_speed(&self) -> f32;
+
     fn set_angular_speed(&mut self, speed: f32);
 
     fn set_forward_speed(&mut self, speed: f32);
+
+    fn set_strafe_speed(&mut self, speed: f32);
 }
 
 macro_rules! impl_getters_setters {
@@ -27,12 +31,20 @@ macro_rules! impl_getters_setters {
             self.forward_speed
         }
 
+        fn get_strafe_speed(&self) -> f32 {
+            self.strafe_speed
+        }
+
         fn set_angular_speed(&mut self, speed: f32) {
             self.angular_speed = speed;
         }
 
         fn set_forward_speed(&mut self, speed: f32) {
             self.forward_speed = speed;
+        }
+
+        fn set_strafe_speed(&mut self, speed: f32) {
+            self.strafe_speed = speed;
         }
     };
 }
@@ -42,7 +54,7 @@ pub(crate) use impl_getters_setters;
 pub fn update_move_component(
     move_component: &dyn MoveComponent,
     delta_time: f32,
-    owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+    owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
 ) -> (Option<Vector3>, Option<Quaternion>) {
     let mut result = (None, None);
 
@@ -56,10 +68,13 @@ pub fn update_move_component(
         result.1 = Some(rotation);
     }
 
-    if !math::basic::near_zero(move_component.get_forward_speed(), 0.001) {
+    if !math::basic::near_zero(move_component.get_forward_speed(), 0.001)
+        && !math::basic::near_zero(move_component.get_strafe_speed(), 0.001)
+    {
         let temp_position = result.0.clone().unwrap_or(Vector3::ZERO);
         let mut position = owner_info.0.clone() + temp_position;
         position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
+        position += owner_info.4.clone() * move_component.get_strafe_speed() * delta_time;
         result.0 = Some(position);
     }
 
@@ -73,6 +88,7 @@ pub struct DefaultMoveComponent {
     state: State,
     angular_speed: f32,
     forward_speed: f32,
+    strafe_speed: f32,
 }
 
 impl DefaultMoveComponent {
@@ -84,6 +100,7 @@ impl DefaultMoveComponent {
             state: State::Active,
             angular_speed: 0.0,
             forward_speed: 0.0,
+            strafe_speed: 0.0,
         };
 
         let result = Rc::new(RefCell::new(this));
@@ -103,7 +120,7 @@ impl Component for DefaultMoveComponent {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>) {
         update_move_component(self, delta_time, owner_info)
     }

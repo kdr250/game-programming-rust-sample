@@ -5,6 +5,7 @@ use crate::{
     actors::{
         actor::{self, Actor, DefaultActor, State as ActorState},
         camera_actor::CameraActor,
+        fps_actor::FPSActor,
         plane_actor::PlaneActor,
     },
     components::{
@@ -68,7 +69,7 @@ impl EntityManager {
         asset_manager: Rc<RefCell<AssetManager>>,
         renderer: Rc<RefCell<Renderer>>,
         audio_system: Rc<RefCell<AudioSystem>>,
-    ) -> Rc<RefCell<CameraActor>> {
+    ) -> Rc<RefCell<FPSActor>> {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
         a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
@@ -137,15 +138,6 @@ impl EntityManager {
             p.borrow_mut().set_rotation(q.clone());
         }
 
-        // Camera actor
-        let camera_actor = CameraActor::new(
-            asset_manager.clone(),
-            this.clone(),
-            renderer.clone(),
-            audio_system.clone(),
-        );
-        this.borrow_mut().camera_actor = Some(camera_actor.clone());
-
         // Setup lights
         {
             let mut borrowed_renderer = renderer.borrow_mut();
@@ -173,16 +165,18 @@ impl EntityManager {
         sprite_component.borrow_mut().set_texture(texture);
 
         // Create spheres with audio components playing different sounds
-        let m = DefaultActor::new(asset_manager.clone(), this);
+        let m = DefaultActor::new(asset_manager.clone(), this.clone());
         m.borrow_mut().set_position(Vector3::new(500.0, -75.0, 0.0));
         m.borrow_mut().set_scale(1.0);
         let mc = MeshComponent::new(m.clone());
         let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
         mc.borrow_mut().set_mesh(mesh);
-        let ac = AudioComponent::new(m, audio_system);
+        let ac = AudioComponent::new(m, audio_system.clone());
         ac.borrow_mut().play_event("event:/FireLoop");
 
-        camera_actor
+        let fps_actor = FPSActor::new(asset_manager, this, audio_system);
+
+        fps_actor
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

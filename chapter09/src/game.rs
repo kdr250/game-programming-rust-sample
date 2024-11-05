@@ -10,7 +10,10 @@ use sdl2::{
 };
 
 use crate::{
-    actors::camera_actor::{self, CameraActor},
+    actors::{
+        actor::{self, Actor},
+        fps_actor::FPSActor,
+    },
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
         renderer::Renderer, sound_event::SoundEvent,
@@ -28,7 +31,7 @@ pub struct Game {
     tick_count: u64,
     music_event: SoundEvent,
     reverb_snap: Option<SoundEvent>,
-    camera_actor: Rc<RefCell<CameraActor>>,
+    fps_actor: Rc<RefCell<FPSActor>>,
 }
 
 impl Game {
@@ -56,7 +59,7 @@ impl Game {
             audio_system.clone(),
         );
 
-        let game = Game {
+        let mut game = Game {
             renderer,
             event_pump,
             timer,
@@ -67,8 +70,10 @@ impl Game {
             tick_count: 0,
             music_event,
             reverb_snap: None,
-            camera_actor,
+            fps_actor: camera_actor,
         };
+
+        game.change_camera(1);
 
         Ok(game)
     }
@@ -99,7 +104,7 @@ impl Game {
                             &mut self.music_event,
                             &mut self.reverb_snap,
                             self.audio_system.clone(),
-                            self.camera_actor.clone(),
+                            self.fps_actor.clone(),
                         ) {
                             self.reverb_snap = Some(reverb);
                         }
@@ -114,10 +119,12 @@ impl Game {
             self.is_running = false;
         }
 
+        let mouse_state = self.event_pump.relative_mouse_state();
+
         self.entity_manager.borrow_mut().set_updating_actors(true);
         let actors = self.entity_manager.borrow().get_actors().clone();
         for actor in actors {
-            actor.borrow_mut().process_input(&state);
+            actor.borrow_mut().process_input(&state, &mouse_state);
         }
     }
 
@@ -126,7 +133,7 @@ impl Game {
         music_event: &mut SoundEvent,
         reverb_snap: &mut Option<SoundEvent>,
         audio_system: Rc<RefCell<AudioSystem>>,
-        camera_actor: Rc<RefCell<CameraActor>>,
+        camera_actor: Rc<RefCell<FPSActor>>,
     ) -> Option<SoundEvent> {
         match key {
             Scancode::Minus => {
@@ -201,5 +208,19 @@ impl Game {
 
     fn generate_output(&mut self) {
         self.renderer.borrow_mut().draw();
+    }
+
+    fn change_camera(&mut self, mode: i32) {
+        // Disable everything
+        self.fps_actor.borrow_mut().set_state(actor::State::Paused);
+        self.fps_actor.borrow_mut().set_visible(false);
+
+        // Enable the camera specified by the mode
+        match mode {
+            1 | _ => {
+                self.fps_actor.borrow_mut().set_state(actor::State::Active);
+                self.fps_actor.borrow_mut().set_visible(true);
+            }
+        }
     }
 }
