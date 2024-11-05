@@ -9,8 +9,10 @@ use sdl2::{
 use crate::{
     components::{
         audio_component::AudioComponent,
+        camera_component,
         component::{Component, State as ComponentState},
         fps_camera::FPSCamera,
+        mesh_component::MeshComponent,
         move_component::{DefaultMoveComponent, MoveComponent},
     },
     math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
@@ -20,7 +22,7 @@ use crate::{
     },
 };
 
-use super::actor::{self, generate_id, Actor, State};
+use super::actor::{self, generate_id, Actor, DefaultActor, State};
 
 pub struct FPSActor {
     id: u32,
@@ -36,7 +38,9 @@ pub struct FPSActor {
     audio_system: Rc<RefCell<AudioSystem>>,
     move_component: Option<Rc<RefCell<DefaultMoveComponent>>>,
     camera_component: Option<Rc<RefCell<FPSCamera>>>,
+    mesh_component: Option<Rc<RefCell<MeshComponent>>>,
     audio_component: Option<Rc<RefCell<AudioComponent>>>,
+    fps_model: Option<Rc<RefCell<DefaultActor>>>,
     foot_step: Option<Rc<RefCell<SoundEvent>>>,
     last_foot_step: f32,
 }
@@ -57,12 +61,14 @@ impl FPSActor {
             scale: 1.0,
             rotation: Quaternion::new(),
             components: vec![],
-            asset_manager,
+            asset_manager: asset_manager.clone(),
             entity_manager: entity_manager.clone(),
             audio_system: audio_system.clone(),
             move_component: None,
             camera_component: None,
+            mesh_component: None,
             audio_component: None,
+            fps_model: None,
             foot_step: None,
             last_foot_step: 0.0,
         };
@@ -81,6 +87,16 @@ impl FPSActor {
         let fps_camera = FPSCamera::new(result.clone(), renderer, audio_system);
         result.borrow_mut().camera_component = Some(fps_camera);
 
+        let fps_model = DefaultActor::new(asset_manager.clone(), entity_manager.clone());
+        fps_model.borrow_mut().set_scale(0.75);
+
+        let mesh_component = MeshComponent::new(fps_model.clone());
+        let mesh = asset_manager.borrow_mut().get_mesh("Rifle.gpmesh");
+        mesh_component.borrow_mut().set_mesh(mesh);
+
+        result.borrow_mut().fps_model = Some(fps_model);
+        result.borrow_mut().mesh_component = Some(mesh_component);
+
         entity_manager.borrow_mut().add_actor(result.clone());
 
         result
@@ -95,7 +111,8 @@ impl FPSActor {
     }
 
     pub fn set_visible(&mut self, visible: bool) {
-        // TODO: Not yet implemented
+        let mesh_component = self.mesh_component.as_ref().unwrap();
+        mesh_component.borrow_mut().set_visible(visible);
     }
 }
 
@@ -118,7 +135,26 @@ impl Actor for FPSActor {
             self.last_foot_step = 0.5;
         }
 
-        // TODO: Update position of FPS model
+        // Update position of FPS model relative to actor position
+        let model_offset = Vector3::new(10.0, 10.0, -10.0);
+        let mut model_position = self.get_position().clone();
+        model_position += self.get_forward() * model_offset.x;
+        model_position += self.get_right() * model_offset.y;
+        model_position.z += model_offset.z;
+
+        let fps_model = self.fps_model.as_ref().unwrap();
+        fps_model.borrow_mut().set_position(model_position);
+
+        // Initialize rotation to actor rotation
+        let mut q = self.get_rotation().clone();
+
+        // Rotate by pitch from camera
+        let camera_component = self.camera_component.as_ref().unwrap();
+        q = Quaternion::concatenate(
+            &q,
+            &Quaternion::from_axis_angle(&self.get_right(), camera_component.borrow().get_pitch()),
+        );
+        fps_model.borrow_mut().set_rotation(q);
     }
 
     fn actor_input(&mut self, key_state: &KeyboardState, mouse_state: &RelativeMouseState) {

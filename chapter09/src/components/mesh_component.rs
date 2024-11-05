@@ -17,6 +17,7 @@ pub struct MeshComponent {
     state: State,
     mesh: Option<Rc<Mesh>>,
     texture_index: usize,
+    visible: bool,
 }
 
 impl MeshComponent {
@@ -28,6 +29,7 @@ impl MeshComponent {
             state: State::Active,
             mesh: None,
             texture_index: 0,
+            visible: true,
         };
 
         let result = Rc::new(RefCell::new(this));
@@ -76,6 +78,14 @@ impl MeshComponent {
 
     pub fn set_mesh(&mut self, mesh: Rc<Mesh>) {
         self.mesh = Some(mesh);
+    }
+
+    pub fn set_visible(&mut self, visible: bool) {
+        self.visible = visible;
+    }
+
+    pub fn get_visible(&self) -> bool {
+        self.visible
     }
 }
 

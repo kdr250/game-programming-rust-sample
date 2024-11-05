@@ -69,10 +69,9 @@ pub fn update_move_component(
     }
 
     if !math::basic::near_zero(move_component.get_forward_speed(), 0.001)
-        && !math::basic::near_zero(move_component.get_strafe_speed(), 0.001)
+        || !math::basic::near_zero(move_component.get_strafe_speed(), 0.001)
     {
-        let temp_position = result.0.clone().unwrap_or(Vector3::ZERO);
-        let mut position = owner_info.0.clone() + temp_position;
+        let mut position = owner_info.0.clone();
         position += owner_info.2.clone() * move_component.get_forward_speed() * delta_time;
         position += owner_info.4.clone() * move_component.get_strafe_speed() * delta_time;
         result.0 = Some(position);
