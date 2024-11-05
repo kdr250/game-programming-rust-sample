@@ -1,6 +1,8 @@
 pub mod audio_component;
+pub mod camera_component;
 pub mod circle_component;
 pub mod component;
+pub mod fps_camera;
 pub mod input_component;
 pub mod mesh_component;
 pub mod move_component;
