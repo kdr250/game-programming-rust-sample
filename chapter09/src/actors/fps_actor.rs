@@ -10,12 +10,13 @@ use crate::{
     components::{
         audio_component::AudioComponent,
         component::{Component, State as ComponentState},
+        fps_camera::FPSCamera,
         move_component::{DefaultMoveComponent, MoveComponent},
     },
     math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-        sound_event::SoundEvent,
+        renderer::Renderer, sound_event::SoundEvent,
     },
 };
 
@@ -34,6 +35,7 @@ pub struct FPSActor {
     entity_manager: Rc<RefCell<EntityManager>>,
     audio_system: Rc<RefCell<AudioSystem>>,
     move_component: Option<Rc<RefCell<DefaultMoveComponent>>>,
+    camera_component: Option<Rc<RefCell<FPSCamera>>>,
     audio_component: Option<Rc<RefCell<AudioComponent>>>,
     foot_step: Option<Rc<RefCell<SoundEvent>>>,
     last_foot_step: f32,
@@ -44,6 +46,7 @@ impl FPSActor {
         asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
         audio_system: Rc<RefCell<AudioSystem>>,
+        renderer: Rc<RefCell<Renderer>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
@@ -58,6 +61,7 @@ impl FPSActor {
             entity_manager: entity_manager.clone(),
             audio_system: audio_system.clone(),
             move_component: None,
+            camera_component: None,
             audio_component: None,
             foot_step: None,
             last_foot_step: 0.0,
@@ -68,13 +72,14 @@ impl FPSActor {
         let move_component = DefaultMoveComponent::new(result.clone());
         result.borrow_mut().move_component = Some(move_component);
 
-        let audio_component = AudioComponent::new(result.clone(), audio_system);
+        let audio_component = AudioComponent::new(result.clone(), audio_system.clone());
         let sound_event = audio_component.borrow_mut().play_event("event:/Footstep");
         sound_event.borrow_mut().set_paused(true);
         result.borrow_mut().audio_component = Some(audio_component);
         result.borrow_mut().foot_step = Some(sound_event);
 
-        // TODO: FPS Camera
+        let fps_camera = FPSCamera::new(result.clone(), renderer, audio_system);
+        result.borrow_mut().camera_component = Some(fps_camera);
 
         entity_manager.borrow_mut().add_actor(result.clone());
 
@@ -140,6 +145,7 @@ impl Actor for FPSActor {
         // Mouse movement
         // Get relative movement from SDL
         let x = mouse_state.x();
+        let y = mouse_state.y();
 
         // Assume mouse movement is usually between -500 and +500
         let max_mouse_speed = 500.0;
@@ -155,6 +161,18 @@ impl Actor for FPSActor {
             angular_speed *= max_angular_speed;
         }
         move_component.borrow_mut().set_angular_speed(angular_speed);
+
+        // Compute pitch
+        let max_pitch_speed = f32::consts::PI * 8.0;
+        let mut pitch_speed = 0.0;
+        if y != 0 {
+            // Convert to [-1.0, 1.0]
+            pitch_speed = y as f32 / max_mouse_speed;
+            pitch_speed *= max_pitch_speed;
+        }
+
+        let camera_component = self.camera_component.clone().unwrap();
+        camera_component.borrow_mut().set_pitch_speed(pitch_speed);
     }
 
     actor::impl_getters_setters! {}

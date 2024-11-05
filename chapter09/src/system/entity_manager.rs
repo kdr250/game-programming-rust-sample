@@ -174,7 +174,7 @@ impl EntityManager {
         let ac = AudioComponent::new(m, audio_system.clone());
         ac.borrow_mut().play_event("event:/FireLoop");
 
-        let fps_actor = FPSActor::new(asset_manager, this, audio_system);
+        let fps_actor = FPSActor::new(asset_manager, this, audio_system, renderer);
 
         fps_actor
     }
