@@ -258,6 +258,18 @@ dependencies = [
 [[package]]
 name = "chapter09"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "fs_extra",
+ "gl",
+ "glob",
+ "image",
+ "libfmod",
+ "rand",
+ "sdl2",
+ "serde_json",
+]
 
 [[package]]
 name = "color_quant"
