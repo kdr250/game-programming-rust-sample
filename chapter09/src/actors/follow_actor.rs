@@ -71,6 +71,7 @@ impl FollowActor {
         result.borrow_mut().move_component = Some(move_component);
 
         let follow_camera = FollowCamera::new(result.clone(), renderer, audio_system);
+        follow_camera.borrow_mut().snap_to_ideal();
         result.borrow_mut().camera_component = Some(follow_camera);
 
         let mesh_component = MeshComponent::new(result.clone());
