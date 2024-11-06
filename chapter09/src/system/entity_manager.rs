@@ -5,6 +5,7 @@ use crate::{
     actors::{
         actor::{self, Actor, DefaultActor, State as ActorState},
         camera_actor::CameraActor,
+        follow_actor::FollowActor,
         fps_actor::FPSActor,
         plane_actor::PlaneActor,
     },
@@ -69,7 +70,7 @@ impl EntityManager {
         asset_manager: Rc<RefCell<AssetManager>>,
         renderer: Rc<RefCell<Renderer>>,
         audio_system: Rc<RefCell<AudioSystem>>,
-    ) -> Rc<RefCell<FPSActor>> {
+    ) -> (Rc<RefCell<FPSActor>>, Rc<RefCell<FollowActor>>) {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
         a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
@@ -174,9 +175,16 @@ impl EntityManager {
         let ac = AudioComponent::new(m, audio_system.clone());
         ac.borrow_mut().play_event("event:/FireLoop");
 
-        let fps_actor = FPSActor::new(asset_manager, this, audio_system, renderer);
+        // Different camera actors
+        let fps_actor = FPSActor::new(
+            asset_manager.clone(),
+            this.clone(),
+            audio_system.clone(),
+            renderer.clone(),
+        );
+        let follow_actor = FollowActor::new(asset_manager, this, audio_system, renderer);
 
-        fps_actor
+        (fps_actor, follow_actor)
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

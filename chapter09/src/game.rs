@@ -12,6 +12,7 @@ use sdl2::{
 use crate::{
     actors::{
         actor::{self, Actor},
+        follow_actor::FollowActor,
         fps_actor::FPSActor,
     },
     system::{
@@ -32,6 +33,7 @@ pub struct Game {
     music_event: SoundEvent,
     reverb_snap: Option<SoundEvent>,
     fps_actor: Rc<RefCell<FPSActor>>,
+    follow_actor: Rc<RefCell<FollowActor>>,
 }
 
 impl Game {
@@ -52,7 +54,7 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
-        let camera_actor = EntityManager::load_data(
+        let (fps_actor, follow_actor) = EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
@@ -70,7 +72,8 @@ impl Game {
             tick_count: 0,
             music_event,
             reverb_snap: None,
-            fps_actor: camera_actor,
+            fps_actor,
+            follow_actor,
         };
 
         game.change_camera(1);
@@ -89,6 +92,7 @@ impl Game {
 
     /// Herlper functions for the game loop
     fn process_input(&mut self) {
+        let mut scancodes = vec![];
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => {
@@ -99,19 +103,15 @@ impl Game {
                     scancode, repeat, ..
                 } => {
                     if !repeat && scancode.is_some() {
-                        if let Some(reverb) = Game::handle_key_pressed(
-                            scancode.unwrap(),
-                            &mut self.music_event,
-                            &mut self.reverb_snap,
-                            self.audio_system.clone(),
-                            self.fps_actor.clone(),
-                        ) {
-                            self.reverb_snap = Some(reverb);
-                        }
+                        scancodes.push(scancode.unwrap());
                     }
                 }
                 _ => {}
             }
+        }
+
+        for scancode in scancodes {
+            self.handle_key_pressed(scancode);
         }
 
         let state = KeyboardState::new(&self.event_pump);
@@ -128,54 +128,51 @@ impl Game {
         }
     }
 
-    fn handle_key_pressed(
-        key: Scancode,
-        music_event: &mut SoundEvent,
-        reverb_snap: &mut Option<SoundEvent>,
-        audio_system: Rc<RefCell<AudioSystem>>,
-        camera_actor: Rc<RefCell<FPSActor>>,
-    ) -> Option<SoundEvent> {
+    fn handle_key_pressed(&mut self, key: Scancode) {
         match key {
             Scancode::Minus => {
                 // Reduce master volume
-                let mut volume = audio_system.borrow().get_bus_volume("bus:/");
+                let mut volume = self.audio_system.borrow().get_bus_volume("bus:/");
                 volume = f32::max(0.0, volume - 0.1);
-                audio_system.borrow_mut().set_bus_volume("bus:/", volume);
+                self.audio_system
+                    .borrow_mut()
+                    .set_bus_volume("bus:/", volume);
             }
             Scancode::Equals => {
                 // Increase master volume
-                let mut volume = audio_system.borrow().get_bus_volume("bus:/");
+                let mut volume = self.audio_system.borrow().get_bus_volume("bus:/");
                 volume = f32::min(1.0, volume + 0.1);
-                audio_system.borrow_mut().set_bus_volume("bus:/", volume);
+                self.audio_system
+                    .borrow_mut()
+                    .set_bus_volume("bus:/", volume);
             }
             Scancode::E => {
-                audio_system.borrow_mut().play_event("event:/Explosion2D");
+                self.audio_system
+                    .borrow_mut()
+                    .play_event("event:/Explosion2D");
             }
             Scancode::M => {
-                music_event.set_paused(!music_event.get_paused());
+                self.music_event.set_paused(!self.music_event.get_paused());
             }
             Scancode::R => {
                 // FIXME: An error will happen when switching four times...
-                if let Some(reverb) = reverb_snap {
+                if let Some(reverb) = &mut self.reverb_snap {
                     if reverb.is_valid() {
                         reverb.stop(true);
-                        return None;
+                        return;
                     }
                 }
-                let reverb = audio_system.borrow_mut().play_event("snapshot:/WithReverb");
-                return Some(reverb);
+                let reverb = self
+                    .audio_system
+                    .borrow_mut()
+                    .play_event("snapshot:/WithReverb");
+                self.reverb_snap = Some(reverb);
             }
-            Scancode::Num1 => {
-                // Set default footstep surface
-                camera_actor.borrow_mut().set_foot_step_surface(0.0);
-            }
-            Scancode::Num2 => {
-                // Set grass footstep surface
-                camera_actor.borrow_mut().set_foot_step_surface(0.5);
+            Scancode::Num1 | Scancode::Num2 => {
+                self.change_camera(key as i32 - 29);
             }
             _ => {}
         };
-        return None;
     }
 
     fn update_game(&mut self) {
@@ -214,9 +211,19 @@ impl Game {
         // Disable everything
         self.fps_actor.borrow_mut().set_state(actor::State::Paused);
         self.fps_actor.borrow_mut().set_visible(false);
+        self.follow_actor
+            .borrow_mut()
+            .set_state(actor::State::Paused);
+        self.follow_actor.borrow_mut().set_visible(false);
 
         // Enable the camera specified by the mode
         match mode {
+            2 => {
+                self.follow_actor
+                    .borrow_mut()
+                    .set_state(actor::State::Active);
+                self.follow_actor.borrow_mut().set_visible(true);
+            }
             1 | _ => {
                 self.fps_actor.borrow_mut().set_state(actor::State::Active);
                 self.fps_actor.borrow_mut().set_visible(true);

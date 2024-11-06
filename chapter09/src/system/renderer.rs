@@ -107,7 +107,9 @@ impl Renderer {
 
         // Draw mesh components
         for mesh_component in asset_manager.get_mesh_components() {
-            mesh_component.borrow().draw(&asset_manager.mesh_shader);
+            if mesh_component.borrow().get_visible() {
+                mesh_component.borrow().draw(&asset_manager.mesh_shader);
+            }
         }
 
         unsafe {
