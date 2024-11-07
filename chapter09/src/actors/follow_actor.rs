@@ -13,7 +13,7 @@ use crate::{
         mesh_component::MeshComponent,
         move_component::{DefaultMoveComponent, MoveComponent},
     },
-    math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
         renderer::Renderer,

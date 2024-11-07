@@ -9,7 +9,6 @@ use sdl2::{
 use crate::{
     components::{
         audio_component::AudioComponent,
-        camera_component,
         component::{Component, State as ComponentState},
         fps_camera::FPSCamera,
         mesh_component::MeshComponent,

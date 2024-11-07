@@ -2,27 +2,24 @@ use core::f32;
 use std::{cell::RefCell, rc::Rc};
 
 use sdl2::{
-    keyboard::{KeyboardState, Scancode},
+    keyboard::KeyboardState,
     mouse::{MouseButton, RelativeMouseState},
 };
 
 use crate::{
     components::{
-        audio_component::AudioComponent,
         component::{Component, State as ComponentState},
-        fps_camera::FPSCamera,
         mesh_component::MeshComponent,
-        move_component::{DefaultMoveComponent, MoveComponent},
         orbit_camera::OrbitCamera,
     },
-    math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-        renderer::Renderer, sound_event::SoundEvent,
+        renderer::Renderer,
     },
 };
 
-use super::actor::{self, generate_id, Actor, DefaultActor, State};
+use super::actor::{self, generate_id, Actor, State};
 
 pub struct OrbitActor {
     id: u32,

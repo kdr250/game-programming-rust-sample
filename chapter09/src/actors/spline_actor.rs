@@ -4,8 +4,6 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     components::{
         component::{Component, State as ComponentState},
-        mesh_component::MeshComponent,
-        orbit_camera::OrbitCamera,
         spline_camera::{Spline, SplineCamera},
     },
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
