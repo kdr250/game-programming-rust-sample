@@ -11,12 +11,13 @@ use sdl2::{
 
 use crate::{
     actors::{
-        actor::{self, Actor},
+        actor::{self, Actor, DefaultActor},
         follow_actor::FollowActor,
         fps_actor::FPSActor,
         orbit_actor::{self, OrbitActor},
         spline_actor::{self, SplineActor},
     },
+    math::vector3::Vector3,
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
         renderer::Renderer, sound_event::SoundEvent,
@@ -38,6 +39,8 @@ pub struct Game {
     follow_actor: Rc<RefCell<FollowActor>>,
     orbit_actor: Rc<RefCell<OrbitActor>>,
     spline_actor: Rc<RefCell<SplineActor>>,
+    start_sphere: Rc<RefCell<DefaultActor>>,
+    end_sphere: Rc<RefCell<DefaultActor>>,
 }
 
 impl Game {
@@ -58,12 +61,13 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
-        let (fps_actor, follow_actor, orbit_actor, spline_actor) = EntityManager::load_data(
-            entity_manager.clone(),
-            asset_manager.clone(),
-            renderer.clone(),
-            audio_system.clone(),
-        );
+        let (fps_actor, follow_actor, orbit_actor, spline_actor, start_sphere, end_sphere) =
+            EntityManager::load_data(
+                entity_manager.clone(),
+                asset_manager.clone(),
+                renderer.clone(),
+                audio_system.clone(),
+            );
 
         let mut game = Game {
             renderer,
@@ -80,6 +84,8 @@ impl Game {
             follow_actor,
             orbit_actor,
             spline_actor,
+            start_sphere,
+            end_sphere,
         };
 
         game.change_camera(1);
@@ -176,6 +182,17 @@ impl Game {
             }
             Scancode::Num1 | Scancode::Num2 | Scancode::Num3 | Scancode::Num4 => {
                 self.change_camera(key as i32 - 29);
+            }
+            Scancode::P => {
+                // Get start point (in center of screen on near plane)
+                let mut screen_point = Vector3::new(0.0, 0.0, 0.0);
+                let start = self.renderer.borrow().unproject(screen_point.clone());
+                // Get end point (in center of screen, between near and far)
+                screen_point.z = 0.9;
+                let end = self.renderer.borrow().unproject(screen_point);
+                // Set spheres to points
+                self.start_sphere.borrow_mut().set_position(start);
+                self.end_sphere.borrow_mut().set_position(end);
             }
             _ => {}
         };

@@ -13,7 +13,7 @@ use crate::{
     },
     components::{
         audio_component::AudioComponent,
-        mesh_component::MeshComponent,
+        mesh_component::{self, MeshComponent},
         sprite_component::{DefaultSpriteComponent, SpriteComponent},
     },
     math::{quaternion::Quaternion, random::Random, vector3::Vector3},
@@ -77,6 +77,8 @@ impl EntityManager {
         Rc<RefCell<FollowActor>>,
         Rc<RefCell<OrbitActor>>,
         Rc<RefCell<SplineActor>>,
+        Rc<RefCell<DefaultActor>>,
+        Rc<RefCell<DefaultActor>>,
     ) {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
@@ -201,9 +203,40 @@ impl EntityManager {
             audio_system.clone(),
             renderer.clone(),
         );
-        let spline_actor = SplineActor::new(asset_manager, this, audio_system, renderer);
+        let spline_actor = SplineActor::new(
+            asset_manager.clone(),
+            this.clone(),
+            audio_system.clone(),
+            renderer.clone(),
+        );
 
-        (fps_actor, follow_actor, orbit_actor, spline_actor)
+        // Spheres for demonstrating unprojection
+        let start_sphere = DefaultActor::new(asset_manager.clone(), this.clone());
+        start_sphere
+            .borrow_mut()
+            .set_position(Vector3::new(10000.0, 0.0, 0.0));
+        start_sphere.borrow_mut().set_scale(0.25);
+        let mesh_component = MeshComponent::new(start_sphere.clone());
+        let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
+        mesh_component.borrow_mut().set_mesh(mesh);
+
+        let end_sphere = DefaultActor::new(asset_manager.clone(), this.clone());
+        end_sphere
+            .borrow_mut()
+            .set_position(Vector3::new(10000.0, 0.0, 0.0));
+        let mesh_component = MeshComponent::new(end_sphere.clone());
+        let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
+        mesh_component.borrow_mut().set_mesh(mesh);
+        mesh_component.borrow_mut().set_texture_index(1);
+
+        (
+            fps_actor,
+            follow_actor,
+            orbit_actor,
+            spline_actor,
+            start_sphere,
+            end_sphere,
+        )
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

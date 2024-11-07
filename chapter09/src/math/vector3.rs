@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
-use super::quaternion::Quaternion;
+use super::{basic, matrix4::Matrix4, quaternion::Quaternion};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Vector3 {
@@ -28,6 +28,40 @@ impl Vector3 {
         let mut result = self.clone();
         result += Vector3::cross(&qv, &(Vector3::cross(&qv, &self) + self.clone() * q.w)) * 2.0;
         result
+    }
+
+    /// This will transform the vector and renormalize the w component
+    pub fn transform_with_pers_div(&self, mat: Matrix4, w: Option<f32>) -> Vector3 {
+        let w = w.unwrap_or(1.0);
+
+        let mut x = self.x * mat.mat[0][0]
+            + self.y * mat.mat[1][0]
+            + self.z * mat.mat[2][0]
+            + w * mat.mat[3][0];
+
+        let mut y = self.x * mat.mat[0][1]
+            + self.y * mat.mat[1][1]
+            + self.z * mat.mat[2][1]
+            + w * mat.mat[3][1];
+
+        let mut z = self.x * mat.mat[0][2]
+            + self.y * mat.mat[1][2]
+            + self.z * mat.mat[2][2]
+            + w * mat.mat[3][2];
+
+        let mut transformed_w = self.x * mat.mat[0][3]
+            + self.y * mat.mat[1][3]
+            + self.z * mat.mat[2][3]
+            + w * mat.mat[3][3];
+
+        if !basic::near_zero(transformed_w.abs(), 0.001) {
+            transformed_w = 1.0 / transformed_w;
+            x *= transformed_w;
+            y *= transformed_w;
+            z *= transformed_w;
+        }
+
+        Vector3::new(x, y, z)
     }
 
     pub fn set(&mut self, x: f32, y: f32, z: f32) {

@@ -87,6 +87,10 @@ impl MeshComponent {
     pub fn get_visible(&self) -> bool {
         self.visible
     }
+
+    pub fn set_texture_index(&mut self, index: usize) {
+        self.texture_index = index;
+    }
 }
 
 impl Component for MeshComponent {

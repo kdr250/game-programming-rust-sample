@@ -165,4 +165,34 @@ impl Renderer {
     pub fn set_view_matrix(&mut self, view: Matrix4) {
         self.view = view;
     }
+
+    pub fn unproject(&self, screen_point: Vector3) -> Vector3 {
+        // Convert screenPoint to device coordinates (between -1 and +1)
+        let mut device_coord = screen_point;
+        device_coord.x /= self.screen_width * 0.5;
+        device_coord.y /= self.screen_height * 0.5;
+
+        // Transform vector by unprojection matrix
+        let mut unprojection = self.view.clone() * self.projection.clone();
+        unprojection.invert();
+
+        let result = Vector3::transform_with_pers_div(&device_coord, unprojection, None);
+
+        result
+    }
+
+    /// return: (0:out_start, 1:out_dir)
+    pub fn get_screen_direction(&self) -> (Vector3, Vector3) {
+        // Get start point (in center of screen on near plane)
+        let mut screen_point = Vector3::ZERO;
+        let out_start = self.unproject(screen_point.clone());
+        // Get end point (in center of screen, between near and far)
+        screen_point.z = 0.9;
+        let end = self.unproject(screen_point);
+        // Get direction vector
+        let mut out_dir = end - out_start.clone();
+        out_dir.normalize_mut();
+
+        (out_start, out_dir)
+    }
 }
