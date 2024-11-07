@@ -256,6 +256,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "chapter09"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "fs_extra",
+ "gl",
+ "glob",
+ "image",
+ "libfmod",
+ "rand",
+ "sdl2",
+ "serde_json",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
