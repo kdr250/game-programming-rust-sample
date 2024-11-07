@@ -14,6 +14,7 @@ use crate::{
         actor::{self, Actor},
         follow_actor::FollowActor,
         fps_actor::FPSActor,
+        orbit_actor::{self, OrbitActor},
     },
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
@@ -34,6 +35,7 @@ pub struct Game {
     reverb_snap: Option<SoundEvent>,
     fps_actor: Rc<RefCell<FPSActor>>,
     follow_actor: Rc<RefCell<FollowActor>>,
+    orbit_actor: Rc<RefCell<OrbitActor>>,
 }
 
 impl Game {
@@ -54,7 +56,7 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
-        let (fps_actor, follow_actor) = EntityManager::load_data(
+        let (fps_actor, follow_actor, orbit_actor) = EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
@@ -74,6 +76,7 @@ impl Game {
             reverb_snap: None,
             fps_actor,
             follow_actor,
+            orbit_actor,
         };
 
         game.change_camera(1);
@@ -168,7 +171,7 @@ impl Game {
                     .play_event("snapshot:/WithReverb");
                 self.reverb_snap = Some(reverb);
             }
-            Scancode::Num1 | Scancode::Num2 => {
+            Scancode::Num1 | Scancode::Num2 | Scancode::Num3 => {
                 self.change_camera(key as i32 - 29);
             }
             _ => {}
@@ -215,9 +218,19 @@ impl Game {
             .borrow_mut()
             .set_state(actor::State::Paused);
         self.follow_actor.borrow_mut().set_visible(false);
+        self.orbit_actor
+            .borrow_mut()
+            .set_state(actor::State::Paused);
+        self.orbit_actor.borrow_mut().set_visible(false);
 
         // Enable the camera specified by the mode
         match mode {
+            3 => {
+                self.orbit_actor
+                    .borrow_mut()
+                    .set_state(actor::State::Active);
+                self.orbit_actor.borrow_mut().set_visible(true);
+            }
             2 => {
                 self.follow_actor
                     .borrow_mut()
