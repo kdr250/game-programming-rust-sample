@@ -129,9 +129,8 @@ impl AudioSystem {
             velocity: AudioSystem::vector_to_fmod(&Vector3::ZERO),
         };
 
-        self.system
-            .set_listener_attributes(0, attributes, None)
-            .unwrap();
+        // FIXME: when using spline camera, an error happens by unwrap()...
+        let _ = self.system.set_listener_attributes(0, attributes, None);
     }
 
     pub fn vector_to_fmod(in_vector: &Vector3) -> Vector {

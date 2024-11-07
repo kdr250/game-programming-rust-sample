@@ -9,6 +9,7 @@ use crate::{
         fps_actor::FPSActor,
         orbit_actor::{self, OrbitActor},
         plane_actor::PlaneActor,
+        spline_actor::SplineActor,
     },
     components::{
         audio_component::AudioComponent,
@@ -75,6 +76,7 @@ impl EntityManager {
         Rc<RefCell<FPSActor>>,
         Rc<RefCell<FollowActor>>,
         Rc<RefCell<OrbitActor>>,
+        Rc<RefCell<SplineActor>>,
     ) {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
@@ -193,9 +195,15 @@ impl EntityManager {
             audio_system.clone(),
             renderer.clone(),
         );
-        let orbit_actor = OrbitActor::new(asset_manager, this, audio_system, renderer);
+        let orbit_actor = OrbitActor::new(
+            asset_manager.clone(),
+            this.clone(),
+            audio_system.clone(),
+            renderer.clone(),
+        );
+        let spline_actor = SplineActor::new(asset_manager, this, audio_system, renderer);
 
-        (fps_actor, follow_actor, orbit_actor)
+        (fps_actor, follow_actor, orbit_actor, spline_actor)
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

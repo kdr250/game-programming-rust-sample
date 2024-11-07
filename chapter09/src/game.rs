@@ -15,6 +15,7 @@ use crate::{
         follow_actor::FollowActor,
         fps_actor::FPSActor,
         orbit_actor::{self, OrbitActor},
+        spline_actor::{self, SplineActor},
     },
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
@@ -36,6 +37,7 @@ pub struct Game {
     fps_actor: Rc<RefCell<FPSActor>>,
     follow_actor: Rc<RefCell<FollowActor>>,
     orbit_actor: Rc<RefCell<OrbitActor>>,
+    spline_actor: Rc<RefCell<SplineActor>>,
 }
 
 impl Game {
@@ -56,7 +58,7 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
-        let (fps_actor, follow_actor, orbit_actor) = EntityManager::load_data(
+        let (fps_actor, follow_actor, orbit_actor, spline_actor) = EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
@@ -77,6 +79,7 @@ impl Game {
             fps_actor,
             follow_actor,
             orbit_actor,
+            spline_actor,
         };
 
         game.change_camera(1);
@@ -171,7 +174,7 @@ impl Game {
                     .play_event("snapshot:/WithReverb");
                 self.reverb_snap = Some(reverb);
             }
-            Scancode::Num1 | Scancode::Num2 | Scancode::Num3 => {
+            Scancode::Num1 | Scancode::Num2 | Scancode::Num3 | Scancode::Num4 => {
                 self.change_camera(key as i32 - 29);
             }
             _ => {}
@@ -222,9 +225,18 @@ impl Game {
             .borrow_mut()
             .set_state(actor::State::Paused);
         self.orbit_actor.borrow_mut().set_visible(false);
+        self.spline_actor
+            .borrow_mut()
+            .set_state(actor::State::Paused);
 
         // Enable the camera specified by the mode
         match mode {
+            4 => {
+                self.spline_actor
+                    .borrow_mut()
+                    .set_state(actor::State::Active);
+                self.spline_actor.borrow_mut().restart_spline();
+            }
             3 => {
                 self.orbit_actor
                     .borrow_mut()
