@@ -3,6 +3,7 @@ mod components;
 mod game;
 mod graphics;
 mod math;
+mod physics;
 mod system;
 
 use crate::game::*;
