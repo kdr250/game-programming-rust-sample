@@ -1,5 +1,7 @@
 use crate::math::{self, vector3::Vector3};
 
+use super::plane::Plane;
+
 pub struct LineSegment {
     start: Vector3,
     end: Vector3,
@@ -125,11 +127,39 @@ impl LineSegment {
 
         dp.length_sq()
     }
+
+    pub fn intersect(&self, plane: &Plane) -> Option<(bool, f32)> {
+        // First test if there's a solution for t
+        let denom = Vector3::dot(&(self.end.clone() - self.start.clone()), &plane.normal);
+
+        if math::basic::near_zero(denom, 0.001) {
+            // The only way they intersect is if start
+            // is a point on the plane (P dot N) == d
+            if math::basic::near_zero(Vector3::dot(&self.start, &plane.normal) - plane.d, 0.001) {
+                println!("denom near 0 -> number near 0");
+                return Some((false, 0.0));
+            }
+            println!("denom near 0 -> number not near 0");
+            return None;
+        }
+
+        let number = -Vector3::dot(&self.start, &plane.normal) - plane.d;
+        let result = number / denom;
+
+        // Validate t is within bounds of the line segment
+        if result >= 0.0 && result <= 1.0 {
+            println!("result 0-1, value = {result}");
+            Some((true, result))
+        } else {
+            println!("result not 0-1, value = {result}");
+            Some((false, result))
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::math::vector3::Vector3;
+    use crate::{collision::plane::Plane, math::vector3::Vector3};
 
     use super::LineSegment;
 
@@ -169,6 +199,17 @@ mod tests {
 
         let segment = LineSegment::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 0.0));
         let actual = segment.min_dist_sq(&Vector3::new(0.5, 1.5, 0.0));
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_intersect() {
+        let expected = Some((true, 0.5));
+
+        let segment = LineSegment::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 2.0));
+        let plane = Plane::new(Vector3::new(0.0, -1.0, 0.0), 1.0);
+        let actual = LineSegment::intersect(&segment, &plane);
 
         assert_eq!(expected, actual);
     }

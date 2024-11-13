@@ -2,8 +2,8 @@ use crate::math::vector3::Vector3;
 
 #[derive(Debug, PartialEq)]
 pub struct Plane {
-    normal: Vector3,
-    d: f32,
+    pub normal: Vector3,
+    pub d: f32,
 }
 
 impl Plane {
