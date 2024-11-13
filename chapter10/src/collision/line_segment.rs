@@ -1,6 +1,6 @@
 use crate::math::{self, vector3::Vector3};
 
-use super::{plane::Plane, sphere::Sphere};
+use super::{aabb::AABB, plane::Plane, sphere::Sphere};
 
 pub struct LineSegment {
     start: Vector3,
@@ -184,12 +184,57 @@ impl LineSegment {
         }
         None
     }
+
+    pub fn intersect_aabb(&self, aabb: &AABB) -> Option<f32> {
+        // Vector to save all possible t values for those sides
+        let mut t_values = vec![];
+        // Test the x planes
+        LineSegment::test_side_plane(self.start.x, self.end.x, aabb.min.x, &mut t_values);
+        LineSegment::test_side_plane(self.start.x, self.end.x, aabb.max.x, &mut t_values);
+        // Test the y planes
+        LineSegment::test_side_plane(self.start.y, self.end.y, aabb.min.y, &mut t_values);
+        LineSegment::test_side_plane(self.start.y, self.end.y, aabb.max.y, &mut t_values);
+        // Test the z planes
+        LineSegment::test_side_plane(self.start.z, self.end.z, aabb.min.z, &mut t_values);
+        LineSegment::test_side_plane(self.start.z, self.end.z, aabb.max.z, &mut t_values);
+
+        // Sort the t values in ascending order
+        t_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        // Test if the box contains any of these points of intersection
+        for t in t_values {
+            let point = self.point_on_segment(t);
+            if aabb.contains(&point) {
+                return Some(t);
+            }
+        }
+
+        //None of the intersections are within bounds of box
+        None
+    }
+
+    fn test_side_plane(start: f32, end: f32, negd: f32, out: &mut Vec<f32>) -> bool {
+        let denom = end - start;
+        if math::basic::near_zero(denom, 0.001) {
+            return false;
+        }
+
+        let numer = -start + negd;
+        let t = numer / denom;
+        // Test that t is within bounds
+        if t >= 0.0 && t <= 1.0 {
+            out.push(t);
+            return true;
+        }
+
+        false
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        collision::{plane::Plane, sphere::Sphere},
+        collision::{aabb::AABB, plane::Plane, sphere::Sphere},
         math::vector3::Vector3,
     };
 
@@ -253,6 +298,17 @@ mod tests {
         let segment = LineSegment::new(Vector3::ZERO, Vector3::new(0.0, 2.0, 0.0));
         let sphere = Sphere::new(Vector3::new(1.0, 1.0, 0.0), 1.0);
         let actual = LineSegment::intersect_sphere(&segment, &sphere);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_intersect_aabb() {
+        let expected = Some(0.5);
+
+        let segment = LineSegment::new(Vector3::ZERO, Vector3::new(0.0, 2.0, 0.0));
+        let aabb = AABB::new(Vector3::new(-1.0, -1.0, -1.0), Vector3::new(1.0, 1.0, 1.0));
+        let actual = LineSegment::intersect_aabb(&segment, &aabb);
 
         assert_eq!(expected, actual);
     }

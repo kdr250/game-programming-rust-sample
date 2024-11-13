@@ -1,8 +1,8 @@
 use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
 pub struct AABB {
-    min: Vector3,
-    max: Vector3,
+    pub min: Vector3,
+    pub max: Vector3,
 }
 
 impl AABB {
