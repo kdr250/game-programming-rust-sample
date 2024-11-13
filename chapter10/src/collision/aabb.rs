@@ -52,4 +52,38 @@ impl AABB {
             self.update_min_max(p);
         }
     }
+
+    pub fn contains(&self, point: &Vector3) -> bool {
+        let outside = point.x < self.min.x
+            || point.y < self.min.y
+            || point.z < self.min.z
+            || point.x > self.max.x
+            || point.y > self.max.y
+            || point.x > self.max.z;
+
+        !outside
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::math::vector3::Vector3;
+
+    use super::AABB;
+
+    #[test]
+    fn test_contains() {
+        let aabb = AABB::new(Vector3::ZERO, Vector3::new(1.0, 1.0, 1.0));
+        let actual = aabb.contains(&Vector3::new(0.8, 0.8, 0.8));
+
+        assert!(actual);
+    }
+
+    #[test]
+    fn test_not_contains() {
+        let aabb = AABB::new(Vector3::ZERO, Vector3::new(1.0, 1.0, 1.0));
+        let actual = aabb.contains(&Vector3::new(1.8, 1.8, 1.8));
+
+        assert!(!actual);
+    }
 }
