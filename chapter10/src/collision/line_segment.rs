@@ -1,6 +1,6 @@
 use crate::math::{self, vector3::Vector3};
 
-use super::plane::Plane;
+use super::{plane::Plane, sphere::Sphere};
 
 pub struct LineSegment {
     start: Vector3,
@@ -155,11 +155,43 @@ impl LineSegment {
             Some((false, result))
         }
     }
+
+    pub fn intersect_sphere(&self, sphere: &Sphere) -> Option<f32> {
+        // Compute X, Y, a, b, c as per equations
+        let x = self.start.clone() - sphere.center.clone();
+        let y = self.end.clone() - self.start.clone();
+        let a = Vector3::dot(&y, &y);
+        let b = 2.0 * Vector3::dot(&x, &y);
+        let c = Vector3::dot(&x, &x) - sphere.radius * sphere.radius;
+
+        // Compute discriminant
+        let mut discriminant = b * b - 4.0 * a * c;
+        if discriminant < 0.0 {
+            return None;
+        }
+
+        // Compute min and max solutions of t
+        discriminant = discriminant.sqrt();
+        let t_min = (-b - discriminant) / (2.0 * a);
+        let t_max = (-b + discriminant) / (2.0 * a);
+
+        // Check whether either t is within bounds of segment
+        if t_min > 0.0 && t_min <= 1.0 {
+            return Some(t_min);
+        }
+        if t_max >= 0.0 && t_max <= 1.0 {
+            return Some(t_max);
+        }
+        None
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{collision::plane::Plane, math::vector3::Vector3};
+    use crate::{
+        collision::{plane::Plane, sphere::Sphere},
+        math::vector3::Vector3,
+    };
 
     use super::LineSegment;
 
@@ -210,6 +242,17 @@ mod tests {
         let segment = LineSegment::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 2.0));
         let plane = Plane::new(Vector3::new(0.0, -1.0, 0.0), 1.0);
         let actual = LineSegment::intersect_plane(&segment, &plane);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_intersect_sphere() {
+        let expected = Some(0.5);
+
+        let segment = LineSegment::new(Vector3::ZERO, Vector3::new(0.0, 2.0, 0.0));
+        let sphere = Sphere::new(Vector3::new(1.0, 1.0, 0.0), 1.0);
+        let actual = LineSegment::intersect_sphere(&segment, &sphere);
 
         assert_eq!(expected, actual);
     }
