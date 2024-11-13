@@ -27,6 +27,27 @@ impl Sphere {
         let dist_sq = aabb.min_dist_sq(&self.center);
         dist_sq <= self.radius * self.radius
     }
+
+    fn swept_sphere(p0: &Sphere, p1: &Sphere, q0: &Sphere, q1: &Sphere) -> Option<f32> {
+        // Compute X, Y, a, b, and c
+        let x = p0.center.clone() - q0.center.clone();
+        let y = p1.center.clone() - p0.center.clone() - (q1.center.clone() - q0.center.clone());
+        let a = Vector3::dot(&y, &y);
+        let b = 2.0 * Vector3::dot(&x, &y);
+        let sum_radius = p0.radius + q0.radius;
+        let c = Vector3::dot(&x, &x) - sum_radius * sum_radius;
+
+        // Solve discriminant
+        let mut discriminant = b * b - 4.0 * a * c;
+        if discriminant < 0.0 {
+            return None;
+        }
+
+        // We only care about the smaller solution
+        discriminant = discriminant.sqrt();
+        let result = (-b - discriminant) / (2.0 * a);
+        Some(result)
+    }
 }
 
 #[cfg(test)]
@@ -85,5 +106,18 @@ mod tests {
         let actual = Sphere::intersect_aabb(&sphere, &aabb);
 
         assert!(!actual);
+    }
+
+    #[test]
+    fn test_swept_sphere() {
+        let expected = Some(0.25);
+
+        let p0 = Sphere::new(Vector3::new(-1.0, -1.0, -1.0), 0.5);
+        let p1 = Sphere::new(Vector3::new(1.0, 1.0, 1.0), 0.5);
+        let q0 = Sphere::new(Vector3::new(1.0, -1.0, -1.0), 0.5);
+        let q1 = Sphere::new(Vector3::new(-1.0, 1.0, 1.0), 0.5);
+        let actual = Sphere::swept_sphere(&p0, &p1, &q0, &q1);
+
+        assert_eq!(expected, actual);
     }
 }
