@@ -128,7 +128,7 @@ impl LineSegment {
         dp.length_sq()
     }
 
-    pub fn intersect(&self, plane: &Plane) -> Option<(bool, f32)> {
+    pub fn intersect_plane(&self, plane: &Plane) -> Option<(bool, f32)> {
         // First test if there's a solution for t
         let denom = Vector3::dot(&(self.end.clone() - self.start.clone()), &plane.normal);
 
@@ -204,12 +204,12 @@ mod tests {
     }
 
     #[test]
-    fn test_intersect() {
+    fn test_intersect_plane() {
         let expected = Some((true, 0.5));
 
         let segment = LineSegment::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 2.0));
         let plane = Plane::new(Vector3::new(0.0, -1.0, 0.0), 1.0);
-        let actual = LineSegment::intersect(&segment, &plane);
+        let actual = LineSegment::intersect_plane(&segment, &plane);
 
         assert_eq!(expected, actual);
     }
