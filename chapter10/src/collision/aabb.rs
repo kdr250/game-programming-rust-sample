@@ -63,6 +63,17 @@ impl AABB {
 
         !outside
     }
+
+    pub fn intersect(&self, other: &AABB) -> bool {
+        let no = self.max.x < other.min.x
+            || self.max.y < other.min.y
+            || self.max.z < other.min.z
+            || other.max.x < self.min.x
+            || other.max.y < self.min.y
+            || other.max.z < self.min.z;
+
+        !no
+    }
 }
 
 #[cfg(test)]
@@ -83,6 +94,24 @@ mod tests {
     fn test_not_contains() {
         let aabb = AABB::new(Vector3::ZERO, Vector3::new(1.0, 1.0, 1.0));
         let actual = aabb.contains(&Vector3::new(1.8, 1.8, 1.8));
+
+        assert!(!actual);
+    }
+
+    #[test]
+    fn test_intersect() {
+        let a = AABB::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 2.0));
+        let b = AABB::new(Vector3::new(1.0, 1.0, 1.0), Vector3::new(3.0, 3.0, 3.0));
+        let actual = AABB::intersect(&a, &b);
+
+        assert!(actual);
+    }
+
+    #[test]
+    fn test_not_intersect() {
+        let a = AABB::new(Vector3::ZERO, Vector3::new(2.0, 2.0, 2.0));
+        let b = AABB::new(Vector3::new(3.0, 1.0, 1.0), Vector3::new(4.0, 3.0, 3.0));
+        let actual = AABB::intersect(&a, &b);
 
         assert!(!actual);
     }
