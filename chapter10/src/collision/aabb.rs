@@ -74,6 +74,16 @@ impl AABB {
 
         !no
     }
+
+    pub fn min_dist_sq(&self, point: &Vector3) -> f32 {
+        // Compute differences for each axis
+        let dx = (self.min.x - point.x).max(0.0).max(point.x - self.max.x);
+        let dy = (self.min.y - point.y).max(0.0).max(point.y - self.max.y);
+        let dz = (self.min.z - point.z).max(0.0).max(point.z - self.max.z);
+
+        // Distance squared formula
+        dx * dx + dy * dy + dz * dz
+    }
 }
 
 #[cfg(test)]

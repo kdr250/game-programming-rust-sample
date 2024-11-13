@@ -1,5 +1,7 @@
 use crate::math::vector3::Vector3;
 
+use super::aabb::AABB;
+
 pub struct Sphere {
     center: Vector3,
     radius: f32,
@@ -20,11 +22,16 @@ impl Sphere {
         let sum_radius = self.radius + other.radius;
         dist_sq <= sum_radius * sum_radius
     }
+
+    pub fn intersect_aabb(&self, aabb: &AABB) -> bool {
+        let dist_sq = aabb.min_dist_sq(&self.center);
+        dist_sq <= self.radius * self.radius
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::math::vector3::Vector3;
+    use crate::{collision::aabb::AABB, math::vector3::Vector3};
 
     use super::Sphere;
 
@@ -58,6 +65,24 @@ mod tests {
         let a = Sphere::new(Vector3::ZERO, 1.0);
         let b = Sphere::new(Vector3::new(2.0, 2.0, 2.0), 1.0);
         let actual = Sphere::intersect(&a, &b);
+
+        assert!(!actual);
+    }
+
+    #[test]
+    fn test_intersect_aabb() {
+        let sphere = Sphere::new(Vector3::ZERO, 5.0);
+        let aabb = AABB::new(Vector3::new(1.0, 1.0, 1.0), Vector3::new(2.0, 2.0, 2.0));
+        let actual = Sphere::intersect_aabb(&sphere, &aabb);
+
+        assert!(actual);
+    }
+
+    #[test]
+    fn test_not_intersect_aabb() {
+        let sphere = Sphere::new(Vector3::ZERO, 1.0);
+        let aabb = AABB::new(Vector3::new(1.0, 1.0, 1.0), Vector3::new(2.0, 2.0, 2.0));
+        let actual = Sphere::intersect_aabb(&sphere, &aabb);
 
         assert!(!actual);
     }
