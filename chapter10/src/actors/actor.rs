@@ -45,6 +45,7 @@ pub trait Actor {
             self.get_rotation().clone(),
             self.get_forward(),
             self.get_world_transform().clone(),
+            self.get_right(),
         );
 
         for component in self.get_cocmponents() {
@@ -70,18 +71,18 @@ pub trait Actor {
     fn update_actor(&mut self, delta_time: f32);
 
     // ProcessInput function called from Game (not overridable)
-    fn process_input(&mut self, key_state: &KeyboardState) {
+    fn process_input(&mut self, key_state: &KeyboardState, mouse_state: &RelativeMouseState) {
         if *self.get_state() != State::Active {
             return;
         }
         for component in self.get_cocmponents() {
             component.borrow_mut().process_input(&key_state);
         }
-        self.actor_input(&key_state);
+        self.actor_input(key_state, mouse_state);
     }
 
     // Any actor-specific input code (overridable)
-    fn actor_input(&mut self, _key_state: &KeyboardState) {}
+    fn actor_input(&mut self, _key_state: &KeyboardState, _mouse_state: &RelativeMouseState) {}
 
     fn compute_world_transform(&mut self) {
         if !self.get_recompute_world_transform() {
@@ -136,6 +137,8 @@ pub trait Actor {
 
     fn get_forward(&self) -> Vector3;
 
+    fn get_right(&self) -> Vector3;
+
     fn get_world_transform(&self) -> &Matrix4;
 
     fn set_world_transform(&mut self, world_transform: Matrix4);
@@ -182,6 +185,10 @@ macro_rules! impl_getters_setters {
 
         fn get_forward(&self) -> Vector3 {
             Vector3::transform(&Vector3::UNIT_X, &self.rotation)
+        }
+
+        fn get_right(&self) -> Vector3 {
+            Vector3::transform(&Vector3::UNIT_Y, &self.rotation)
         }
 
         fn get_world_transform(&self) -> &Matrix4 {
@@ -305,7 +312,7 @@ macro_rules! impl_drop {
 }
 
 pub(crate) use impl_drop;
-use sdl2::keyboard::KeyboardState;
+use sdl2::{keyboard::KeyboardState, mouse::RelativeMouseState};
 
 pub struct DefaultActor {
     id: u32,

@@ -19,6 +19,7 @@ pub struct BallMove {
     state: State,
     angular_speed: f32,
     forward_speed: f32,
+    strafe_speed: f32,
     phys_world: Rc<RefCell<PhysWorld>>,
     player: Rc<RefCell<dyn Actor>>,
 }
@@ -38,6 +39,7 @@ impl BallMove {
             state: State::Active,
             angular_speed: 0.0,
             forward_speed: 0.0,
+            strafe_speed: 0.0,
             phys_world,
             player,
         };
@@ -59,7 +61,7 @@ impl Component for BallMove {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         // Construct segment in direction of travel
         let start = owner_info.0.clone();

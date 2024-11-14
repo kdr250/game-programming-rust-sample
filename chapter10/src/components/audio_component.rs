@@ -74,7 +74,7 @@ impl Component for AudioComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         self.owner_world_transform = owner_info.3.clone();
         self.events_2d.retain(|event| event.borrow().is_valid());

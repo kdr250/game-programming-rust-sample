@@ -19,6 +19,7 @@ pub struct InputComponent {
     state: State,
     angular_speed: f32,
     forward_speed: f32,
+    strafe_speed: f32,
     max_forward_speed: f32,
     max_angular_speed: f32,
     forward_key: Scancode,
@@ -36,6 +37,7 @@ impl InputComponent {
             state: State::Active,
             angular_speed: 0.0,
             forward_speed: 0.0,
+            strafe_speed: 0.0,
             max_forward_speed: 0.0,
             max_angular_speed: 0.0,
             forward_key: Scancode::Escape,
@@ -110,7 +112,7 @@ impl Component for InputComponent {
     fn update(
         &mut self,
         delta_time: f32,
-        owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         move_component::update_move_component(self, delta_time, owner_info)
     }

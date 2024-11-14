@@ -4,7 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     actors::{
         actor::{self, Actor, DefaultActor, State as ActorState},
-        camera_actor::CameraActor,
+        fps_actor::FPSActor,
         plane_actor::PlaneActor,
     },
     components::{
@@ -22,7 +22,7 @@ pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
     pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
     updating_actors: bool,
-    camera_actor: Option<Rc<RefCell<CameraActor>>>,
+    fps_actor: Option<Rc<RefCell<FPSActor>>>,
     random: Random,
 }
 
@@ -32,7 +32,7 @@ impl EntityManager {
             actors: vec![],
             pending_actors: vec![],
             updating_actors: false,
-            camera_actor: None,
+            fps_actor: None,
             random: Random::new(),
         };
 
@@ -69,7 +69,7 @@ impl EntityManager {
         renderer: Rc<RefCell<Renderer>>,
         audio_system: Rc<RefCell<AudioSystem>>,
         phys_world: Rc<RefCell<PhysWorld>>,
-    ) -> Rc<RefCell<CameraActor>> {
+    ) -> Rc<RefCell<FPSActor>> {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
         a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
@@ -139,13 +139,13 @@ impl EntityManager {
         }
 
         // Camera actor
-        let camera_actor = CameraActor::new(
+        let fps_actor = FPSActor::new(
             asset_manager.clone(),
             this.clone(),
-            renderer.clone(),
             audio_system.clone(),
+            renderer.clone(),
         );
-        this.borrow_mut().camera_actor = Some(camera_actor.clone());
+        this.borrow_mut().fps_actor = Some(fps_actor.clone());
 
         // Setup lights
         {
@@ -183,7 +183,7 @@ impl EntityManager {
         let ac = AudioComponent::new(m, audio_system);
         ac.borrow_mut().play_event("event:/FireLoop");
 
-        camera_actor
+        fps_actor
     }
 
     pub fn get_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {

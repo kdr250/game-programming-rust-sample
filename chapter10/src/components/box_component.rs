@@ -58,7 +58,7 @@ impl Component for BoxComponent {
     fn update(
         &mut self,
         _delta_time: f32,
-        _owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
+        _owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
     ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         (None, None, None)
     }

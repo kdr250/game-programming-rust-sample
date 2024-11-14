@@ -3,14 +3,10 @@ extern crate gl;
 use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{anyhow, Result};
-use sdl2::{
-    event::Event,
-    keyboard::{KeyboardState, Scancode},
-    EventPump, TimerSubsystem,
-};
+use sdl2::{event::Event, keyboard::Scancode, EventPump, TimerSubsystem};
 
 use crate::{
-    actors::camera_actor::CameraActor,
+    actors::fps_actor::FPSActor,
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
         phys_world::PhysWorld, renderer::Renderer, sound_event::SoundEvent,
@@ -29,7 +25,7 @@ pub struct Game {
     tick_count: u64,
     music_event: SoundEvent,
     reverb_snap: Option<SoundEvent>,
-    camera_actor: Rc<RefCell<CameraActor>>,
+    fps_actor: Rc<RefCell<FPSActor>>,
 }
 
 impl Game {
@@ -72,7 +68,7 @@ impl Game {
             tick_count: 0,
             music_event,
             reverb_snap: None,
-            camera_actor,
+            fps_actor: camera_actor,
         };
 
         Ok(game)
@@ -104,7 +100,7 @@ impl Game {
                             &mut self.music_event,
                             &mut self.reverb_snap,
                             self.audio_system.clone(),
-                            self.camera_actor.clone(),
+                            self.fps_actor.clone(),
                         ) {
                             self.reverb_snap = Some(reverb);
                         }
@@ -114,7 +110,7 @@ impl Game {
             }
         }
 
-        let state = KeyboardState::new(&self.event_pump);
+        let state = self.event_pump.keyboard_state();
         if state.is_scancode_pressed(Scancode::Escape) {
             self.is_running = false;
         }
@@ -122,7 +118,9 @@ impl Game {
         self.entity_manager.borrow_mut().set_updating_actors(true);
         let actors = self.entity_manager.borrow().get_actors().clone();
         for actor in actors {
-            actor.borrow_mut().process_input(&state);
+            actor
+                .borrow_mut()
+                .process_input(&state, &self.event_pump.relative_mouse_state());
         }
     }
 
@@ -131,7 +129,7 @@ impl Game {
         music_event: &mut SoundEvent,
         reverb_snap: &mut Option<SoundEvent>,
         audio_system: Rc<RefCell<AudioSystem>>,
-        camera_actor: Rc<RefCell<CameraActor>>,
+        fps_actor: Rc<RefCell<FPSActor>>,
     ) -> Option<SoundEvent> {
         match key {
             Scancode::Minus => {
@@ -165,11 +163,11 @@ impl Game {
             }
             Scancode::Num1 => {
                 // Set default footstep surface
-                camera_actor.borrow_mut().set_foot_step_surface(0.0);
+                fps_actor.borrow_mut().set_foot_step_surface(0.0);
             }
             Scancode::Num2 => {
                 // Set grass footstep surface
-                camera_actor.borrow_mut().set_foot_step_surface(0.5);
+                fps_actor.borrow_mut().set_foot_step_surface(0.5);
             }
             _ => {}
         };
