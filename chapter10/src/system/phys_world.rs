@@ -35,13 +35,14 @@ impl PhysWorld {
     /// Test a line segment against boxes
     /// Returns Some(CollisionInfo) if it collides against a box
     pub fn segment_cast(&self, line: &LineSegment) -> Option<CollisionInfo> {
-        let closest_t = f32::INFINITY;
+        let mut closest_t = f32::INFINITY;
         let mut result = None;
 
         for b in &self.boxes {
             if let Some((t, normal)) = LineSegment::intersect_aabb(line, b.borrow().get_world_box())
             {
                 if t < closest_t {
+                    closest_t = t;
                     let collision_info = CollisionInfo {
                         point: line.point_on_segment(t),
                         normal,

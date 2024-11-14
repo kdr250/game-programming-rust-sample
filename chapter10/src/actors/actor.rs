@@ -125,7 +125,7 @@ pub trait Actor {
             ));
         } else {
             // Rotate about axis from cross product
-            let mut axis = Vector3::cross(&Vector3::UNIT_Z, &forward);
+            let mut axis = Vector3::cross(&Vector3::UNIT_X, &forward);
             axis.normalize_mut();
             self.set_rotation(Quaternion::from_axis_angle(&axis, angle));
         }
