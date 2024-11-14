@@ -148,6 +148,19 @@ impl Renderer {
         shader.set_vector_uniform("uDirLight.mSpecColor", &self.directional_light.spec_color);
     }
 
+    pub fn unproject(&self, screen_point: Vector3) -> Vector3 {
+        // Convert screenPoint to device coordinates (between -1 and +1)
+        let mut device_coord = screen_point;
+        device_coord.x /= self.screen_width * 0.5;
+        device_coord.y /= self.screen_height * 0.5;
+
+        // Transform vector by unprojection matrix
+        let mut unprojection = self.view.clone() * self.projection.clone();
+        unprojection.invert();
+
+        Vector3::transform_with_pers_div(&device_coord, unprojection, None)
+    }
+
     pub fn set_ambient_light(&mut self, ambient_light: Vector3) {
         self.ambient_light = ambient_light;
     }

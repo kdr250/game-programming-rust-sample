@@ -6,12 +6,9 @@ use crate::{
         actor::{self, Actor, DefaultActor, State as ActorState},
         fps_actor::FPSActor,
         plane_actor::PlaneActor,
+        target_actor::TargetActor,
     },
-    components::{
-        audio_component::AudioComponent,
-        mesh_component::MeshComponent,
-        sprite_component::{DefaultSpriteComponent, SpriteComponent},
-    },
+    components::sprite_component::{DefaultSpriteComponent, SpriteComponent},
     math::{quaternion::Quaternion, random::Random, vector3::Vector3},
     system::{asset_manager::AssetManager, renderer::Renderer},
 };
@@ -72,29 +69,6 @@ impl EntityManager {
         audio_system: Rc<RefCell<AudioSystem>>,
         phys_world: Rc<RefCell<PhysWorld>>,
     ) -> Rc<RefCell<FPSActor>> {
-        // Create actors
-        let a = DefaultActor::new(asset_manager.clone(), this.clone());
-        a.borrow_mut().set_position(Vector3::new(200.0, 75.0, 0.0));
-        a.borrow_mut().set_scale(100.0);
-
-        let mut q = Quaternion::from_axis_angle(&Vector3::UNIT_Y, -std::f32::consts::FRAC_PI_2);
-        q = Quaternion::concatenate(
-            &q,
-            &Quaternion::from_axis_angle(&Vector3::UNIT_Z, f32::consts::PI + f32::consts::PI / 4.0),
-        );
-        a.borrow_mut().set_rotation(q);
-
-        let mesh = MeshComponent::new(a.clone());
-        mesh.borrow_mut()
-            .set_mesh(asset_manager.borrow_mut().get_mesh("Cube.gpmesh"));
-
-        let b = DefaultActor::new(asset_manager.clone(), this.clone());
-        b.borrow_mut().set_position(Vector3::new(200.0, -75.0, 0.0));
-        b.borrow_mut().set_scale(3.0);
-        let mesh = MeshComponent::new(b.clone());
-        mesh.borrow_mut()
-            .set_mesh(asset_manager.borrow_mut().get_mesh("Sphere.gpmesh"));
-
         let mut planes = vec![];
 
         // Setup floor
@@ -145,6 +119,8 @@ impl EntityManager {
             planes.push(p);
         }
 
+        this.borrow_mut().planes = planes;
+
         // Camera actor
         let fps_actor = FPSActor::new(
             asset_manager.clone(),
@@ -181,15 +157,19 @@ impl EntityManager {
         let texture = asset_manager.borrow_mut().get_texture("Radar.png");
         sprite_component.borrow_mut().set_texture(texture);
 
-        // Create spheres with audio components playing different sounds
-        let m = DefaultActor::new(asset_manager.clone(), this);
-        m.borrow_mut().set_position(Vector3::new(500.0, -75.0, 0.0));
-        m.borrow_mut().set_scale(1.0);
-        let mc = MeshComponent::new(m.clone());
-        let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
-        mc.borrow_mut().set_mesh(mesh);
-        let ac = AudioComponent::new(m, audio_system);
-        ac.borrow_mut().play_event("event:/FireLoop");
+        // Create target actors
+        let t = TargetActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
+        t.borrow_mut()
+            .set_position(Vector3::new(1450.0, 0.0, 100.0));
+        let t = TargetActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
+        t.borrow_mut()
+            .set_position(Vector3::new(1450.0, 0.0, 400.0));
+        let t = TargetActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
+        t.borrow_mut()
+            .set_position(Vector3::new(1450.0, -500.0, 200.0));
+        let t = TargetActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
+        t.borrow_mut()
+            .set_position(Vector3::new(1450.0, 500.0, 200.0));
 
         fps_actor
     }

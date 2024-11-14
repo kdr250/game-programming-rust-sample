@@ -10,7 +10,7 @@ use crate::{
     collision::aabb::AABB,
     components::{
         audio_component::AudioComponent,
-        box_component::{self, BoxComponent},
+        box_component::BoxComponent,
         component::{Component, State as ComponentState},
         fps_camera::FPSCamera,
         mesh_component::MeshComponent,
@@ -23,7 +23,10 @@ use crate::{
     },
 };
 
-use super::actor::{self, generate_id, Actor, DefaultActor, State};
+use super::{
+    actor::{self, generate_id, Actor, DefaultActor, State},
+    ball_actor::BallActor,
+};
 
 pub struct FPSActor {
     id: u32,
@@ -37,6 +40,8 @@ pub struct FPSActor {
     asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     audio_system: Rc<RefCell<AudioSystem>>,
+    renderer: Rc<RefCell<Renderer>>,
+    phys_world: Rc<RefCell<PhysWorld>>,
     move_component: Option<Rc<RefCell<DefaultMoveComponent>>>,
     camera_component: Option<Rc<RefCell<FPSCamera>>>,
     mesh_component: Option<Rc<RefCell<MeshComponent>>>,
@@ -67,6 +72,8 @@ impl FPSActor {
             asset_manager: asset_manager.clone(),
             entity_manager: entity_manager.clone(),
             audio_system: audio_system.clone(),
+            renderer: renderer.clone(),
+            phys_world: phys_world.clone(),
             move_component: None,
             camera_component: None,
             mesh_component: None,
@@ -83,7 +90,9 @@ impl FPSActor {
         result.borrow_mut().move_component = Some(move_component);
 
         let audio_component = AudioComponent::new(result.clone(), audio_system.clone());
-        let sound_event = audio_component.borrow_mut().play_event("event:/Footstep");
+        let sound_event = audio_component
+            .borrow_mut()
+            .play_event("event:/Footstep", &result.borrow().get_world_transform());
         sound_event.borrow_mut().set_paused(true);
         result.borrow_mut().audio_component = Some(audio_component);
         result.borrow_mut().foot_step = Some(sound_event);
@@ -176,10 +185,41 @@ impl FPSActor {
             borrowed_box_component.on_update_world_transform(&owner_info);
         }
     }
+
+    pub fn shoot(&mut self) {
+        // Get start point (in center of screen on near plane)
+        let mut screen_point = Vector3::ZERO;
+        let start = self.renderer.borrow().unproject(screen_point.clone());
+        // Get end point (in center of screen, between near and far)
+        screen_point.z = 0.9;
+        let end = self.renderer.borrow().unproject(screen_point.clone());
+        // Get direction vector
+        let mut dir = end.clone() - start.clone();
+        dir.normalize_mut();
+        // Spawn a ball
+        let ball = BallActor::new(
+            self.asset_manager.clone(),
+            self.entity_manager.clone(),
+            self.phys_world.clone(),
+            self.get_id(),
+            self.audio_system.clone(),
+        );
+        ball.borrow_mut().set_position(start + dir.clone() * 20.0);
+        // Rotate the ball to face new direction
+        ball.borrow_mut().rotate_to_new_forward(dir);
+        // Play shooting sound
+        self.audio_component
+            .as_ref()
+            .unwrap()
+            .borrow_mut()
+            .play_event("event:/Shot", &self.get_world_transform());
+    }
 }
 
 impl Actor for FPSActor {
     fn update_actor(&mut self, delta_time: f32) {
+        self.fix_collision();
+
         // Play the footstep if we're moving and haven't recently
         self.last_foot_step -= delta_time;
         if !math::basic::near_zero(

@@ -54,7 +54,7 @@ pub trait Actor {
         }
 
         for change in changes {
-            let (position, rotation, new_forward) = change;
+            let (position, rotation, new_forward, hit_actors) = change;
             if let Some(forward) = new_forward {
                 self.rotate_to_new_forward(forward);
             }
@@ -63,6 +63,9 @@ pub trait Actor {
             }
             if let Some(rot) = rotation {
                 self.set_rotation(rot);
+            }
+            for hit_actor in hit_actors {
+                hit_actor.borrow().hit_target();
             }
         }
     }
@@ -175,6 +178,8 @@ pub trait Actor {
     fn add_component(&mut self, component: Rc<RefCell<dyn Component>>);
 
     fn remove_component(&mut self, component: Rc<RefCell<dyn Component>>);
+
+    fn hit_target(&self) {}
 }
 
 macro_rules! impl_getters_setters {

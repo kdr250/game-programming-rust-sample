@@ -20,6 +20,7 @@ pub struct CollisionInfo {
     pub box_component: Rc<RefCell<BoxComponent>>,
     // Owning actor of component
     pub actor: Rc<RefCell<dyn Actor>>,
+    pub actor_id: u32,
 }
 
 pub struct PhysWorld {
@@ -48,6 +49,7 @@ impl PhysWorld {
                         normal,
                         box_component: b.clone(),
                         actor: b.borrow().get_owner().clone(),
+                        actor_id: b.borrow().get_owner_id(),
                     };
                     result = Some(collision_info);
                 }

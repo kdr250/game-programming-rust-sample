@@ -79,7 +79,12 @@ impl Component for FPSCamera {
         &mut self,
         delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
-    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+    ) -> (
+        Option<Vector3>,
+        Option<Quaternion>,
+        Option<Vector3>,
+        Vec<Rc<RefCell<dyn Actor>>>,
+    ) {
         // Camera position is owner position
         let camera_position = owner_info.0.clone();
 
@@ -101,7 +106,7 @@ impl Component for FPSCamera {
         let view = Matrix4::create_look_at(&camera_position, &target, &up);
         self.set_view_matrix(view);
 
-        (None, None, None)
+        (None, None, None, vec![])
     }
 
     component::impl_getters_setters! {}

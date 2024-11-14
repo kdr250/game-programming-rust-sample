@@ -97,8 +97,6 @@ impl Game {
                     if !repeat && scancode.is_some() {
                         if let Some(reverb) = Game::handle_key_pressed(
                             scancode.unwrap(),
-                            &mut self.music_event,
-                            &mut self.reverb_snap,
                             self.audio_system.clone(),
                             self.fps_actor.clone(),
                         ) {
@@ -115,19 +113,17 @@ impl Game {
             self.is_running = false;
         }
 
+        let mouse_state = self.event_pump.relative_mouse_state();
+
         self.entity_manager.borrow_mut().set_updating_actors(true);
         let actors = self.entity_manager.borrow().get_actors().clone();
         for actor in actors {
-            actor
-                .borrow_mut()
-                .process_input(&state, &self.event_pump.relative_mouse_state());
+            actor.borrow_mut().process_input(&state, &mouse_state);
         }
     }
 
     fn handle_key_pressed(
         key: Scancode,
-        music_event: &mut SoundEvent,
-        reverb_snap: &mut Option<SoundEvent>,
         audio_system: Rc<RefCell<AudioSystem>>,
         fps_actor: Rc<RefCell<FPSActor>>,
     ) -> Option<SoundEvent> {
@@ -144,30 +140,8 @@ impl Game {
                 volume = f32::min(1.0, volume + 0.1);
                 audio_system.borrow_mut().set_bus_volume("bus:/", volume);
             }
-            Scancode::E => {
-                audio_system.borrow_mut().play_event("event:/Explosion2D");
-            }
-            Scancode::M => {
-                music_event.set_paused(!music_event.get_paused());
-            }
-            Scancode::R => {
-                // FIXME: An error will happen when switching four times...
-                if let Some(reverb) = reverb_snap {
-                    if reverb.is_valid() {
-                        reverb.stop(true);
-                        return None;
-                    }
-                }
-                let reverb = audio_system.borrow_mut().play_event("snapshot:/WithReverb");
-                return Some(reverb);
-            }
-            Scancode::Num1 => {
-                // Set default footstep surface
-                fps_actor.borrow_mut().set_foot_step_surface(0.0);
-            }
-            Scancode::Num2 => {
-                // Set grass footstep surface
-                fps_actor.borrow_mut().set_foot_step_surface(0.5);
+            Scancode::B => {
+                fps_actor.borrow_mut().shoot();
             }
             _ => {}
         };

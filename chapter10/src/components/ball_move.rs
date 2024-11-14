@@ -21,7 +21,7 @@ pub struct BallMove {
     forward_speed: f32,
     strafe_speed: f32,
     phys_world: Rc<RefCell<PhysWorld>>,
-    player: Rc<RefCell<dyn Actor>>,
+    player_id: u32,
 }
 
 impl BallMove {
@@ -30,7 +30,7 @@ impl BallMove {
     pub fn new(
         owner: Rc<RefCell<dyn Actor>>,
         phys_world: Rc<RefCell<PhysWorld>>,
-        player: Rc<RefCell<dyn Actor>>,
+        player_id: u32,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
@@ -41,7 +41,7 @@ impl BallMove {
             forward_speed: 0.0,
             strafe_speed: 0.0,
             phys_world,
-            player,
+            player_id,
         };
 
         let result = Rc::new(RefCell::new(this));
@@ -62,7 +62,12 @@ impl Component for BallMove {
         &mut self,
         delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
-    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+    ) -> (
+        Option<Vector3>,
+        Option<Quaternion>,
+        Option<Vector3>,
+        Vec<Rc<RefCell<dyn Actor>>>,
+    ) {
         // Construct segment in direction of travel
         let start = owner_info.0.clone();
         let mut direction = owner_info.2.clone();
@@ -72,12 +77,17 @@ impl Component for BallMove {
         let line = LineSegment::new(start, end);
 
         // Test segment vs world
+        let mut hit_actors = vec![];
         if let Some(collision_info) = self.phys_world.borrow().segment_cast(&line) {
-            direction = Vector3::reflect(&direction, &collision_info.normal);
+            if collision_info.actor_id != self.player_id {
+                direction = Vector3::reflect(&direction, &collision_info.normal);
+                hit_actors.push(collision_info.actor);
+            }
         }
 
         let mut result = move_component::update_move_component(self, delta_time, owner_info);
         result.2 = Some(direction);
+        result.3 = hit_actors;
 
         result
     }

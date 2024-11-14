@@ -136,10 +136,8 @@ impl LineSegment {
             // The only way they intersect is if start
             // is a point on the plane (P dot N) == d
             if math::basic::near_zero(Vector3::dot(&self.start, &plane.normal) - plane.d, 0.001) {
-                println!("denom near 0 -> number near 0");
                 return Some((false, 0.0));
             }
-            println!("denom near 0 -> number not near 0");
             return None;
         }
 
@@ -148,10 +146,8 @@ impl LineSegment {
 
         // Validate t is within bounds of the line segment
         if result >= 0.0 && result <= 1.0 {
-            println!("result 0-1, value = {result}");
             Some((true, result))
         } else {
-            println!("result not 0-1, value = {result}");
             Some((false, result))
         }
     }

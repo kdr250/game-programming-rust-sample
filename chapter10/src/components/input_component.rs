@@ -113,7 +113,12 @@ impl Component for InputComponent {
         &mut self,
         delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
-    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+    ) -> (
+        Option<Vector3>,
+        Option<Quaternion>,
+        Option<Vector3>,
+        Vec<Rc<RefCell<dyn Actor>>>,
+    ) {
         move_component::update_move_component(self, delta_time, owner_info)
     }
 

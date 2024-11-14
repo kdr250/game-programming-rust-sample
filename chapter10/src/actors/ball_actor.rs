@@ -38,7 +38,7 @@ impl BallActor {
         asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
         phys_world: Rc<RefCell<PhysWorld>>,
-        player: Rc<RefCell<dyn Actor>>,
+        player_id: u32,
         audio_system: Rc<RefCell<AudioSystem>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
@@ -63,7 +63,7 @@ impl BallActor {
         let mesh = asset_manager.borrow_mut().get_mesh("Sphere.gpmesh");
         mesh_component.borrow_mut().set_mesh(mesh);
 
-        let ball_move = BallMove::new(result.clone(), phys_world, player);
+        let ball_move = BallMove::new(result.clone(), phys_world, player_id);
         ball_move.borrow_mut().set_forward_speed(1500.0);
         result.borrow_mut().ball_move = Some(ball_move);
 
@@ -74,11 +74,6 @@ impl BallActor {
 
         result
     }
-
-    pub fn hit_target(&self) {
-        let audio_component = self.audio_component.as_ref().unwrap();
-        audio_component.borrow_mut().play_event("event:/Ding");
-    }
 }
 
 impl Actor for BallActor {
@@ -87,6 +82,13 @@ impl Actor for BallActor {
         if self.life_span < 0.0 {
             self.set_state(State::Dead);
         }
+    }
+
+    fn hit_target(&self) {
+        let audio_component = self.audio_component.as_ref().unwrap();
+        audio_component
+            .borrow_mut()
+            .play_event("event:/Ding", self.get_world_transform());
     }
 
     actor::impl_getters_setters! {}

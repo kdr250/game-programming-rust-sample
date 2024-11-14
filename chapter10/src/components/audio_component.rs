@@ -3,10 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     actors::actor::Actor,
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
-    system::{
-        audio_system::{self, AudioSystem},
-        sound_event::SoundEvent,
-    },
+    system::{audio_system::AudioSystem, sound_event::SoundEvent},
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -42,10 +39,10 @@ impl AudioComponent {
         result
     }
 
-    pub fn play_event(&mut self, name: &str) -> Rc<RefCell<SoundEvent>> {
+    pub fn play_event(&mut self, name: &str, world_transform: &Matrix4) -> Rc<RefCell<SoundEvent>> {
         let mut event = self.audio_system.borrow_mut().play_event(name);
         let result = if event.is_3d() {
-            event.set_3d_attributes(self.owner.borrow().get_world_transform());
+            event.set_3d_attributes(world_transform);
             let event_ref = Rc::new(RefCell::new(event));
             self.events_3d.push(event_ref.clone());
             event_ref
@@ -75,12 +72,17 @@ impl Component for AudioComponent {
         &mut self,
         _delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4, Vector3),
-    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+    ) -> (
+        Option<Vector3>,
+        Option<Quaternion>,
+        Option<Vector3>,
+        Vec<Rc<RefCell<dyn Actor>>>,
+    ) {
         self.owner_world_transform = owner_info.3.clone();
         self.events_2d.retain(|event| event.borrow().is_valid());
         self.events_3d.retain(|event| event.borrow().is_valid());
 
-        (None, None, None)
+        (None, None, None, vec![])
     }
 
     fn on_update_world_transform(&mut self, _owner_info: &(Vector3, f32, Quaternion)) {
