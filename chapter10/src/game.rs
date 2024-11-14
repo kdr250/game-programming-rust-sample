@@ -10,10 +10,10 @@ use sdl2::{
 };
 
 use crate::{
-    actors::camera_actor::{self, CameraActor},
+    actors::camera_actor::CameraActor,
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-        renderer::Renderer, sound_event::SoundEvent,
+        phys_world::PhysWorld, renderer::Renderer, sound_event::SoundEvent,
     },
 };
 
@@ -24,6 +24,7 @@ pub struct Game {
     asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
     audio_system: Rc<RefCell<AudioSystem>>,
+    phys_world: Rc<RefCell<PhysWorld>>,
     is_running: bool,
     tick_count: u64,
     music_event: SoundEvent,
@@ -49,11 +50,14 @@ impl Game {
         let audio_system = AudioSystem::initialize(asset_manager.clone())?;
         let music_event = audio_system.borrow_mut().play_event("event:/Music");
 
+        let phys_world = PhysWorld::new();
+
         let camera_actor = EntityManager::load_data(
             entity_manager.clone(),
             asset_manager.clone(),
             renderer.clone(),
             audio_system.clone(),
+            phys_world.clone(),
         );
 
         let game = Game {
@@ -63,6 +67,7 @@ impl Game {
             asset_manager,
             entity_manager,
             audio_system,
+            phys_world,
             is_running: true,
             tick_count: 0,
             music_event,
@@ -195,6 +200,7 @@ impl Game {
 
         self.entity_manager.borrow_mut().flush_actors();
         self.asset_manager.borrow_mut().flush_sprites();
+        self.phys_world.borrow_mut().flush_boxes();
 
         self.audio_system.borrow_mut().update(delta_time);
     }

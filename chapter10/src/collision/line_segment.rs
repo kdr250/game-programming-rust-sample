@@ -185,27 +185,63 @@ impl LineSegment {
         None
     }
 
-    pub fn intersect_aabb(&self, aabb: &AABB) -> Option<f32> {
+    pub fn intersect_aabb(&self, aabb: &AABB) -> Option<(f32, Vector3)> {
         // Vector to save all possible t values for those sides
         let mut t_values = vec![];
         // Test the x planes
-        LineSegment::test_side_plane(self.start.x, self.end.x, aabb.min.x, &mut t_values);
-        LineSegment::test_side_plane(self.start.x, self.end.x, aabb.max.x, &mut t_values);
+        LineSegment::test_side_plane(
+            self.start.x,
+            self.end.x,
+            aabb.min.x,
+            Vector3::NEGATIVE_UNIT_X,
+            &mut t_values,
+        );
+        LineSegment::test_side_plane(
+            self.start.x,
+            self.end.x,
+            aabb.max.x,
+            Vector3::UNIT_X,
+            &mut t_values,
+        );
         // Test the y planes
-        LineSegment::test_side_plane(self.start.y, self.end.y, aabb.min.y, &mut t_values);
-        LineSegment::test_side_plane(self.start.y, self.end.y, aabb.max.y, &mut t_values);
+        LineSegment::test_side_plane(
+            self.start.y,
+            self.end.y,
+            aabb.min.y,
+            Vector3::NEGATIVE_UNIT_Y,
+            &mut t_values,
+        );
+        LineSegment::test_side_plane(
+            self.start.y,
+            self.end.y,
+            aabb.max.y,
+            Vector3::UNIT_Y,
+            &mut t_values,
+        );
         // Test the z planes
-        LineSegment::test_side_plane(self.start.z, self.end.z, aabb.min.z, &mut t_values);
-        LineSegment::test_side_plane(self.start.z, self.end.z, aabb.max.z, &mut t_values);
+        LineSegment::test_side_plane(
+            self.start.z,
+            self.end.z,
+            aabb.min.z,
+            Vector3::NEGATIVE_UNIT_Z,
+            &mut t_values,
+        );
+        LineSegment::test_side_plane(
+            self.start.z,
+            self.end.z,
+            aabb.max.z,
+            Vector3::UNIT_Z,
+            &mut t_values,
+        );
 
         // Sort the t values in ascending order
-        t_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        t_values.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
         // Test if the box contains any of these points of intersection
-        for t in t_values {
-            let point = self.point_on_segment(t);
+        for t_and_normal in t_values {
+            let point = self.point_on_segment(t_and_normal.0);
             if aabb.contains(&point) {
-                return Some(t);
+                return Some(t_and_normal);
             }
         }
 
@@ -213,7 +249,13 @@ impl LineSegment {
         None
     }
 
-    fn test_side_plane(start: f32, end: f32, negd: f32, out: &mut Vec<f32>) -> bool {
+    fn test_side_plane(
+        start: f32,
+        end: f32,
+        negd: f32,
+        norm: Vector3,
+        out: &mut Vec<(f32, Vector3)>,
+    ) -> bool {
         let denom = end - start;
         if math::basic::near_zero(denom, 0.001) {
             return false;
@@ -223,7 +265,7 @@ impl LineSegment {
         let t = numer / denom;
         // Test that t is within bounds
         if t >= 0.0 && t <= 1.0 {
-            out.push(t);
+            out.push((t, norm));
             return true;
         }
 
@@ -304,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_intersect_aabb() {
-        let expected = Some(0.5);
+        let expected = Some((0.5, Vector3::UNIT_Y));
 
         let segment = LineSegment::new(Vector3::ZERO, Vector3::new(0.0, 2.0, 0.0));
         let aabb = AABB::new(Vector3::new(-1.0, -1.0, -1.0), Vector3::new(1.0, 1.0, 1.0));

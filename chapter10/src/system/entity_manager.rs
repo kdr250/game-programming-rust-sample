@@ -16,7 +16,7 @@ use crate::{
     system::{asset_manager::AssetManager, renderer::Renderer},
 };
 
-use super::audio_system::AudioSystem;
+use super::{audio_system::AudioSystem, phys_world::PhysWorld};
 
 pub struct EntityManager {
     actors: Vec<Rc<RefCell<dyn Actor>>>,
@@ -68,6 +68,7 @@ impl EntityManager {
         asset_manager: Rc<RefCell<AssetManager>>,
         renderer: Rc<RefCell<Renderer>>,
         audio_system: Rc<RefCell<AudioSystem>>,
+        phys_world: Rc<RefCell<PhysWorld>>,
     ) -> Rc<RefCell<CameraActor>> {
         // Create actors
         let a = DefaultActor::new(asset_manager.clone(), this.clone());
@@ -97,7 +98,7 @@ impl EntityManager {
         let size = 250.0;
         for i in 0..10 {
             for j in 0..10 {
-                let p = PlaneActor::new(asset_manager.clone(), this.clone());
+                let p = PlaneActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
                 p.borrow_mut().set_position(Vector3::new(
                     start + i as f32 * size,
                     start + j as f32 * size,
@@ -109,12 +110,12 @@ impl EntityManager {
         // Left/right walls
         let q = Quaternion::from_axis_angle(&Vector3::UNIT_X, std::f32::consts::FRAC_PI_2);
         for i in 0..10 {
-            let p = PlaneActor::new(asset_manager.clone(), this.clone());
+            let p = PlaneActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
             p.borrow_mut()
                 .set_position(Vector3::new(start + i as f32 * size, start - size, 0.0));
             p.borrow_mut().set_rotation(q.clone());
 
-            let p = PlaneActor::new(asset_manager.clone(), this.clone());
+            let p = PlaneActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
             p.borrow_mut()
                 .set_position(Vector3::new(start + i as f32 * size, -start + size, 0.0));
             p.borrow_mut().set_rotation(q.clone());
@@ -126,12 +127,12 @@ impl EntityManager {
             &Quaternion::from_axis_angle(&Vector3::UNIT_Z, std::f32::consts::FRAC_PI_2),
         );
         for i in 0..10 {
-            let p = PlaneActor::new(asset_manager.clone(), this.clone());
+            let p = PlaneActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
             p.borrow_mut()
                 .set_position(Vector3::new(start - size, start + i as f32 * size, 0.0));
             p.borrow_mut().set_rotation(q.clone());
 
-            let p = PlaneActor::new(asset_manager.clone(), this.clone());
+            let p = PlaneActor::new(asset_manager.clone(), this.clone(), phys_world.clone());
             p.borrow_mut()
                 .set_position(Vector3::new(-start + size, start + i as f32 * size, 0.0));
             p.borrow_mut().set_rotation(q.clone());

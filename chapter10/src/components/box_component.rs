@@ -4,6 +4,7 @@ use crate::{
     actors::actor::Actor,
     collision::aabb::AABB,
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
+    system::phys_world::PhysWorld,
 };
 
 use super::component::{self, generate_id, Component, State};
@@ -19,7 +20,10 @@ pub struct BoxComponent {
 }
 
 impl BoxComponent {
-    pub fn new(owner: Rc<RefCell<dyn Actor>>) -> Rc<RefCell<Self>> {
+    pub fn new(
+        owner: Rc<RefCell<dyn Actor>>,
+        phys_world: Rc<RefCell<PhysWorld>>,
+    ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
             owner: owner.clone(),
@@ -32,6 +36,8 @@ impl BoxComponent {
 
         let result = Rc::new(RefCell::new(this));
         owner.borrow_mut().add_component(result.clone());
+        phys_world.borrow_mut().add_box(result.clone());
+
         result
     }
 

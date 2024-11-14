@@ -2,12 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     components::{
-        box_component::{self, BoxComponent},
+        box_component::BoxComponent,
         component::{Component, State as ComponentState},
         mesh_component::MeshComponent,
     },
     math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
-    system::{asset_manager::AssetManager, entity_manager::EntityManager},
+    system::{asset_manager::AssetManager, entity_manager::EntityManager, phys_world::PhysWorld},
 };
 
 use super::actor::{self, generate_id, Actor, State};
@@ -30,6 +30,7 @@ impl PlaneActor {
     pub fn new(
         asset_manager: Rc<RefCell<AssetManager>>,
         entity_manager: Rc<RefCell<EntityManager>>,
+        phys_world: Rc<RefCell<PhysWorld>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
@@ -51,7 +52,7 @@ impl PlaneActor {
         let mesh = asset_manager.borrow_mut().get_mesh("Plane.gpmesh");
         mesh_component.borrow_mut().set_mesh(mesh.clone());
 
-        let box_component = BoxComponent::new(result.clone());
+        let box_component = BoxComponent::new(result.clone(), phys_world);
         box_component
             .borrow_mut()
             .set_object_box(mesh.get_box().clone());
