@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     actors::actor::Actor,
-    collision::line_segment::LineSegment,
+    collision::{aabb::AABB, line_segment::LineSegment},
     components::{
         box_component::BoxComponent,
         component::{Component, State},
@@ -55,6 +55,57 @@ impl PhysWorld {
         }
 
         result
+    }
+
+    #[deprecated = "Naive implementation O(n^2). Not effecient..."]
+    pub fn test_pairwise(&self, f: fn(Rc<RefCell<dyn Actor>>, Rc<RefCell<dyn Actor>>)) {
+        for i in 0..self.boxes.len() {
+            // Don't need to test vs itself and any previous i values
+            for j in (i + 1)..self.boxes.len() {
+                let a = &self.boxes[i];
+                let b = &self.boxes[j];
+                if AABB::intersect(a.borrow().get_world_box(), b.borrow().get_world_box()) {
+                    // Call supplied function to handle intersection
+                    f(
+                        a.borrow().get_owner().clone(),
+                        b.borrow().get_owner().clone(),
+                    );
+                }
+            }
+        }
+    }
+
+    /// Test collisions using sweep and prune
+    pub fn test_sweep_and_prune(&mut self, f: fn(Rc<RefCell<dyn Actor>>, Rc<RefCell<dyn Actor>>)) {
+        // Sort by min.x
+        self.boxes.sort_by(|a, b| {
+            a.borrow()
+                .get_world_box()
+                .min
+                .x
+                .partial_cmp(&b.borrow().get_world_box().min.x)
+                .unwrap()
+        });
+
+        for i in 0..self.boxes.len() {
+            // Get max.x for current box
+            let a = &self.boxes[i];
+            let max = a.borrow().get_world_box().max.x;
+            for j in (i + 1)..self.boxes.len() {
+                // If AABB[j] min is past the max bounds of AABB[i],
+                // then there aren't any other possible intersections against AABB[i]
+                let b = &self.boxes[j];
+                if b.borrow().get_world_box().min.x > max {
+                    break;
+                }
+                if AABB::intersect(a.borrow().get_world_box(), b.borrow().get_world_box()) {
+                    f(
+                        a.borrow().get_owner().clone(),
+                        b.borrow().get_owner().clone(),
+                    );
+                }
+            }
+        }
     }
 
     /// Add box components from world
