@@ -1,3 +1,4 @@
+use core::f32;
 use std::{
     cell::RefCell,
     rc::Rc,
@@ -6,7 +7,7 @@ use std::{
 
 use crate::{
     components::component::{Component, State as ComponentState},
-    math::{matrix4::Matrix4, quaternion::Quaternion, vector2::Vector2, vector3::Vector3},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{asset_manager::AssetManager, entity_manager::EntityManager},
 };
 
@@ -52,7 +53,10 @@ pub trait Actor {
         }
 
         for change in changes {
-            let (position, rotation) = change;
+            let (position, rotation, new_forward) = change;
+            if let Some(forward) = new_forward {
+                self.rotate_to_new_forward(forward);
+            }
             if let Some(pos) = position {
                 self.set_position(pos);
             }
@@ -102,6 +106,28 @@ pub trait Actor {
             component
                 .borrow_mut()
                 .on_update_world_transform(&owner_info);
+        }
+    }
+
+    fn rotate_to_new_forward(&mut self, forward: Vector3) {
+        // Figure out difference between original (unit x) and new
+        let dot = Vector3::dot(&Vector3::UNIT_X, &forward);
+        let angle = dot.acos();
+
+        if dot > 0.9999 {
+            // Facing down X
+            self.set_rotation(Quaternion::IDENTITY);
+        } else if dot < -0.9999 {
+            // Facing down -X
+            self.set_rotation(Quaternion::from_axis_angle(
+                &Vector3::UNIT_Z,
+                f32::consts::PI,
+            ));
+        } else {
+            // Rotate about axis from cross product
+            let mut axis = Vector3::cross(&Vector3::UNIT_Z, &forward);
+            axis.normalize_mut();
+            self.set_rotation(Quaternion::from_axis_angle(&axis, angle));
         }
     }
 

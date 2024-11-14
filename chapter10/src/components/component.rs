@@ -22,7 +22,7 @@ pub trait Component {
         &mut self,
         delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
-    ) -> (Option<Vector3>, Option<Quaternion>);
+    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>);
 
     fn process_input(&mut self, _key_state: &KeyboardState) {}
 
@@ -122,8 +122,8 @@ pub mod tests {
             &mut self,
             _delta_time: f32,
             _owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
-        ) -> (Option<Vector3>, Option<Quaternion>) {
-            (None, None)
+        ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+            (None, None, None)
         }
 
         impl_getters_setters! {}

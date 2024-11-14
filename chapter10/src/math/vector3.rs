@@ -76,6 +76,10 @@ impl Vector3 {
         temp.z = self.x * other.y - self.y * other.x;
         temp
     }
+
+    pub fn reflect(&self, normal: &Vector3) -> Vector3 {
+        self.clone() - normal.clone() * 2.0 * Vector3::dot(&self, &normal)
+    }
 }
 
 impl Add for Vector3 {

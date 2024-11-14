@@ -60,9 +60,9 @@ impl Component for CircleComponent {
         &mut self,
         _delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
-    ) -> (Option<Vector3>, Option<Quaternion>) {
+    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         self.center = owner_info.0.clone();
-        (None, None)
+        (None, None, None)
     }
 
     component::impl_getters_setters! {}

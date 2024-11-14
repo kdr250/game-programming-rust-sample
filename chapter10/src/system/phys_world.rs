@@ -13,13 +13,13 @@ use crate::{
 
 pub struct CollisionInfo {
     // Point of collision
-    point: Vector3,
+    pub point: Vector3,
     // Normal at collision
-    normal: Vector3,
+    pub normal: Vector3,
     // Component collided with
-    box_component: Rc<RefCell<BoxComponent>>,
+    pub box_component: Rc<RefCell<BoxComponent>>,
     // Owning actor of component
-    actor: Rc<RefCell<dyn Actor>>,
+    pub actor: Rc<RefCell<dyn Actor>>,
 }
 
 pub struct PhysWorld {

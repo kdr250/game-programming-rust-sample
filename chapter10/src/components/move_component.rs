@@ -43,8 +43,8 @@ pub fn update_move_component(
     move_component: &dyn MoveComponent,
     delta_time: f32,
     owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
-) -> (Option<Vector3>, Option<Quaternion>) {
-    let mut result = (None, None);
+) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
+    let mut result = (None, None, None);
 
     if !math::basic::near_zero(move_component.get_angular_speed(), 0.001) {
         let mut rotation = owner_info.1.clone();
@@ -104,7 +104,7 @@ impl Component for DefaultMoveComponent {
         &mut self,
         delta_time: f32,
         owner_info: &(Vector3, Quaternion, Vector3, Matrix4),
-    ) -> (Option<Vector3>, Option<Quaternion>) {
+    ) -> (Option<Vector3>, Option<Quaternion>, Option<Vector3>) {
         update_move_component(self, delta_time, owner_info)
     }
 

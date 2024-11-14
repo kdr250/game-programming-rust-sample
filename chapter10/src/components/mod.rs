@@ -1,4 +1,5 @@
 pub mod audio_component;
+pub mod ball_move;
 pub mod box_component;
 pub mod circle_component;
 pub mod component;
