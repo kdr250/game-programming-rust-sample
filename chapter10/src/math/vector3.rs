@@ -1,3 +1,4 @@
+use core::f32;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
 use super::quaternion::Quaternion;
@@ -17,6 +18,9 @@ impl Vector3 {
     pub const NEGATIVE_UNIT_X: Vector3 = Vector3::new(-1.0, 0.0, 0.0);
     pub const NEGATIVE_UNIT_Y: Vector3 = Vector3::new(0.0, -1.0, 0.0);
     pub const NEGATIVE_UNIT_Z: Vector3 = Vector3::new(0.0, 0.0, -1.0);
+    pub const INFINITY: Vector3 = Vector3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
+    pub const NEGATIVE_INFINITY: Vector3 =
+        Vector3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
 
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }

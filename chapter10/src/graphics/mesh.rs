@@ -3,11 +3,12 @@ use std::{path::Path, rc::Rc};
 use anyhow::{anyhow, Ok, Result};
 use serde_json::Value;
 
-use crate::{math::vector3::Vector3, system::asset_manager::AssetManager};
+use crate::{collision::aabb::AABB, math::vector3::Vector3, system::asset_manager::AssetManager};
 
 use super::{texture::Texture, vertex_array::VertexArray};
 
 pub struct Mesh {
+    box_collision: AABB,
     textures: Vec<Rc<Texture>>,
     vertex_array: Option<Rc<VertexArray>>,
     shader_name: String,
@@ -18,6 +19,7 @@ pub struct Mesh {
 impl Mesh {
     pub fn new() -> Self {
         Self {
+            box_collision: AABB::new(Vector3::INFINITY, Vector3::NEGATIVE_INFINITY),
             textures: vec![],
             vertex_array: None,
             shader_name: String::new(),
@@ -88,6 +90,7 @@ impl Mesh {
                 vert[2].as_f64().unwrap() as f32,
             );
             self.radius = self.radius.max(position.length_sq());
+            self.box_collision.update_min_max(position);
 
             // Add the floats
             for i in 0..vert.len() {
@@ -129,6 +132,10 @@ impl Mesh {
         self.vertex_array = Some(Rc::new(vertex_array));
 
         Ok(())
+    }
+
+    pub fn get_box(&self) -> &AABB {
+        &self.box_collision
     }
 
     pub fn get_vertex_array(&self) -> Rc<VertexArray> {

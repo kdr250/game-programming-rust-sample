@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     components::{
+        box_component::{self, BoxComponent},
         component::{Component, State as ComponentState},
         mesh_component::MeshComponent,
     },
@@ -22,6 +23,7 @@ pub struct PlaneActor {
     components: Vec<Rc<RefCell<dyn Component>>>,
     asset_manager: Rc<RefCell<AssetManager>>,
     entity_manager: Rc<RefCell<EntityManager>>,
+    box_component: Option<Rc<RefCell<BoxComponent>>>,
 }
 
 impl PlaneActor {
@@ -40,13 +42,20 @@ impl PlaneActor {
             components: vec![],
             asset_manager: asset_manager.clone(),
             entity_manager: entity_manager.clone(),
+            box_component: None,
         };
 
         let result = Rc::new(RefCell::new(this));
 
         let mesh_component = MeshComponent::new(result.clone());
         let mesh = asset_manager.borrow_mut().get_mesh("Plane.gpmesh");
-        mesh_component.borrow_mut().set_mesh(mesh);
+        mesh_component.borrow_mut().set_mesh(mesh.clone());
+
+        let box_component = BoxComponent::new(result.clone());
+        box_component
+            .borrow_mut()
+            .set_object_box(mesh.get_box().clone());
+        result.borrow_mut().box_component = Some(box_component);
 
         entity_manager.borrow_mut().add_actor(result.clone());
 

@@ -1,5 +1,6 @@
 use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
+#[derive(Debug, Clone)]
 pub struct AABB {
     pub min: Vector3,
     pub max: Vector3,

@@ -83,7 +83,7 @@ impl Component for AudioComponent {
         (None, None)
     }
 
-    fn on_update_world_transform(&mut self) {
+    fn on_update_world_transform(&mut self, _owner_info: &(Vector3, f32, Quaternion)) {
         let world = &self.owner_world_transform;
         for event in &mut self.events_3d {
             if event.borrow().is_valid() {

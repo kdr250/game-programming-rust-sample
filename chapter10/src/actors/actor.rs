@@ -94,7 +94,14 @@ pub trait Actor {
 
         // Inform components world transform updated
         for component in self.get_cocmponents() {
-            component.borrow_mut().on_update_world_transform();
+            let owner_info = (
+                self.get_position().clone(),
+                self.get_scale(),
+                self.get_rotation().clone(),
+            );
+            component
+                .borrow_mut()
+                .on_update_world_transform(&owner_info);
         }
     }
 
