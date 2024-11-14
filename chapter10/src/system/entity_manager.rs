@@ -23,6 +23,7 @@ pub struct EntityManager {
     pending_actors: Vec<Rc<RefCell<dyn Actor>>>,
     updating_actors: bool,
     fps_actor: Option<Rc<RefCell<FPSActor>>>,
+    planes: Vec<Rc<RefCell<PlaneActor>>>,
     random: Random,
 }
 
@@ -33,6 +34,7 @@ impl EntityManager {
             pending_actors: vec![],
             updating_actors: false,
             fps_actor: None,
+            planes: vec![],
             random: Random::new(),
         };
 
@@ -93,6 +95,8 @@ impl EntityManager {
         mesh.borrow_mut()
             .set_mesh(asset_manager.borrow_mut().get_mesh("Sphere.gpmesh"));
 
+        let mut planes = vec![];
+
         // Setup floor
         let start = -1250.0;
         let size = 250.0;
@@ -104,6 +108,7 @@ impl EntityManager {
                     start + j as f32 * size,
                     -100.0,
                 ));
+                planes.push(p);
             }
         }
 
@@ -119,6 +124,7 @@ impl EntityManager {
             p.borrow_mut()
                 .set_position(Vector3::new(start + i as f32 * size, -start + size, 0.0));
             p.borrow_mut().set_rotation(q.clone());
+            planes.push(p);
         }
 
         // Forward/back walls
@@ -136,6 +142,7 @@ impl EntityManager {
             p.borrow_mut()
                 .set_position(Vector3::new(-start + size, start + i as f32 * size, 0.0));
             p.borrow_mut().set_rotation(q.clone());
+            planes.push(p);
         }
 
         // Camera actor
@@ -144,6 +151,7 @@ impl EntityManager {
             this.clone(),
             audio_system.clone(),
             renderer.clone(),
+            phys_world.clone(),
         );
         this.borrow_mut().fps_actor = Some(fps_actor.clone());
 
@@ -192,6 +200,10 @@ impl EntityManager {
 
     pub fn get_pending_actors(&self) -> &Vec<Rc<RefCell<dyn Actor>>> {
         &self.pending_actors
+    }
+
+    pub fn get_planes(&self) -> &Vec<Rc<RefCell<PlaneActor>>> {
+        &self.planes
     }
 
     pub fn get_random(&mut self) -> &mut Random {

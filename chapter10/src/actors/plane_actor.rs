@@ -62,6 +62,10 @@ impl PlaneActor {
 
         result
     }
+
+    pub fn get_box(&self) -> &Rc<RefCell<BoxComponent>> {
+        self.box_component.as_ref().unwrap()
+    }
 }
 
 impl Actor for PlaneActor {

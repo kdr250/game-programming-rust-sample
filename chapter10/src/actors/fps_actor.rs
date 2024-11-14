@@ -7,8 +7,10 @@ use sdl2::{
 };
 
 use crate::{
+    collision::aabb::AABB,
     components::{
         audio_component::AudioComponent,
+        box_component::{self, BoxComponent},
         component::{Component, State as ComponentState},
         fps_camera::FPSCamera,
         mesh_component::MeshComponent,
@@ -17,7 +19,7 @@ use crate::{
     math::{self, matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     system::{
         asset_manager::AssetManager, audio_system::AudioSystem, entity_manager::EntityManager,
-        renderer::Renderer, sound_event::SoundEvent,
+        phys_world::PhysWorld, renderer::Renderer, sound_event::SoundEvent,
     },
 };
 
@@ -39,6 +41,7 @@ pub struct FPSActor {
     camera_component: Option<Rc<RefCell<FPSCamera>>>,
     mesh_component: Option<Rc<RefCell<MeshComponent>>>,
     audio_component: Option<Rc<RefCell<AudioComponent>>>,
+    box_component: Option<Rc<RefCell<BoxComponent>>>,
     fps_model: Option<Rc<RefCell<DefaultActor>>>,
     foot_step: Option<Rc<RefCell<SoundEvent>>>,
     last_foot_step: f32,
@@ -50,6 +53,7 @@ impl FPSActor {
         entity_manager: Rc<RefCell<EntityManager>>,
         audio_system: Rc<RefCell<AudioSystem>>,
         renderer: Rc<RefCell<Renderer>>,
+        phys_world: Rc<RefCell<PhysWorld>>,
     ) -> Rc<RefCell<Self>> {
         let this = Self {
             id: generate_id(),
@@ -67,6 +71,7 @@ impl FPSActor {
             camera_component: None,
             mesh_component: None,
             audio_component: None,
+            box_component: None,
             fps_model: None,
             foot_step: None,
             last_foot_step: 0.0,
@@ -96,6 +101,15 @@ impl FPSActor {
         result.borrow_mut().fps_model = Some(fps_model);
         result.borrow_mut().mesh_component = Some(mesh_component);
 
+        let box_component = BoxComponent::new(result.clone(), phys_world);
+        let collision = AABB::new(
+            Vector3::new(-25.0, -25.0, -87.5),
+            Vector3::new(25.0, 25.0, 87.5),
+        );
+        box_component.borrow_mut().set_object_box(collision);
+        box_component.borrow_mut().set_should_rotate(false);
+        result.borrow_mut().box_component = Some(box_component);
+
         entity_manager.borrow_mut().add_actor(result.clone());
 
         result
@@ -107,6 +121,60 @@ impl FPSActor {
         let foot_step = self.foot_step.clone().unwrap();
         foot_step.borrow_mut().set_paused(true);
         foot_step.borrow_mut().set_parameter("Surface", value);
+    }
+
+    pub fn fix_collision(&mut self) {
+        // Need to recompute my world transform to update world box
+        self.compute_world_transform();
+
+        let box_component = self.box_component.clone().unwrap();
+        let mut borrowed_box_component = box_component.borrow_mut();
+        let player_box = borrowed_box_component.get_world_box();
+        let position = self.get_position();
+        let mut new_positions = vec![];
+
+        let planes = self.entity_manager.borrow().get_planes().clone();
+        for plane in planes {
+            // Do we collide with this PlaneActor ?
+            let borrowed_plane = plane.borrow();
+            let plane_box = borrowed_plane.get_box().borrow().get_world_box().clone();
+            if AABB::intersect(&player_box, &plane_box) {
+                // Calculate all our differences
+                let dx1 = plane_box.max.x - player_box.min.x;
+                let dx2 = plane_box.min.x - player_box.max.x;
+                let dy1 = plane_box.max.y - player_box.min.y;
+                let dy2 = plane_box.min.y - player_box.max.y;
+                let dz1 = plane_box.max.z - player_box.min.z;
+                let dz2 = plane_box.min.z - player_box.max.z;
+
+                // Set dx to whichever of dx1/dx2 dy1/dy2 dz1/dz2 have a lower abs
+                let dx = if dx1.abs() < dx2.abs() { dx1 } else { dx2 };
+                let dy = if dy1.abs() < dy2.abs() { dy1 } else { dy2 };
+                let dz = if dz1.abs() < dz2.abs() { dz1 } else { dz2 };
+
+                // Whichever is closest, adjust x/y position
+                let mut new_position = position.clone();
+                if dx.abs() <= dy.abs() && dx.abs() <= dz.abs() {
+                    new_position.x += dx;
+                } else if dy.abs() <= dx.abs() && dy.abs() <= dz.abs() {
+                    new_position.y += dy;
+                } else {
+                    new_position.z += dz;
+                }
+                new_positions.push(new_position);
+            }
+        }
+
+        for position in new_positions {
+            // Need to set position and update box component
+            self.set_position(position);
+            let owner_info = (
+                self.get_position().clone(),
+                self.get_scale(),
+                self.get_rotation().clone(),
+            );
+            borrowed_box_component.on_update_world_transform(&owner_info);
+        }
     }
 }
 
