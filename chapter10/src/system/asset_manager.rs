@@ -4,7 +4,9 @@ use anyhow::{Ok, Result};
 
 use crate::{
     components::{
-        component::State, mesh_component::MeshComponent, sprite_component::SpriteComponent,
+        component::{Component, State},
+        mesh_component::MeshComponent,
+        sprite_component::SpriteComponent,
     },
     graphics::{mesh::Mesh, shader::Shader, texture::Texture, vertex_array::VertexArray},
     math::{self, matrix4::Matrix4, vector3::Vector3},
@@ -129,7 +131,12 @@ impl AssetManager {
 
     pub fn flush_sprites(&mut self) {
         self.sprites
-            .retain(|sprite| *sprite.borrow().get_state() == State::Active {});
+            .retain(|sprite| *sprite.borrow().get_state() == State::Active);
+    }
+
+    pub fn flush_meshes(&mut self) {
+        self.mesh_components
+            .retain(|mesh_component| *mesh_component.borrow().get_state() == State::Active);
     }
 
     pub fn get_mesh(&mut self, file_name: &str) -> Rc<Mesh> {

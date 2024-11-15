@@ -172,6 +172,7 @@ impl Game {
 
         self.entity_manager.borrow_mut().flush_actors();
         self.asset_manager.borrow_mut().flush_sprites();
+        self.asset_manager.borrow_mut().flush_meshes();
         self.phys_world.borrow_mut().flush_boxes();
 
         self.audio_system.borrow_mut().update(delta_time);

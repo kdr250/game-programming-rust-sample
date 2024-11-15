@@ -2,6 +2,7 @@ use crate::math::{self, vector3::Vector3};
 
 use super::{aabb::AABB, plane::Plane, sphere::Sphere};
 
+#[derive(Debug)]
 pub struct LineSegment {
     start: Vector3,
     end: Vector3,

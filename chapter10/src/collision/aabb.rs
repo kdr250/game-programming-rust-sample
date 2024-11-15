@@ -60,7 +60,7 @@ impl AABB {
             || point.z < self.min.z
             || point.x > self.max.x
             || point.y > self.max.y
-            || point.x > self.max.z;
+            || point.z > self.max.z;
 
         !outside
     }
